@@ -68,6 +68,7 @@ contract DssVest {
     function vest(uint256 _id) external {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-vesting-award");
+        require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
             MKR.mint(_award.usr, _award.amt - _award.rxd); // TODO safemath
