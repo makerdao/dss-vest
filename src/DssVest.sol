@@ -42,18 +42,18 @@ contract DssVest {
     }
 
     function init(address _usr, uint256 _amt, uint256 _tau, uint256 _pmt) external auth returns (uint256 id) {
-        require(_usr != address(0), "dss-vest/invalid-user");
-        require(_amt < uint128(-1), "dss-vest/amount-error");
-        require(_tau < 5 * 365 days,     "dss-vest/tau-too-long");
-        require(_pmt < uint128(-1), "dss-vest/payout-error");
-        require(_pmt <= _amt,       "dss-vest/bulk-payment-higher-than-amt");
+        require(_usr != address(0),  "dss-vest/invalid-user");
+        require(_amt < uint128(-1),  "dss-vest/amount-error");
+        require(_tau < 5 * 365 days, "dss-vest/tau-too-long");
+        require(_pmt < uint128(-1),  "dss-vest/payout-error");
+        require(_pmt <= _amt,        "dss-vest/bulk-payment-higher-than-amt");
 
         id = ++ids;
         if (_pmt != 0) {
             MKR.mint(_usr, _pmt);    // Initial payout
         }
 
-        if (_amt - _pmt != 0) {       // safe because pmt <= amt
+        if (_amt - _pmt != 0) {      // safe because pmt <= amt
             awards[id] = Award({
                 usr: _usr,
                 bgn: uint48(block.timestamp),
