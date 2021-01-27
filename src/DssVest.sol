@@ -92,7 +92,7 @@ contract DssVest {
         awards[_id].usr = _usr;
     }
 
-    function active(uint256 _id) external view returns (bool) {
+    function live(uint256 _id) external view returns (bool) {
         return awards[_id].usr != address(0);
     }
 }
