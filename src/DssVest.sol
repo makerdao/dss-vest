@@ -21,7 +21,7 @@ contract DssVest {
     function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
     function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
     modifier auth {
-        require(wards[msg.sender] == 1, "ChainLog/not-authorized");
+        require(wards[msg.sender] == 1, "dss-vest/not-authorized");
         _;
     }
 
