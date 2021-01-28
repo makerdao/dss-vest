@@ -87,7 +87,12 @@ contract DssVest {
         emit Yank(_id);
     }
 
-    function active(uint256 _id) external view returns (bool) {
+    function move(uint256 _id, address _usr) external {
+        require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
+        awards[_id].usr = _usr;
+    }
+
+    function live(uint256 _id) external view returns (bool) {
         return awards[_id].usr != address(0);
     }
 }
