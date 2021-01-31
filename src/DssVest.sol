@@ -89,6 +89,7 @@ contract DssVest {
 
     function move(uint256 _id, address _usr) external {
         require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
+        require(_usr != address(0), "dss-vest/zero-address-invalid");
         awards[_id].usr = _usr;
     }
 
