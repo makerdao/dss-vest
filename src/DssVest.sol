@@ -1,3 +1,19 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
+// Copyright (C) 2021 - Brian McMichael <brian@brianmcmichael.com>
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU Affero General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU Affero General Public License for more details.
+//
+// You should have received a copy of the GNU Affero General Public License
+// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+
 pragma solidity ^0.6.7;
 
 interface IMKR {
@@ -21,7 +37,7 @@ contract DssVest {
     function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
     function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
     modifier auth {
-        require(wards[msg.sender] == 1, "ChainLog/not-authorized");
+        require(wards[msg.sender] == 1, "dss-vest/not-authorized");
         _;
     }
 
@@ -49,10 +65,6 @@ contract DssVest {
         require(_pmt <= _amt,        "dss-vest/bulk-payment-higher-than-amt");
 
         id = ++ids;
-        if (_pmt != 0) {
-            MKR.mint(_usr, _pmt);    // Initial payout
-        }
-
         if (_amt - _pmt != 0) {      // safe because pmt <= amt
             awards[id] = Award({
                 usr: _usr,
@@ -62,12 +74,14 @@ contract DssVest {
                 rxd: 0
             });
         }
+        if (_pmt != 0) {
+            MKR.mint(_usr, _pmt);    // Initial payout
+        }
         emit Init(_usr, _amt, block.timestamp + _tau);
     }
 
     function vest(uint256 _id) external {
         Award memory _award = awards[_id];
-        require(_award.usr != address(0), "dss-vest/invalid-vesting-award");
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
