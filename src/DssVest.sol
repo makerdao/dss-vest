@@ -24,23 +24,13 @@ contract DssVest {
 
     IMKR public immutable MKR;
 
-    uint256 internal constant WAD = 10**18;
-
-    event Rely(address usr);
-    event Deny(address usr);
-    event Init(address indexed usr, uint256 amt, uint256 fin);
-    event Vest(uint256 id);
-    event Yank(uint256 id);
-
     // --- Auth ---
     mapping (address => uint) public wards;
     function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
     function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
-    modifier auth {
-        require(wards[msg.sender] == 1, "dss-vest/not-authorized");
-        _;
-    }
+    modifier auth { require(wards[msg.sender] == 1, "dss-vest/not-authorized");_;}
 
+    // --- Data ---
     struct Award {
         address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period
@@ -51,7 +41,14 @@ contract DssVest {
     mapping (uint256 => Award) public awards;
     uint256 public ids;
 
-    // Governance must rely() this contract on MKR to mint.
+    // --- Event ---
+    event Rely(address usr);
+    event Deny(address usr);
+    event Init(address indexed usr, uint256 amt, uint256 fin);
+    event Vest(uint256 id);
+    event Yank(uint256 id);
+
+    // --- Init ---
     constructor(address token) public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -59,12 +56,16 @@ contract DssVest {
         MKR = IMKR(token);
     }
 
+    // --- Math ---
+    uint256 constant WAD = 10 ** 18;
+
+    // --- Administration ---
     function init(address _usr, uint256 _amt, uint256 _tau, uint256 _pmt) external auth returns (uint256 id) {
         require(_usr != address(0),  "dss-vest/invalid-user");
-        require(_amt < uint128(-1),  "dss-vest/amount-error"); // 1
+        require(_amt < uint128(-1),  "dss-vest/amount-error");
         require(_tau < 5 * 365 days, "dss-vest/tau-too-long");
-        require(_pmt < uint128(-1),  "dss-vest/payout-error"); // 2
-        require(_pmt <= _amt,        "dss-vest/bulk-payment-higher-than-amt"); // 3 - 123 should be covered by math sub() for a better gas efficiency, Am I right?
+        require(_pmt < uint128(-1),  "dss-vest/payout-error");
+        require(_pmt <= _amt,        "dss-vest/bulk-payment-higher-than-amt");
         uint256 _vestedAmount = _amt - _pmt;
         uint256 _endVesting = block.timestamp + _tau;
 
@@ -87,6 +88,12 @@ contract DssVest {
         }
     }
 
+    function yank(uint256 _id) external auth {
+        delete awards[_id];
+        emit Yank(_id);
+    }
+
+    // --- Primary Functions ---
     function vest(uint256 _id) external {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
@@ -96,17 +103,12 @@ contract DssVest {
             MKR.mint(_award.usr, _award.amt - _award.rxd); // TODO safemath
             // TODO I would add a new type of event and return.
         } else {                              // Vesting in progress
-            uint256 t = (uint48(block.timestamp) - _award.bgn) * WAD / (_award.fin - _award.bgn); // why do we mult by WAD? Do we need WAD here?
-            uint256 mkr = (_award.amt * t) / WAD; // is * safe ? can it goes over? I am not too sure
-            awards[_id].rxd = uint128(mkr); // Do we need to mix uint128 with uint 256?
+            uint256 t = (uint48(block.timestamp) - _award.bgn) * WAD / (_award.fin - _award.bgn);
+            uint256 mkr = (_award.amt * t) / WAD;
+            awards[_id].rxd = uint128(mkr);
             MKR.mint(_award.usr, mkr - _award.rxd);
         }
         emit Vest(_id);
-    }
-
-    function yank(uint256 _id) external auth {
-        delete awards[_id];
-        emit Yank(_id);
     }
 
     function move(uint256 _id, address _usr) external {
@@ -115,6 +117,7 @@ contract DssVest {
         awards[_id].usr = _usr;
     }
 
+    // --- View ---
     function live(uint256 _id) external view returns (bool) {
         return awards[_id].usr != address(0);
     }
