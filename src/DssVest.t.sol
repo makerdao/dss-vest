@@ -1,8 +1,7 @@
+// SPDX-License-Identifier: GPL-3.0-or-later
 pragma solidity ^0.6.7;
 
 import "ds-test/test.sol";
-import "./testhelper/TestToken.sol";
-import "./testhelper/MkrTokenAuthority.sol";
 
 import "./DssVest.sol";
 
@@ -23,9 +22,10 @@ interface Token {
 contract DssVestTest is DSTest {
     Hevm hevm;
     DssVest vest;
-    TestToken mkr;
 
-// CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
+    address constant MKR_TOKEN = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+
+    // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE =
         bytes20(uint160(uint256(keccak256('hevm cheat code'))));
 
@@ -33,18 +33,19 @@ contract DssVestTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
+        vest = new DssVest(MKR_TOKEN);
 
-        mkr = new TestToken("MKR", 18);
-        TokenAuthority mkrAuthority = new TokenAuthority();
-        mkr.setAuthority(DSAuthority(address(mkrAuthority)));
-
-        vest = new DssVest(address(mkr));
-        mkrAuthority.rely(address(vest));
-
+        // Set testing contract as a MKR Auth
+        hevm.store(
+            address(GOV_GUARD),
+            keccak256(abi.encode(address(vest), uint256(1))),
+            bytes32(uint256(1))
+        );
+        assertEq(GovGuard(GOV_GUARD).wards(address(vest)), 1);
     }
 
     function testCost() public {
-        new DssVest(address(mkr));
+        new DssVest(MKR_TOKEN);
     }
 
     function testInit() public {

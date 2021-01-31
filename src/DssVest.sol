@@ -22,8 +22,6 @@ interface IMKR {
 
 contract DssVest {
 
-    IMKR public immutable MKR;
-
     // --- Auth ---
     mapping (address => uint) public wards;
     function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
@@ -41,20 +39,24 @@ contract DssVest {
     mapping (uint256 => Award) public awards;
     uint256 public ids;
 
+    // MKR Mainnet: 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+    IMKR public immutable MKR;
+
     // --- Event ---
     event Rely(address usr);
     event Deny(address usr);
-    event Init(address indexed usr, uint256 amt, uint256 fin);
+    event Init(uint256 indexed id);
     event Vest(uint256 id, uint256 amount);
     event EndVesting(uint256 id, uint256 amount, uint totalAmount);
+    event Move(uint256 indexed id);
     event Yank(uint256 id);
 
     // --- Init ---
-    constructor(address token) public {
+    constructor(address mkr) public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
 
-        MKR = IMKR(token);
+        MKR = IMKR(mkr);
     }
 
     // --- Math ---
@@ -82,7 +84,7 @@ contract DssVest {
             });
         }
 
-        emit Init(_usr, _amt, _endVesting);
+        emit Init(id);
 
         if (_pmt > 0) {
             emit Vest(id, _pmt);
@@ -101,7 +103,7 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            uint128 _finalAmount = _award.amt - _award.rxd; // TODO SafeMath?
+            uint128 _finalAmount = _award.amt - _award.rxd;
             delete awards[_id];
 
             emit EndVesting(_id, _finalAmount, _award.amt);
@@ -112,7 +114,7 @@ contract DssVest {
             uint256 t = (uint48(block.timestamp) - _award.bgn) * WAD / (_award.fin - _award.bgn);
             uint128 mkr = uint128((_award.amt * t) / WAD);
             awards[_id].rxd = mkr;
-            uint256 _amount = mkr - _award.rxd; // TODO SafeMath?
+            uint256 _amount = mkr - _award.rxd;
 
             emit Vest(_id, _amount);
 
@@ -124,6 +126,7 @@ contract DssVest {
         require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
         require(_usr != address(0), "dss-vest/zero-address-invalid");
         awards[_id].usr = _usr;
+        emit Move(_id);
     }
 
     // --- View ---
