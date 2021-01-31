@@ -22,6 +22,8 @@ contract DssVestTest is DSTest {
     Hevm hevm;
     DssVest vest;
 
+    address constant MKR_TOKEN = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE =
         bytes20(uint160(uint256(keccak256('hevm cheat code'))));
@@ -30,7 +32,7 @@ contract DssVestTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
-        vest = new DssVest();
+        vest = new DssVest(MKR_TOKEN);
 
         // Set testing contract as a MKR Auth
         hevm.store(
@@ -42,7 +44,7 @@ contract DssVestTest is DSTest {
     }
 
     function testCost() public {
-        new DssVest();
+        new DssVest(MKR_TOKEN);
     }
 
     function testInit() public {

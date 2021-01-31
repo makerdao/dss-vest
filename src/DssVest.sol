@@ -22,7 +22,8 @@ interface IMKR {
 
 contract DssVest {
 
-    IMKR public constant MKR = IMKR(0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2);
+    // MKR Mainnet: 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+    IMKR public immutable MKR;
 
     uint256 internal constant WAD = 10**18;
 
@@ -51,8 +52,9 @@ contract DssVest {
     mapping (uint256 => Award) public awards;
     uint256 public ids;
 
-    // Governance must rely() this contract on MKR to mint.
-    constructor() public {
+    // Governance must rely() this contract on MKR's GOV_GUARD to mint.
+    constructor(address mkr) public {
+        MKR = IMKR(mkr);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
