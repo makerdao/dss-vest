@@ -31,6 +31,7 @@ contract DssVest {
     event Deny(address usr);
     event Init(address indexed usr, uint256 amt, uint256 fin);
     event Vest(uint256 id);
+    event Move(uint256 id, address usr);
     event Yank(uint256 id);
 
     // --- Auth ---
@@ -107,6 +108,7 @@ contract DssVest {
         require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
         require(_usr != address(0), "dss-vest/zero-address-invalid");
         awards[_id].usr = _usr;
+        emit Move(_id, _usr);
     }
 
     function live(uint256 _id) external view returns (bool) {
