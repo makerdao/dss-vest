@@ -43,13 +43,13 @@ contract DssVest {
     IMKR public immutable MKR;
 
     // --- Event ---
-    event Rely(address usr);
-    event Deny(address usr);
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
     event Init(uint256 indexed id);
-    event Vest(uint256 id, uint256 amount);
-    event EndVesting(uint256 id, uint256 amount, uint totalAmount);
+    event Vest(uint256 indexed id, uint256 amount);
+    event EndVesting(uint256 indexed id, uint256 amount, uint totalAmount);
     event Move(uint256 indexed id);
-    event Yank(uint256 id);
+    event Yank(uint256 indexed id);
 
     // --- Init ---
     constructor(address mkr) public {
