@@ -127,6 +127,11 @@ contract DssVestTest is DSTest {
         assertEq(usr, address(3));
     }
 
+    function testFailMoveToZeroAddress() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, 100 days, 0);
+        vest.move(id, address(0));
+    }
+
     function testYank() public {
         uint256 id = vest.init(address(this), 100 * 10**18, 100 days, 0);
         assertTrue(vest.live(id));
