@@ -45,7 +45,8 @@ contract DssVest {
     event Rely(address usr);
     event Deny(address usr);
     event Init(address indexed usr, uint256 amt, uint256 fin);
-    event Vest(uint256 id);
+    event Vest(uint256 id, uint256 amount);
+    event EndVesting(uint256 id, uint256 amount, uint totalAmount);
     event Yank(uint256 id);
 
     // --- Init ---
@@ -84,6 +85,7 @@ contract DssVest {
         emit Init(_usr, _amt, _endVesting);
 
         if (_pmt > 0) {
+            emit Vest(id, _pmt);
             MKR.mint(_usr, _pmt);    // Initial payout
         }
     }
@@ -99,16 +101,23 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
+            uint128 _finalAmount = _award.amt - _award.rxd; // TODO SafeMath?
             delete awards[_id];
-            MKR.mint(_award.usr, _award.amt - _award.rxd); // TODO safemath
-            // TODO I would add a new type of event and return.
-        } else {                              // Vesting in progress
+
+            emit EndVesting(_id, _finalAmount, _award.amt);
+
+            MKR.mint(_award.usr, _finalAmount);
+
+        } else { // Vesting in progress
             uint256 t = (uint48(block.timestamp) - _award.bgn) * WAD / (_award.fin - _award.bgn);
-            uint256 mkr = (_award.amt * t) / WAD;
-            awards[_id].rxd = uint128(mkr);
-            MKR.mint(_award.usr, mkr - _award.rxd);
+            uint128 mkr = uint128((_award.amt * t) / WAD);
+            awards[_id].rxd = mkr;
+            uint256 _amount = mkr - _award.rxd; // TODO SafeMath?
+
+            emit Vest(_id, _amount);
+
+            MKR.mint(_award.usr, _amount);
         }
-        emit Vest(_id);
     }
 
     function move(uint256 _id, address _usr) external {
