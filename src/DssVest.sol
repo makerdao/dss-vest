@@ -27,12 +27,12 @@ contract DssVest {
 
     uint256 internal constant WAD = 10**18;
 
-    event Rely(address usr);
-    event Deny(address usr);
-    event Init(address indexed usr, uint256 amt, uint256 fin);
-    event Vest(uint256 id);
-    event Move(uint256 id, address usr);
-    event Yank(uint256 id);
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+    event Init(uint256 indexed id);
+    event Vest(uint256 indexed id);
+    event Move(uint256 indexed id);
+    event Yank(uint256 indexed id);
 
     // --- Auth ---
     mapping (address => uint) public wards;
@@ -80,7 +80,7 @@ contract DssVest {
         if (_pmt != 0) {
             MKR.mint(_usr, _pmt);    // Initial payout
         }
-        emit Init(_usr, _amt, block.timestamp + _tau);
+        emit Init(id);
     }
 
     function vest(uint256 _id) external {
@@ -88,7 +88,7 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            MKR.mint(_award.usr, _award.amt - _award.rxd); // TODO safemath
+            MKR.mint(_award.usr, _award.amt - _award.rxd);
             delete awards[_id];
         } else {                              // Vesting in progress
             uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn);
@@ -108,7 +108,7 @@ contract DssVest {
         require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
         require(_usr != address(0), "dss-vest/zero-address-invalid");
         awards[_id].usr = _usr;
-        emit Move(_id, _usr);
+        emit Move(_id);
     }
 
     function live(uint256 _id) external view returns (bool) {
