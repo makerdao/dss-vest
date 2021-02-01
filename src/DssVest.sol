@@ -60,6 +60,10 @@ contract DssVest {
         emit Rely(msg.sender);
     }
 
+    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require((z = x - y) <= x);
+    }
+
     function init(address _usr, uint256 _amt, uint256 _tau, uint256 _pmt) external auth returns (uint256 id) {
         require(_usr != address(0),  "dss-vest/invalid-user");
         require(_amt < uint128(-1),  "dss-vest/amount-error");
@@ -88,12 +92,12 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            MKR.mint(_award.usr, _award.amt - _award.rxd);
+            MKR.mint(_award.usr, sub(_award.amt, _award.rxd)); // TODO prove this can't fail. Look for remainder errors in formula below.
             delete awards[_id];
         } else {                              // Vesting in progress
             uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn);
             uint256 mkr = (_award.amt * t) / WAD;
-            MKR.mint(_award.usr, mkr - _award.rxd);
+            MKR.mint(_award.usr, sub(mkr, _award.rxd));
             awards[_id].rxd = uint128(mkr);
         }
         emit Vest(_id);
