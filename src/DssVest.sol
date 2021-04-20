@@ -46,6 +46,7 @@ contract DssVest {
     struct Award {
         address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period
+        uint48  clf;   // An optional cliff
         uint48  fin;   // End of vesting period
         uint128 amt;   // Total reward amount
         uint128 rxd;   // Amount of vest claimed
@@ -64,12 +65,13 @@ contract DssVest {
         require((z = x - y) <= x);
     }
 
-    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _pmt) external auth returns (uint256 id) {
+    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt) external auth returns (uint256 id) {
         require(_usr != address(0),                     "dss-vest/invalid-user");
         require(_amt < uint128(-1),                     "dss-vest/amount-error");
         require(_bgn < block.timestamp + 5 * 365 days,  "dss-vest/bgn-too-far");
         require(_tau > 0,                               "dss-vest/tau-zero");
         require(_tau < 5 * 365 days,                    "dss-vest/tau-too-long");
+        require(_clf <= _tau,                           "dss-vest/clf-too-long");
         require(_pmt < uint128(-1),                     "dss-vest/payout-error");
         require(_pmt <= _amt,                           "dss-vest/bulk-payment-higher-than-amt");
 
@@ -78,6 +80,7 @@ contract DssVest {
             awards[id] = Award({
                 usr: _usr,
                 bgn: uint48(_bgn),
+                clf: uint48(_bgn + _clf),
                 fin: uint48(_bgn + _tau),
                 amt: uint128(_amt - _pmt),
                 rxd: 0
@@ -96,7 +99,7 @@ contract DssVest {
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
             MKR.mint(_award.usr, sub(_award.amt, _award.rxd));
             delete awards[_id];
-        } else if (block.timestamp >= _award.bgn) {                              // Vesting in progress
+        } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
             uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn); // 0 <= t < WAD
             uint256 mkr = (_award.amt * t) / WAD; // 0 <= mkr < _award.amt
             MKR.mint(_award.usr, sub(mkr, _award.rxd));
