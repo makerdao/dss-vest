@@ -65,21 +65,22 @@ contract DssVest {
         require((z = x - y) <= x);
     }
 
-    function init(address _usr, uint256 _amt, uint256 _tau, uint256 _clf, uint256 _pmt) external auth returns (uint256 id) {
-        require(_usr != address(0),  "dss-vest/invalid-user");
-        require(_amt < uint128(-1),  "dss-vest/amount-error");
-        require(_tau < 5 * 365 days, "dss-vest/tau-too-long");
-        require(_clf <= _tau,        "dss-vest/clf-too-long");
-        require(_pmt < uint128(-1),  "dss-vest/payout-error");
-        require(_pmt <= _amt,        "dss-vest/bulk-payment-higher-than-amt");
+    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt) external auth returns (uint256 id) {
+        require(_usr != address(0),                     "dss-vest/invalid-user");
+        require(_amt < uint128(-1),                     "dss-vest/amount-error");
+        require(_bgn < block.timestamp + 5 * 365 days,  "dss-vest/bgn-too-far");
+        require(_tau < 5 * 365 days,                    "dss-vest/tau-too-long");
+        require(_clf <= _tau,                           "dss-vest/clf-too-long");
+        require(_pmt < uint128(-1),                     "dss-vest/payout-error");
+        require(_pmt <= _amt,                           "dss-vest/bulk-payment-higher-than-amt");
 
         id = ++ids;
         if (_amt - _pmt != 0) {      // safe because pmt <= amt
             awards[id] = Award({
                 usr: _usr,
-                bgn: uint48(block.timestamp),
-                clf: uint48(block.timestamp + _clf),
-                fin: uint48(block.timestamp + _tau),
+                bgn: uint48(_bgn),
+                clf: uint48(_bgn + _clf),
+                fin: uint48(_bgn + _tau),
                 amt: uint128(_amt - _pmt),
                 rxd: 0
             });
