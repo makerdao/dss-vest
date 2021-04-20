@@ -49,27 +49,28 @@ contract DssVestTest is DSTest {
     }
 
     function testInit() public {
-        vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd) = vest.awards(1);
+        vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(1));
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(1);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now);
         assertEq(uint256(clf), now);
         assertEq(uint256(fin), now + 100 days);
         assertEq(uint256(amt), 100 * 10**18);
         assertEq(uint256(rxd), 0);
+        assertEq(mgr, address(1));
     }
 
     function testPmt() public {
-        vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 10 * 10**18);
+        vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 10 * 10**18, address(0));
         assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 10*10**18);
     }
 
     function testVest() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
 
         hevm.warp(now + 10 days);
 
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd) = vest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 10 days);
         assertEq(uint256(fin), now + 90 days);
@@ -78,7 +79,7 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 0);
 
         vest.vest(id);
-        (usr, bgn, clf, fin, amt, rxd) = vest.awards(id);
+        (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 10 days);
         assertEq(uint256(fin), now + 90 days);
@@ -89,7 +90,7 @@ contract DssVestTest is DSTest {
         hevm.warp(now + 70 days);
 
         vest.vest(id);
-        (usr, bgn, clf, fin, amt, rxd) = vest.awards(id);
+        (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 80 days);
         assertEq(uint256(fin), now + 20 days);
@@ -99,11 +100,11 @@ contract DssVestTest is DSTest {
     }
 
     function testVestAfterTimeout() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
 
         hevm.warp(now + 200 days);
 
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd) = vest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 200 days);
         assertEq(uint256(fin), now - 100 days);
@@ -112,7 +113,7 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 0);
 
         vest.vest(id);
-        (usr, bgn, clf, fin, amt, rxd) = vest.awards(id);
+        (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         // After final payout, vesting information is removed
         assertEq(usr, address(0));
         assertEq(uint256(bgn), 0);
@@ -120,32 +121,32 @@ contract DssVestTest is DSTest {
         assertEq(uint256(amt), 0);
         assertEq(uint256(rxd), 0);
         assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 100*10**18);
-        assertTrue(!vest.live(id));
+        assertTrue(!vest.valid(id));
     }
 
     function testMove() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
         vest.move(id, address(3));
 
-        (address usr,,,,,) = vest.awards(id);
+        (address usr,,,,,,) = vest.awards(id);
         assertEq(usr, address(3));
     }
 
     function testFailMoveToZeroAddress() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
         vest.move(id, address(0));
     }
 
     function testYank() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
-        assertTrue(vest.live(id));
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+        assertTrue(vest.valid(id));
         vest.yank(id);
-        assertTrue(!vest.live(id));
+        assertTrue(!vest.valid(id));
     }
 
     function testLive() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0);
-        assertTrue(vest.live(id));
-        assertTrue(!vest.live(5));
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+        assertTrue(vest.valid(id));
+        assertTrue(!vest.valid(5));
     }
 }
