@@ -30,9 +30,9 @@ contract DssVest {
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event Init(uint256 indexed id);
+    event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id);
-    event Move(uint256 indexed id);
+    event Move(uint256 indexed id, address indexed dst);
     event Yank(uint256 indexed id);
 
     // --- Auth ---
@@ -103,7 +103,7 @@ contract DssVest {
         if (_pmt != 0) {
             MKR.mint(_usr, _pmt);    // Initial payout
         }
-        emit Init(id);
+        emit Init(id, _usr);
     }
 
     /*
@@ -145,7 +145,7 @@ contract DssVest {
         require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
         require(_dst != address(0), "dss-vest/zero-address-invalid");
         awards[_id].usr = _dst;
-        emit Move(_id);
+        emit Move(_id, _dst);
     }
 
     /*
