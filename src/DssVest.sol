@@ -14,7 +14,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.6.11;
+pragma solidity 0.6.12;
 
 interface IMKR {
     function mint(address usr, uint256 amt) external;
@@ -69,6 +69,7 @@ contract DssVest {
         require(_usr != address(0),                     "dss-vest/invalid-user");
         require(_amt < uint128(-1),                     "dss-vest/amount-error");
         require(_bgn < block.timestamp + 5 * 365 days,  "dss-vest/bgn-too-far");
+        require(_tau > 0,                               "dss-vest/tau-zero");
         require(_tau < 5 * 365 days,                    "dss-vest/tau-too-long");
         require(_clf <= _tau,                           "dss-vest/clf-too-long");
         require(_pmt < uint128(-1),                     "dss-vest/payout-error");
@@ -96,11 +97,11 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            MKR.mint(_award.usr, sub(_award.amt, _award.rxd)); // TODO prove this can't fail. Look for remainder errors in formula below.
+            MKR.mint(_award.usr, sub(_award.amt, _award.rxd));
             delete awards[_id];
-        } else if (block.timestamp >= _award.clf) {  // Vesting in progress
-            uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn);
-            uint256 mkr = (_award.amt * t) / WAD;
+        } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
+            uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn); // 0 <= t < WAD
+            uint256 mkr = (_award.amt * t) / WAD; // 0 <= mkr < _award.amt
             MKR.mint(_award.usr, sub(mkr, _award.rxd));
             awards[_id].rxd = uint128(mkr);
         }
