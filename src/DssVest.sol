@@ -23,7 +23,8 @@ interface IMKR {
 contract DssVest {
 
     // MKR Mainnet: 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
-    IMKR public immutable MKR;
+    IMKR     public immutable MKR;
+    uint256  public constant  MAX_VEST_PERIOD = 20 * 365 days;
 
     uint256 internal constant WAD = 10**18;
 
@@ -78,14 +79,14 @@ contract DssVest {
         @return id  The id of the vesting contract
     */
     function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth returns (uint256 id) {
-        require(_usr != address(0),                     "dss-vest/invalid-user");
-        require(_amt < uint128(-1),                     "dss-vest/amount-error");
-        require(_bgn < block.timestamp + 5 * 365 days,  "dss-vest/bgn-too-far");
-        require(_tau > 0,                               "dss-vest/tau-zero");
-        require(_tau < 5 * 365 days,                    "dss-vest/tau-too-long");
-        require(_clf <= _tau,                           "dss-vest/clf-too-long");
-        require(_pmt < uint128(-1),                     "dss-vest/payout-error");
-        require(_pmt <= _amt,                           "dss-vest/bulk-payment-higher-than-amt");
+        require(_usr != address(0),                       "dss-vest/invalid-user");
+        require(_amt < uint128(-1),                       "dss-vest/amount-error");
+        require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
+        require(_tau > 0,                                 "dss-vest/tau-zero");
+        require(_tau <= MAX_VEST_PERIOD,                  "dss-vest/tau-too-long");
+        require(_clf <= _tau,                             "dss-vest/clf-too-long");
+        require(_pmt < uint128(-1),                       "dss-vest/payout-error");
+        require(_pmt <= _amt,                             "dss-vest/bulk-payment-higher-than-amt");
 
         id = ++ids;
         if (_amt - _pmt != 0) {      // safe because pmt <= amt
