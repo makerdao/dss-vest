@@ -19,6 +19,12 @@ interface Token {
     function balanceOf(address) external returns (uint256);
 }
 
+contract Manager {
+    function yank(address dssvest, uint256 id) external {
+        DssVest(dssvest).yank(id);
+    }
+}
+
 contract DssVestTest is DSTest {
     Hevm hevm;
     DssVest vest;
@@ -141,6 +147,14 @@ contract DssVestTest is DSTest {
         uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
         assertTrue(vest.valid(id));
         vest.yank(id);
+        assertTrue(!vest.valid(id));
+    }
+
+    function testMgrYank() public {
+        Manager manager = new Manager();
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(manager));
+        assertTrue(vest.valid(id));
+        manager.yank(address(vest), id);
         assertTrue(!vest.valid(id));
     }
 
