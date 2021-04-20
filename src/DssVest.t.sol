@@ -158,6 +158,12 @@ contract DssVestTest is DSTest {
         assertTrue(!vest.valid(id));
     }
 
+    function testFailMgrYankUnauthed() public {
+        Manager manager = new Manager();
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(1));
+        manager.yank(address(vest), id);
+    }
+
     function testLive() public {
         uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
         assertTrue(vest.valid(id));
