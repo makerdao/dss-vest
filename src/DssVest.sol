@@ -28,6 +28,8 @@ contract DssVest {
 
     uint256 internal constant WAD = 10**18;
 
+    uint256 internal locked;
+
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event Init(uint256 indexed id, address indexed usr);
@@ -42,6 +44,14 @@ contract DssVest {
     modifier auth {
         require(wards[msg.sender] == 1, "dss-vest/not-authorized");
         _;
+    }
+
+    // --- Mutex  ---
+    modifier lock {
+        require(locked == 0, "dss-vest/system-locked");
+        locked = 1;
+        _;
+        locked = 0;
     }
 
     struct Award {
@@ -78,7 +88,7 @@ contract DssVest {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth returns (uint256 id) {
+    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                       "dss-vest/invalid-user");
         require(_amt < uint128(-1),                       "dss-vest/amount-error");
         require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
@@ -110,7 +120,7 @@ contract DssVest {
         @dev Owner of a vesting contract calls this to claim rewards
         @param id The id of the vesting contract
     */
-    function vest(uint256 _id) external {
+    function vest(uint256 _id) external lock {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
