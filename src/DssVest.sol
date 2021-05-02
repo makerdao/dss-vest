@@ -70,7 +70,6 @@ contract DssVest is DSDeed {
 
     /*
         @dev Govanance adds a vesting contract
-        @param _usr The recipient of the reward
         @param _amt The total amount of the vest
         @param _bgn The starting timestamp of the vest
         @param _tau The duration of the vest (in seconds)
@@ -89,7 +88,7 @@ contract DssVest is DSDeed {
         require(_pmt < uint128(-1),                       "dss-vest/payout-error");
         require(_pmt <= _amt,                             "dss-vest/bulk-payment-higher-than-amt");
 
-        _id = mint(_usr);
+        _id = _mint(_usr, "");
         if (_amt - _pmt != 0) {      // safe because pmt <= amt
             awards[_id] = Award({
                 bgn: uint48(_bgn),
@@ -141,18 +140,6 @@ contract DssVest is DSDeed {
         delete awards[_id];
         _burn(_id);
     }
-
-    /*
-        @dev Allows owner to move a contract to a different address
-        @param _id  The id of the vesting contract
-        @param _dst The address to send ownership of the contract to
-    */
-    //function move(uint256 _id, address _dst) external {
-    //    require(this.ownerOf(_id) == msg.sender, "dss-vest/only-user-can-move");
-    //    require(_dst != address(0), "dss-vest/zero-address-invalid");
-    //    awards[_id].usr = _dst;
-    //    emit Move(_id, _dst);
-    //}
 
     /*
         @dev Return true if a contract is valid
