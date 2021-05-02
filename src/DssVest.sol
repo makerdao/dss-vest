@@ -16,11 +16,13 @@
 
 pragma solidity 0.6.12;
 
+import "ds-deed/deed.sol";
+
 interface IMKR {
     function mint(address usr, uint256 amt) external;
 }
 
-contract DssVest {
+contract DssVest is DSDeed {
 
     // MKR Mainnet: 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
     IMKR     public immutable MKR;
@@ -37,15 +39,6 @@ contract DssVest {
     event Move(uint256 indexed id, address indexed dst);
     event Yank(uint256 indexed id);
 
-    // --- Auth ---
-    mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
-    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
-    modifier auth {
-        require(wards[msg.sender] == 1, "dss-vest/not-authorized");
-        _;
-    }
-
     // --- Mutex  ---
     modifier lock {
         require(locked == 0, "dss-vest/system-locked");
@@ -55,7 +48,6 @@ contract DssVest {
     }
 
     struct Award {
-        address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period
         uint48  clf;   // An optional cliff
         uint48  fin;   // End of vesting period
@@ -64,10 +56,9 @@ contract DssVest {
         address mgr;   // A manager address that can yank
     }
     mapping (uint256 => Award) public awards;
-    uint256 public ids;
 
     // Governance must rely() this contract on MKR's GOV_GUARD to mint.
-    constructor(address mkr) public {
+    constructor(address mkr, string memory name, string memory symbol) public DSDeed(name, symbol) {
         MKR = IMKR(mkr);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -88,7 +79,7 @@ contract DssVest {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth lock returns (uint256 id) {
+    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth lock returns (uint256 _id) {
         require(_usr != address(0),                       "dss-vest/invalid-user");
         require(_amt < uint128(-1),                       "dss-vest/amount-error");
         require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
@@ -98,10 +89,9 @@ contract DssVest {
         require(_pmt < uint128(-1),                       "dss-vest/payout-error");
         require(_pmt <= _amt,                             "dss-vest/bulk-payment-higher-than-amt");
 
-        id = ++ids;
+        _id = mint(_usr);
         if (_amt - _pmt != 0) {      // safe because pmt <= amt
-            awards[id] = Award({
-                usr: _usr,
+            awards[_id] = Award({
                 bgn: uint48(_bgn),
                 clf: uint48(_bgn + _clf),
                 fin: uint48(_bgn + _tau),
@@ -113,7 +103,7 @@ contract DssVest {
         if (_pmt != 0) {
             MKR.mint(_usr, _pmt);    // Initial payout
         }
-        emit Init(id, _usr);
+        emit Init(_id, _usr);
     }
 
     /*
@@ -122,15 +112,16 @@ contract DssVest {
     */
     function vest(uint256 _id) external lock {
         Award memory _award = awards[_id];
-        require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
+        address _owner = _deeds[_id].guy;
+        require(_owner == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            MKR.mint(_award.usr, sub(_award.amt, _award.rxd));
-            delete awards[_id];
+            MKR.mint(_owner, sub(_award.amt, _award.rxd));
+            remove(_id);
         } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
             uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn); // 0 <= t < WAD
             uint256 mkr = (_award.amt * t) / WAD; // 0 <= mkr < _award.amt
-            MKR.mint(_award.usr, sub(mkr, _award.rxd));
+            MKR.mint(_owner, sub(mkr, _award.rxd));
             awards[_id].rxd = uint128(mkr);
         }
         emit Vest(_id);
@@ -142,8 +133,13 @@ contract DssVest {
     */
     function yank(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
-        delete awards[_id];
+        remove(_id);
         emit Yank(_id);
+    }
+
+    function remove(uint256 _id) internal {
+        delete awards[_id];
+        _burn(_id);
     }
 
     /*
@@ -151,18 +147,19 @@ contract DssVest {
         @param _id  The id of the vesting contract
         @param _dst The address to send ownership of the contract to
     */
-    function move(uint256 _id, address _dst) external {
-        require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
-        require(_dst != address(0), "dss-vest/zero-address-invalid");
-        awards[_id].usr = _dst;
-        emit Move(_id, _dst);
-    }
+    //function move(uint256 _id, address _dst) external {
+    //    require(this.ownerOf(_id) == msg.sender, "dss-vest/only-user-can-move");
+    //    require(_dst != address(0), "dss-vest/zero-address-invalid");
+    //    awards[_id].usr = _dst;
+    //    emit Move(_id, _dst);
+    //}
 
     /*
         @dev Return true if a contract is valid
         @param _id The id of the vesting contract
     */
     function valid(uint256 _id) external view returns (bool) {
-        return awards[_id].usr != address(0);
+        return _deeds[_id].guy != address(0);
     }
+
 }
