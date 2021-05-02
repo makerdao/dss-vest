@@ -121,13 +121,21 @@ contract DssVestTest is DSTest {
         vest.vest(id);
         (bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         // After final payout, vesting information is removed
-        //assertEq(vest.ownerOf(id), address(0));
+        //assertEq(vest.ownerOf(id), address(0)); // Owner reverts if invalid
         assertEq(uint256(bgn), 0);
         assertEq(uint256(fin), 0);
         assertEq(uint256(amt), 0);
         assertEq(uint256(rxd), 0);
         assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 100*10**18);
         assertTrue(!vest.valid(id));
+    }
+
+    function testFailVestingComplete() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+        hevm.warp(now + 200 days);
+        vest.vest(id);
+        // After final payout, vesting information is removed
+        vest.ownerOf(id); // Fail here
     }
 
     function testMove() public {

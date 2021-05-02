@@ -110,9 +110,9 @@ contract DssVest is DSDeed {
         @param id The id of the vesting contract
     */
     function vest(uint256 _id) external lock {
-        Award memory _award = awards[_id];
-        address _owner = _deeds[_id].guy;
+        address _owner = this.ownerOf(_id); // Reverts if invalid
         require(_owner == msg.sender, "dss-vest/only-user-can-claim");
+        Award memory _award = awards[_id];
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
             MKR.mint(_owner, sub(_award.amt, _award.rxd));
