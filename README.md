@@ -49,4 +49,4 @@ To quickly test Echidna in Linux or MacOS:
   `$ solc-select use 0.6.12`
 
 - Run Echidna Tests:
-  `$ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config src/fuzz/echidna.config.yml`
+  `$ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml`
