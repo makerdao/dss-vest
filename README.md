@@ -1,3 +1,5 @@
+[![Fuzz](https://github.com/brianmcmichael/dss-vest/actions/workflows/fuzz.yml/badge.svg)](https://github.com/brianmcmichael/dss-vest/actions/workflows/fuzz.yml)
+
 # dss-vest
 
 ## Fuzz
@@ -28,6 +30,15 @@ To quickly test Echidna in Linux or MacOS:
 
 - solc-select
   `$ pip3 install solc-select`
+
+### Local Fuzz Settings
+
+- Edit `echidna.config.yml`
+- Comment `format: "text"`
+- Set `coverage` to true
+- Uncomment `seqLen`
+- Uncomment `testLimit`
+- Uncomment `estimateGas` (optional)
 
 ### Run Echidna Tests
 
