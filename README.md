@@ -48,5 +48,8 @@ To quickly test Echidna in Linux or MacOS:
 - Select solc version:
   `$ solc-select use 0.6.12`
 
+- If using Dapp Tools:
+  `$ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-versions.solc_0_6_12`
+
 - Run Echidna Tests:
   `$ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml`
