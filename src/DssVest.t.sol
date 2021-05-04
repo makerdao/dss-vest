@@ -131,7 +131,7 @@ contract DssVestTest is DSTest {
     }
 
     function testMove() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
         vest.move(id, address(3));
 
         (address usr,,,,,,) = vest.awards(id);
@@ -139,33 +139,77 @@ contract DssVestTest is DSTest {
     }
 
     function testFailMoveToZeroAddress() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
         vest.move(id, address(0));
     }
 
-    function testYank() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+    function testUnpaid() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
         assertTrue(vest.valid(id));
-        vest.yank(id);
+
+        uint256 days_vest = 1000000000000000000;
+
+        assertEq(vest.unpaid(id), 0);
+        hevm.warp(block.timestamp + 43200);
+        assertEq(vest.unpaid(id), 0);                   // inside cliff
+        hevm.warp(block.timestamp + 36 hours);
+        assertEq(vest.unpaid(id), days_vest * 2);       // past cliff
+        hevm.warp(block.timestamp + 2 days);
+        assertEq(vest.unpaid(id), days_vest * 4);       // past cliff
+        vest.vest(id);
+        assertEq(vest.unpaid(id), 0);
+        assertEq(Token(address(vest.MKR())).balanceOf(address(this)), days_vest * 4);
+        hevm.warp(block.timestamp + 10 days);
+        assertEq(vest.unpaid(id), days_vest * 10);
+        vest.vest(id);
+        assertEq(vest.unpaid(id), 0);
+        assertEq(Token(address(vest.MKR())).balanceOf(address(this)), days_vest * 14);
+        hevm.warp(block.timestamp + 120 days);           // vesting complete
+        assertEq(vest.unpaid(id), days_vest * 86);
+        vest.vest(id);
+        assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 100 * 10**18);
+    }
+
+    function testYank() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
+        assertTrue(vest.valid(id));
+        vest.yank(id); // yank before cliff
+        assertTrue(!vest.valid(id));
+
+        id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 2 days);
+        vest.yank(id); // yank after cliff
+        assertTrue(vest.valid(id));
+        vest.vest(id);
         assertTrue(!vest.valid(id));
     }
 
     function testMgrYank() public {
         Manager manager = new Manager();
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(manager));
-        assertTrue(vest.valid(id));
-        manager.yank(address(vest), id);
-        assertTrue(!vest.valid(id));
+        uint256 id1 = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(manager));
+        assertTrue(vest.valid(id1));
+        hevm.warp(block.timestamp + 30 days);
+        manager.yank(address(vest), id1);
+        assertTrue(vest.valid(id1));
+        vest.vest(id1);
+        assertTrue(!vest.valid(id1));
+
+        uint256 id2 = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 30 days, 0, address(manager));
+        assertTrue(id1 != id2);
+        assertTrue(vest.valid(id2));
+        manager.yank(address(vest), id2);
+        assertTrue(!vest.valid(id2));
     }
 
     function testFailMgrYankUnauthed() public {
         Manager manager = new Manager();
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(1));
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(1));
         manager.yank(address(vest), id);
     }
 
     function testLive() public {
-        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, 0, address(0));
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
         assertTrue(vest.valid(id));
         assertTrue(!vest.valid(5));
     }

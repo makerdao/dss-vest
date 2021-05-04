@@ -128,12 +128,40 @@ contract DssVest {
             MKR.mint(_award.usr, sub(_award.amt, _award.rxd));
             delete awards[_id];
         } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
-            uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn); // 0 <= t < WAD
-            uint256 mkr = (_award.amt * t) / WAD; // 0 <= mkr < _award.amt
+            uint256 mkr = accrued(_award.bgn, _award.fin, _award.amt);
             MKR.mint(_award.usr, sub(mkr, _award.rxd));
             awards[_id].rxd = uint128(mkr);
         }
         emit Vest(_id);
+    }
+
+    /*
+        @dev amount of tokens accrued, not accounting for tokens paid
+        @param bgn the start time of the contract
+        @param end the end time of the contract
+        @param amt the total amount of the contract
+    */
+    function accrued(uint48 bgn, uint48 fin, uint128 amt) internal view returns (uint256 mkr) {
+        if (block.timestamp >= fin) {
+            mkr = amt;
+        } else {
+            uint256 t = (block.timestamp - bgn) * WAD / (fin - bgn); // 0 <= t < WAD
+            mkr = (amt * t) / WAD; // 0 <= mkr < _award.amt
+        }
+    }
+
+    /*
+        @dev return the amount of vested, claimable MKR for a given ID
+        @param id The id of the vesting contract
+    */
+    function unpaid(uint256 id) external view returns (uint256 mkr) {
+        Award memory _award = awards[id];
+        require(_award.usr != address(0), "dss-vest/invalid-award");
+        if (block.timestamp < _award.clf) {
+            return 0;
+        } else {
+            return sub(accrued(_award.bgn, _award.fin, _award.amt), _award.rxd);
+        }
     }
 
     /*
@@ -142,7 +170,15 @@ contract DssVest {
     */
     function yank(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
-        delete awards[_id];
+        Award memory _award = awards[_id];
+        require(_award.usr != address(0), "dss-vest/invalid-award");
+        if (block.timestamp < _award.clf) {
+            // Contract has not reached vest cliff
+            delete awards[_id];
+        } else {
+            awards[_id].fin = uint48(block.timestamp);
+            awards[_id].amt = uint128(accrued(_award.bgn, _award.fin, _award.amt));
+        }
         emit Yank(_id);
     }
 
@@ -162,7 +198,7 @@ contract DssVest {
         @dev Return true if a contract is valid
         @param _id The id of the vesting contract
     */
-    function valid(uint256 _id) external view returns (bool) {
+    function valid(uint256 _id) public view returns (bool) {
         return awards[_id].usr != address(0);
     }
 }
