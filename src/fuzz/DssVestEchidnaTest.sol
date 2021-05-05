@@ -25,7 +25,7 @@ contract DssVestEchidnaTest {
     }
 
     function test_init_ids(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = 0 + _amt % uint128(-1);
+        _amt = _amt < WAD ?  _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = 0 + _clf % _tau;
@@ -37,7 +37,7 @@ contract DssVestEchidnaTest {
     }
 
     function test_init_params(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = 0 + _amt % uint128(-1);
+        _amt = _amt < WAD ?  _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = 0 + _clf % _tau;
@@ -56,7 +56,7 @@ contract DssVestEchidnaTest {
     }
 
     function test_vest(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr, uint256 _tick) public {
-        _amt = 0 + _amt % uint128(-1);
+        _amt = _amt < WAD ?  _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = 0 + _clf % _tau;
