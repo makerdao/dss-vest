@@ -25,7 +25,7 @@ contract DssVestEchidnaTest {
     }
 
     function test_init_ids(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = _amt < WAD ?  _amt *= WAD : _amt % uint128(-1);
+        _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = 0 + _clf % _tau;
@@ -37,7 +37,7 @@ contract DssVestEchidnaTest {
     }
 
     function test_init_params(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = _amt < WAD ?  _amt *= WAD : _amt % uint128(-1);
+        _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = 0 + _clf % _tau;
@@ -55,22 +55,21 @@ contract DssVestEchidnaTest {
         }
     }
 
-    function test_vest(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr, uint256 _tick) public {
-        _amt = _amt < WAD ?  _amt *= WAD : _amt % uint128(-1);
+    function test_vest(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
+        _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = 0 + _clf % _tau;
         _pmt = 0 + _pmt % _amt;
-        _tick = block.timestamp + _tick % uint128(-1);
         uint256 id = vest.init(address(this), _amt, _bgn, _tau, _clf, _pmt, _mgr);
         assert(vest.valid(id));
         uint256 ids = vest.ids();
         vest.vest(id);
         (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
-        if (_tick < fin) {
+        if (block.timestamp >= fin) {
           assert (vest.ids() == sub(ids, 1));
-        } else if (_tick >= clf) {
-          uint256 t = (_tick - bgn) * WAD / (fin - bgn);
+        } else if (block.timestamp >= clf) {
+          uint256 t = (block.timestamp - bgn) * WAD / (fin - bgn);
           assert(t >= 0);
           assert(t < WAD);
           uint256 mkr = (amt * t) / WAD;
