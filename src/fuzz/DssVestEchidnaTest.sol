@@ -28,8 +28,8 @@ contract DssVestEchidnaTest {
         _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
-        _clf = 0 + _clf % _tau;
-        _pmt = 0 + _pmt % _amt;
+        _clf = _clf % _tau;
+        _pmt = _pmt % _amt;
         uint256 prevId = vest.ids();
         uint256 id = vest.init(address(this), _amt, _bgn, _tau, _clf, _pmt, _mgr);
         assert(vest.ids() == add(prevId, id));
@@ -40,8 +40,8 @@ contract DssVestEchidnaTest {
         _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
-        _clf = 0 + _clf % _tau;
-        _pmt = 0 + _pmt % _amt;
+        _clf = _clf % _tau;
+        _pmt = _pmt % _amt;
         uint256 id = vest.init(address(this), _amt, _bgn, _tau, _clf, _pmt, _mgr);
         (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
         if (sub(_amt, _pmt) != 0) {
@@ -59,8 +59,8 @@ contract DssVestEchidnaTest {
         _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
-        _clf = 0 + _clf % _tau;
-        _pmt = 0 + _pmt % _amt;
+        _clf = _clf % _tau;
+        _pmt = _pmt % _amt;
         uint256 id = vest.init(address(this), _amt, _bgn, _tau, _clf, _pmt, _mgr);
         assert(vest.valid(id));
         uint256 ids = vest.ids();
