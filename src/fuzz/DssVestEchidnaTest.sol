@@ -25,19 +25,22 @@ contract DssVestEchidnaTest {
     }
 
     function test_init_ids(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
+        _amt = _amt % uint128(-1);
+        if (_amt < WAD) _amt = (1 + _amt) * WAD;
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = _clf % _tau;
         _pmt = _pmt % _amt;
         uint256 prevId = vest.ids();
         uint256 id = vest.init(address(this), _amt, _bgn, _tau, _clf, _pmt, _mgr);
-        assert(vest.ids() == add(prevId, id));
+        assert(vest.ids() == add(prevId, 1));
+        assert(vest.ids() == id);
         assert(vest.valid(id));
     }
 
     function test_init_params(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
+        _amt = _amt % uint128(-1);
+        if (_amt < WAD) _amt = (1 + _amt) * WAD;
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = _clf % _tau;
@@ -56,7 +59,8 @@ contract DssVestEchidnaTest {
     }
 
     function test_vest(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) public {
-        _amt = _amt < WAD ? _amt *= WAD : _amt % uint128(-1);
+        _amt = _amt % uint128(-1);
+        if (_amt < WAD) _amt = (1 + _amt) * WAD;
         _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = _clf % _tau;
