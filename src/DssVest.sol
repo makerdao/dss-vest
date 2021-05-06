@@ -16,14 +16,13 @@
 
 pragma solidity 0.6.12;
 
-interface IMKR {
+interface IERC20 {
     function mint(address usr, uint256 amt) external;
 }
 
 contract DssVest {
 
-    // MKR Mainnet: 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
-    IMKR     public immutable MKR;
+    IERC20   public immutable GEM;
     uint256  public constant  MAX_VEST_PERIOD = 20 * 365 days;
 
     uint256 internal constant WAD = 10**18;
@@ -66,9 +65,9 @@ contract DssVest {
     mapping (uint256 => Award) public awards;
     uint256 public ids;
 
-    // Governance must rely() this contract on MKR's GOV_GUARD to mint.
-    constructor(address mkr) public {
-        MKR = IMKR(mkr);
+    // This contract must be authorized to 'mint' on the token
+    constructor(address gem) public {
+        GEM = IERC20(gem);
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
@@ -111,7 +110,7 @@ contract DssVest {
             });
         }
         if (_pmt != 0) {
-            MKR.mint(_usr, _pmt);    // Initial payout
+            GEM.mint(_usr, _pmt);    // Initial payout
         }
         emit Init(id, _usr);
     }
@@ -125,12 +124,12 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            MKR.mint(_award.usr, sub(_award.amt, _award.rxd));
+            GEM.mint(_award.usr, sub(_award.amt, _award.rxd));
             delete awards[_id];
         } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
-            uint256 mkr = accrued(_award.bgn, _award.fin, _award.amt);
-            MKR.mint(_award.usr, sub(mkr, _award.rxd));
-            awards[_id].rxd = uint128(mkr);
+            uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
+            GEM.mint(_award.usr, sub(gem, _award.rxd));
+            awards[_id].rxd = uint128(gem);
         }
         emit Vest(_id);
     }
@@ -141,14 +140,14 @@ contract DssVest {
         @param end the end time of the contract
         @param amt the total amount of the contract
     */
-    function accrued(uint48 bgn, uint48 fin, uint128 amt) internal view returns (uint256 mkr) {
+    function accrued(uint48 bgn, uint48 fin, uint128 amt) internal view returns (uint256 gem) {
         if (block.timestamp < bgn) {
-            mkr = 0;
+            gem = 0;
         } else if (block.timestamp >= fin) {
-            mkr = amt;
+            gem = amt;
         } else {
             uint256 t = (block.timestamp - bgn) * WAD / (fin - bgn); // 0 <= t < WAD
-            mkr = (amt * t) / WAD; // 0 <= mkr < _award.amt
+            gem = (amt * t) / WAD; // 0 <= gem < _award.amt
         }
     }
 
@@ -159,10 +158,10 @@ contract DssVest {
     }
 
     /*
-        @dev return the amount of vested, claimable MKR for a given ID
+        @dev return the amount of vested, claimable GEM for a given ID
         @param id The id of the vesting contract
     */
-    function unpaid(uint256 id) external view returns (uint256 mkr) {
+    function unpaid(uint256 id) external view returns (uint256 gem) {
         Award memory _award = awards[id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
         if (block.timestamp < _award.clf) {
