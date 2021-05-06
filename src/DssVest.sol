@@ -179,10 +179,9 @@ contract DssVest {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
-        if (block.timestamp < _award.clf) {
-            // Contract has not reached vest cliff
+        if (block.timestamp < _award.clf) { // Contract has not reached vest cliff
             delete awards[_id];
-        } else {
+        } else {                            // Contract is past cliff vest
             awards[_id].fin = uint48(block.timestamp);
             awards[_id].amt = uint128(accrued(_award.bgn, _award.fin, _award.amt));
         }
