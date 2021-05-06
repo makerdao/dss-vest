@@ -87,34 +87,29 @@ contract DssVest {
         @param _bgn The starting timestamp of the vest
         @param _tau The duration of the vest (in seconds)
         @param _clf The cliff duration in seconds (i.e. 1 years)
-        @param _pmt An optional lump sump payout from the vest amount
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth lock returns (uint256 id) {
+    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                       "dss-vest/invalid-user");
         require(_amt < uint128(-1),                       "dss-vest/amount-error");
+        require(_amt > 0,                                 "dss-vest/no-vest-amt");
         require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
         require(_tau > 0,                                 "dss-vest/tau-zero");
         require(_tau <= MAX_VEST_PERIOD,                  "dss-vest/tau-too-long");
         require(_clf <= _tau,                             "dss-vest/clf-too-long");
-        require(_pmt < uint128(-1),                       "dss-vest/payout-error");
-        require(_pmt <= _amt,                             "dss-vest/bulk-payment-higher-than-amt");
 
         id = ++ids;
-        if (_amt - _pmt != 0) {      // safe because pmt <= amt
+        if (_amt != 0) {      // safe because pmt <= amt
             awards[id] = Award({
                 usr: _usr,
                 bgn: uint48(_bgn),
                 clf: uint48(_bgn + _clf),
                 fin: uint48(_bgn + _tau),
-                amt: uint128(_amt - _pmt),
+                amt: uint128(_amt),
                 rxd: 0,
                 mgr: _mgr
             });
-        }
-        if (_pmt != 0) {
-            MKR.mint(_usr, _pmt);    // Initial payout
         }
         emit Init(id, _usr);
     }
