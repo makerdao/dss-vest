@@ -142,12 +142,20 @@ contract DssVest {
         @param amt the total amount of the contract
     */
     function accrued(uint48 bgn, uint48 fin, uint128 amt) internal view returns (uint256 mkr) {
-        if (block.timestamp >= fin) {
+        if (block.timestamp < bgn) {
+            mkr = 0;
+        } else if (block.timestamp >= fin) {
             mkr = amt;
         } else {
             uint256 t = (block.timestamp - bgn) * WAD / (fin - bgn); // 0 <= t < WAD
             mkr = (amt * t) / WAD; // 0 <= mkr < _award.amt
         }
+    }
+
+    function accrued(uint256 id) external view returns (uint256 amt) {
+        Award memory _award = awards[id];
+        require(_award.usr != address(0), "dss-vest/invalid-award");
+        amt = accrued(_award.bgn, _award.fin, _award.amt);
     }
 
     /*
@@ -198,7 +206,7 @@ contract DssVest {
         @dev Return true if a contract is valid
         @param _id The id of the vesting contract
     */
-    function valid(uint256 _id) public view returns (bool) {
+    function valid(uint256 _id) external view returns (bool) {
         return awards[_id].usr != address(0);
     }
 }

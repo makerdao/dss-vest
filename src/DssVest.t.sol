@@ -170,6 +170,52 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 100 * 10**18);
     }
 
+    function testAccrued() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp + 10 days, 100 days, 0, 0, address(0));
+        assertTrue(vest.valid(id));
+
+        uint256 days_vest = 1000000000000000000;
+
+        assertEq(vest.accrued(id), 0);
+        hevm.warp(block.timestamp + 43200);
+        assertEq(vest.unpaid(id), 0);                   // inside cliff
+        assertEq(vest.accrued(id), 0);
+        hevm.warp(block.timestamp + 12 hours + 11 days);
+        assertEq(vest.unpaid(id), days_vest * 2);       // past cliff
+        assertEq(vest.accrued(id), days_vest * 2);
+        hevm.warp(block.timestamp + 2 days);
+        assertEq(vest.unpaid(id), days_vest * 4);       // past cliff
+        assertEq(vest.accrued(id), days_vest * 4);
+        vest.vest(id);
+        assertEq(vest.unpaid(id), 0);
+        assertEq(vest.accrued(id), days_vest * 4);
+        assertEq(Token(address(vest.MKR())).balanceOf(address(this)), days_vest * 4);
+        hevm.warp(block.timestamp + 10 days);
+        assertEq(vest.unpaid(id), days_vest * 10);
+        assertEq(vest.accrued(id), days_vest * 14);
+        vest.vest(id);
+        assertEq(vest.unpaid(id), 0);
+        assertEq(vest.accrued(id), days_vest * 14);
+        assertEq(Token(address(vest.MKR())).balanceOf(address(this)), days_vest * 14);
+        hevm.warp(block.timestamp + 120 days);           // vesting complete
+        assertEq(vest.unpaid(id), days_vest * 86);
+        assertEq(vest.accrued(id), days_vest * 100);
+        vest.vest(id);
+        assertEq(Token(address(vest.MKR())).balanceOf(address(this)), 100 * 10**18);
+    }
+
+    function testFutureAccrual() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp + 10 days, 100 days, 0, 0, address(0));
+        uint256 days_vest = 1000000000000000000;
+        assertEq(vest.accrued(id), 0); // accrual starts in 10 days
+        hevm.warp(block.timestamp + 9 days);
+        assertEq(vest.accrued(id), 0); // accrual starts in 1 days
+        hevm.warp(block.timestamp + 2 days);
+        assertEq(vest.accrued(id), days_vest); // accrual started 1 day ago
+        hevm.warp(block.timestamp + 999 days);
+        assertEq(vest.accrued(id), days_vest * 100); // accrual ended
+    }
+
     function testYank() public {
         uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
         assertTrue(vest.valid(id));
