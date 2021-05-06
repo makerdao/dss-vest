@@ -15,7 +15,7 @@
 Then, run via:
 `docker run -it -v`pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol`
 
-- Precompiled Binaries
+- Precompiled Binaries (recommended)
 
 Before starting, make sure Slither is installed:
 `$ pip3 install slither-analyzer`
