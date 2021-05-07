@@ -126,14 +126,12 @@ contract DssVest {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
-        if (block.timestamp >= _award.fin) {  // Vesting period has ended.
-            GEM.mint(_award.usr, sub(_award.amt, _award.rxd));
-            delete awards[_id];
-        } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
-            uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
+        uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
+        if (block.timestamp >= _award.clf) {
             GEM.mint(_award.usr, sub(gem, _award.rxd));
             awards[_id].rxd = uint128(gem);
         }
+        if (block.timestamp >= _award.fin) delete awards[_id];
         emit Vest(_id);
     }
 
