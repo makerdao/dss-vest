@@ -197,7 +197,7 @@ contract DssVestTest is DSTest {
         assertEq(vest.unpaid(id), 0);
         assertEq(vest.accrued(id), days_vest * 14);
         assertEq(Token(address(vest.GEM())).balanceOf(address(this)), days_vest * 14);
-        hevm.warp(block.timestamp + 120 days);           // vesting complete
+        hevm.warp(block.timestamp + 120 days);       // vesting complete
         assertEq(vest.unpaid(id), days_vest * 86);
         assertEq(vest.accrued(id), days_vest * 100);
         vest.vest(id);
@@ -207,11 +207,11 @@ contract DssVestTest is DSTest {
     function testFutureAccrual() public {
         uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp + 10 days, 100 days, 0, 0, address(0));
         uint256 days_vest = 1000000000000000000;
-        assertEq(vest.accrued(id), 0); // accrual starts in 10 days
+        assertEq(vest.accrued(id), 0);               // accrual starts in 10 days
         hevm.warp(block.timestamp + 9 days);
-        assertEq(vest.accrued(id), 0); // accrual starts in 1 days
+        assertEq(vest.accrued(id), 0);               // accrual starts in 1 days
         hevm.warp(block.timestamp + 2 days);
-        assertEq(vest.accrued(id), days_vest); // accrual started 1 day ago
+        assertEq(vest.accrued(id), days_vest);       // accrual started 1 day ago
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.accrued(id), days_vest * 100); // accrual ended
     }
@@ -229,6 +229,29 @@ contract DssVestTest is DSTest {
         assertTrue(vest.valid(id));
         vest.vest(id);
         assertTrue(!vest.valid(id));
+    }
+
+    function testDoubleYank() public {
+        // Test case where vest is yanked twice, say by manager and then governance
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
+        uint256 days_vest = 1000000000000000000;
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 2 days);
+        vest.yank(id); // accrued two days before yank
+        (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp);
+        assertEq(amt, 2 * days_vest);
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 2 days);
+        vest.yank(id); // yank again later
+        (,,, fin, amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp); // fin gets updated on second yank
+        assertEq(amt, 2 * days_vest);   // amt doesn't get updated on second yank
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 999 days);
+        vest.vest(id); // user collects at some future time
+        assertTrue(!vest.valid(id));
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 2 * days_vest);
     }
 
     function testMgrYank() public {
