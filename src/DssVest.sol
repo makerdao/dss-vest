@@ -1,5 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2021 - Brian McMichael <brian@brianmcmichael.com>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// dss-vest - Token vesting contract
+//
+// Copyright (C) 2020-2021  Servo Farms, LLC
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -12,7 +15,7 @@
 // GNU Affero General Public License for more details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pragma solidity 0.6.12;
 
