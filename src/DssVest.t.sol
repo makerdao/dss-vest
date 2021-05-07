@@ -218,6 +218,7 @@ contract DssVestTest is DSTest {
 
     function testYank() public {
         uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(0));
+        uint256 days_vest = 1000000000000000000;
         assertTrue(vest.valid(id));
         vest.yank(id); // yank before cliff
         assertTrue(!vest.valid(id));
@@ -227,7 +228,9 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 2 days);
         vest.yank(id); // yank after cliff
         assertTrue(vest.valid(id));
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 0);
         vest.vest(id);
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 2 * days_vest);
         assertTrue(!vest.valid(id));
     }
 
@@ -257,11 +260,14 @@ contract DssVestTest is DSTest {
     function testMgrYank() public {
         Manager manager = new Manager();
         uint256 id1 = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, 0, address(manager));
+        uint256 days_vest = 1000000000000000000;
         assertTrue(vest.valid(id1));
         hevm.warp(block.timestamp + 30 days);
         manager.yank(address(vest), id1);
         assertTrue(vest.valid(id1));
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 0);
         vest.vest(id1);
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 30 * days_vest);
         assertTrue(!vest.valid(id1));
 
         uint256 id2 = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 30 days, 0, address(manager));
