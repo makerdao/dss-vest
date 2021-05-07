@@ -121,7 +121,7 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
-        if (block.timestamp >= _award.clf) {
+        if (gem > _award.rxd) {
             GEM.mint(_award.usr, sub(gem, _award.rxd));
             awards[_id].rxd = uint128(gem);
         }
