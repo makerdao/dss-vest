@@ -283,4 +283,28 @@ contract DssVestTest is DSTest {
         assertTrue(vest.valid(id));
         assertTrue(!vest.valid(5));
     }
+
+    function testFailAmtTooHigh() public {
+        vest.init(address(this), uint128(-1) + 1, block.timestamp, 100 days, 0 days, address(0));
+    }
+
+    function testFailZeroUser() public {
+        vest.init(address(0), 100 * 10**18 + 1, block.timestamp, 100 days, 0 days, address(0));
+    }
+
+    function testFailStartTooFarInTheFuture() public {
+        vest.init(address(this), 100 * 10**18 + 1, block.timestamp + (21 * 365 days), 100 days, 0 days, address(0));
+    }
+
+    function testFailStartTooFarInThePast() public {
+        vest.init(address(this), 100 * 10**18 + 1, block.timestamp - (21 * 365 days), 100 days, 0 days, address(0));
+    }
+
+    function testFailStartTooLong() public {
+        vest.init(address(this), 100 * 10**18 + 1, block.timestamp, 21 * 365 days, 0 days, address(0));
+    }
+
+    function testFailClfAfterTau() public {
+        vest.init(address(this), 100 * 10**18 + 1, block.timestamp, 100 days, 101 days, address(0));
+    }
 }

@@ -94,6 +94,7 @@ contract DssVest {
         require(_amt < uint128(-1),                       "dss-vest/amount-error");
         require(_amt > 0,                                 "dss-vest/no-vest-amt");
         require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
+        require(_bgn > block.timestamp - MAX_VEST_PERIOD, "dss-vest/bgn-too-long-ago");
         require(_tau > 0,                                 "dss-vest/tau-zero");
         require(_tau <= MAX_VEST_PERIOD,                  "dss-vest/tau-too-long");
         require(_clf <= _tau,                             "dss-vest/clf-too-long");
@@ -158,10 +159,14 @@ contract DssVest {
     function unpaid(uint256 id) external view returns (uint256 gem) {
         Award memory _award = awards[id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
-        if (block.timestamp < _award.clf) {
+        return unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
+    }
+
+    function unpaid(uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd) internal view returns (uint256 gem) {
+        if (block.timestamp < clf) {
             return 0;
         } else {
-            return sub(accrued(_award.bgn, _award.fin, _award.amt), _award.rxd);
+            return sub(accrued(bgn, fin, amt), rxd);
         }
     }
 
@@ -173,12 +178,14 @@ contract DssVest {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
-        if (block.timestamp < _award.clf) { // Contract has not reached vest cliff
+        uint256 gems = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
+        if (gems == 0) {
             delete awards[_id];
-        } else {                            // Contract is past cliff vest
+        } else {         // Contract is past cliff vest
             awards[_id].fin = uint48(block.timestamp);
-            awards[_id].amt = uint128(accrued(_award.bgn, _award.fin, _award.amt));
+            awards[_id].amt = uint128(gems);
         }
+
         emit Yank(_id);
     }
 
