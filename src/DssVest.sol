@@ -1,5 +1,8 @@
-// SPDX-License-Identifier: GPL-3.0-or-later
-// Copyright (C) 2021 - Brian McMichael <brian@brianmcmichael.com>
+// SPDX-License-Identifier: AGPL-3.0-or-later
+//
+// dss-vest - Token vesting contract
+//
+// Copyright (C) 2020-2021  Servo Farms, LLC
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -12,7 +15,7 @@
 // GNU Affero General Public License for more details.
 //
 // You should have received a copy of the GNU Affero General Public License
-// along with this program.  If not, see <https://www.gnu.org/licenses/>.
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 pragma solidity 0.6.12;
 
@@ -84,35 +87,28 @@ contract DssVest {
         @param _bgn The starting timestamp of the vest
         @param _tau The duration of the vest (in seconds)
         @param _clf The cliff duration in seconds (i.e. 1 years)
-        @param _pmt An optional lump sump payout from the vest amount
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _pmt, address _mgr) external auth lock returns (uint256 id) {
+    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                       "dss-vest/invalid-user");
         require(_amt < uint128(-1),                       "dss-vest/amount-error");
+        require(_amt > 0,                                 "dss-vest/no-vest-amt");
         require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
         require(_tau > 0,                                 "dss-vest/tau-zero");
         require(_tau <= MAX_VEST_PERIOD,                  "dss-vest/tau-too-long");
         require(_clf <= _tau,                             "dss-vest/clf-too-long");
-        require(_pmt < uint128(-1),                       "dss-vest/payout-error");
-        require(_pmt <= _amt,                             "dss-vest/bulk-payment-higher-than-amt");
 
         id = ++ids;
-        if (_amt - _pmt != 0) {      // safe because pmt <= amt
-            awards[id] = Award({
-                usr: _usr,
-                bgn: uint48(_bgn),
-                clf: uint48(_bgn + _clf),
-                fin: uint48(_bgn + _tau),
-                amt: uint128(_amt - _pmt),
-                rxd: 0,
-                mgr: _mgr
-            });
-        }
-        if (_pmt != 0) {
-            MKR.mint(_usr, _pmt);    // Initial payout
-        }
+        awards[id] = Award({
+            usr: _usr,
+            bgn: uint48(_bgn),
+            clf: uint48(_bgn + _clf),
+            fin: uint48(_bgn + _tau),
+            amt: uint128(_amt),
+            rxd: 0,
+            mgr: _mgr
+        });
         emit Init(id, _usr);
     }
 
@@ -124,12 +120,12 @@ contract DssVest {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
-        if (block.timestamp >= _award.fin) {  // Vesting period has ended.
+        if (block.timestamp >= _award.fin) {               // Vesting period has ended.
             MKR.mint(_award.usr, sub(_award.amt, _award.rxd));
             delete awards[_id];
-        } else if (block.timestamp >= _award.clf) {                              // Vesting in progress
+        } else if (block.timestamp >= _award.clf) {        // Vesting in progress
             uint256 t = (block.timestamp - _award.bgn) * WAD / (_award.fin - _award.bgn); // 0 <= t < WAD
-            uint256 mkr = (_award.amt * t) / WAD; // 0 <= mkr < _award.amt
+            uint256 mkr = (_award.amt * t) / WAD;          // 0 <= mkr < _award.amt
             MKR.mint(_award.usr, sub(mkr, _award.rxd));
             awards[_id].rxd = uint128(mkr);
         }
