@@ -31,7 +31,7 @@ contract DssVestEchidnaTest is EchidnaInterface {
     function test_init(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf) public {
         _amt = _amt % uint128(-1);
         if (_amt < WAD) _amt = (1 + _amt) * WAD;
-        _bgn = block.timestamp + _bgn % (block.timestamp + vest.MAX_VEST_PERIOD());
+        _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = _clf % _tau;
         uint256 prevId = vest.ids();
