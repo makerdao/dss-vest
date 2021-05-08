@@ -191,8 +191,8 @@ contract DssVest {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
 
-        uint256 gem = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
-        if (gem == 0) {
+        uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
+        if (gem <= _award.rxd) {
             delete awards[_id];
         } else {         // Contract is past cliff vest
             awards[_id].fin = uint48(block.timestamp);
