@@ -58,9 +58,9 @@ contract DssVest {
 
     struct Award {
         address usr;   // Vesting recipient
-        uint48  bgn;   // Start of vesting period
-        uint48  clf;   // An optional cliff
-        uint48  fin;   // End of vesting period
+        uint48  bgn;   // Start of vesting period  [timestamp]
+        uint48  clf;   // The cliff date           [timestamp]
+        uint48  fin;   // End of vesting period    [timestamp]
         uint128 amt;   // Total reward amount
         uint128 rxd;   // Amount of vest claimed
         address mgr;   // A manager address that can yank
@@ -131,6 +131,16 @@ contract DssVest {
 
     /*
         @dev amount of tokens accrued, not accounting for tokens paid
+        @param id The id of the vesting contract
+    */
+    function accrued(uint256 id) external view returns (uint256 amt) {
+        Award memory _award = awards[id];
+        require(_award.usr != address(0), "dss-vest/invalid-award");
+        amt = accrued(_award.bgn, _award.fin, _award.amt);
+    }
+
+    /*
+        @dev amount of tokens accrued, not accounting for tokens paid
         @param bgn the start time of the contract
         @param end the end time of the contract
         @param amt the total amount of the contract
@@ -146,12 +156,6 @@ contract DssVest {
         }
     }
 
-    function accrued(uint256 id) external view returns (uint256 amt) {
-        Award memory _award = awards[id];
-        require(_award.usr != address(0), "dss-vest/invalid-award");
-        amt = accrued(_award.bgn, _award.fin, _award.amt);
-    }
-
     /*
         @dev return the amount of vested, claimable GEM for a given ID
         @param id The id of the vesting contract
@@ -162,6 +166,14 @@ contract DssVest {
         return unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
     }
 
+    /*
+        @dev amount of tokens accrued, not accounting for tokens paid
+        @param bgn the start time of the contract
+        @param clf the timestamp of the cliff
+        @param end the end time of the contract
+        @param amt the total amount of the contract
+        @param rxd the number of gems received
+    */
     function unpaid(uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd) internal view returns (uint256 gem) {
         if (block.timestamp < clf) {
             return 0;
