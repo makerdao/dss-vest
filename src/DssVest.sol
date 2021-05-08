@@ -25,10 +25,10 @@ interface IERC20 {
 
 contract DssVest {
 
-    IERC20   public immutable GEM;
-    uint256  public constant  MAX_VEST_PERIOD = 20 * 365 days;
+    IERC20  public   immutable GEM;
 
-    uint256 internal constant WAD = 10**18;
+    uint256 public   constant  MAX_VEST_PERIOD = 20 * 365 days;
+    uint256 internal constant  WAD = 10**18;
 
     uint256 internal locked;
 
