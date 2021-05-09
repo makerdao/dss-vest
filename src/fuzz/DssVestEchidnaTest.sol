@@ -13,13 +13,15 @@ contract DssVestEchidnaTest is EchidnaInterface {
     DssVest internal vest;
     IMKR internal MKR;
 
+    uint256 internal constant WAD = 10**18;
+    uint256 internal immutable salt;
+
     constructor() public {
       vest = new DssVest(address(MKR));
+      salt = block.timestamp;
     }
 
     // --- Math ---
-
-    uint256 internal constant WAD = 10**18;
 
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x);
@@ -31,7 +33,7 @@ contract DssVestEchidnaTest is EchidnaInterface {
     function test_init(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf) public {
         _amt = _amt % uint128(-1);
         if (_amt < WAD) _amt = (1 + _amt) * WAD;
-        _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
+        _bgn = salt + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = _clf % _tau;
         uint256 prevId = vest.ids();
@@ -52,7 +54,7 @@ contract DssVestEchidnaTest is EchidnaInterface {
     function test_vest(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf) public {
         _amt = _amt % uint128(-1);
         if (_amt < WAD) _amt = (1 + _amt) * WAD;
-        _bgn = block.timestamp + _bgn % vest.MAX_VEST_PERIOD();
+        _bgn = salt + _bgn % vest.MAX_VEST_PERIOD();
         _tau = 1 + _tau % vest.MAX_VEST_PERIOD();
         _clf = _clf % _tau;
         uint256 id = vest.init(address(this), _amt, _bgn, _tau, _clf, echidna_mgr);
