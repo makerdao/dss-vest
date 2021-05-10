@@ -278,6 +278,33 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 2 * days_vest);
     }
 
+    function testYankAfterVest() public {
+        // Test case where vest is yanked twice, say by manager and then governance
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, address(0));
+        uint256 days_vest = 1000000000000000000;
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 2 days);
+        assertEq(vest.unpaid(id), 2 * days_vest);
+        vest.vest(id); // collect some now
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 2 * days_vest);
+
+        hevm.warp(block.timestamp + 2 days);
+        assertEq(vest.unpaid(id), 2 * days_vest);
+        assertEq(vest.accrued(id), 4 * days_vest);
+
+        vest.yank(id); // yank 4 days after start
+        (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp);
+        assertEq(amt, 4 * days_vest);   // amt doesn't get updated on second yank
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 999 days);
+        assertEq(vest.unpaid(id), 2 * days_vest);
+        assertEq(vest.accrued(id), 4 * days_vest);
+        vest.vest(id); // user collects at some future time
+        assertTrue(!vest.valid(id));
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 4 * days_vest);
+    }
+
     function testMgrYank() public {
         Manager manager = new Manager();
         uint256 id1 = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 1 days, address(manager));
