@@ -133,11 +133,11 @@ contract DssVestTest is DSTest {
         vest.vest(id);
         (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         // After final payout, vesting information is removed
-        assertEq(usr, address(0));
-        assertEq(uint256(bgn), 0);
-        assertEq(uint256(fin), 0);
-        assertEq(uint256(amt), 0);
-        assertEq(uint256(rxd), 0);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 200 days);
+        assertEq(uint256(fin), now - 100 days);
+        assertEq(uint256(amt), 100 * 10**18);
+        assertEq(uint256(rxd), 100 * 10**18);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 100*10**18);
         assertTrue(!vest.valid(id));
     }

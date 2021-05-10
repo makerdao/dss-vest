@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 //
-// dss-vest - Token vesting contract
+// DssVest - Token vesting contract
 //
 // Copyright (C) 2020-2021  Servo Farms, LLC
 //
@@ -44,13 +44,13 @@ contract DssVest {
     function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
     function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
     modifier auth {
-        require(wards[msg.sender] == 1, "dss-vest/not-authorized");
+        require(wards[msg.sender] == 1, "DssVest/not-authorized");
         _;
     }
 
     // --- Mutex  ---
     modifier lock {
-        require(locked == 0, "dss-vest/system-locked");
+        require(locked == 0, "DssVest/system-locked");
         locked = 1;
         _;
         locked = 0;
@@ -75,11 +75,20 @@ contract DssVest {
         emit Rely(msg.sender);
     }
 
-    function add(uint x, uint y) internal pure returns (uint z) {
+    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x);
     }
     function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x);
+    }
+    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        require(y == 0 || (z = x * y) / y == x);
+    }
+    function toUint48(uint256 x) internal pure returns (uint48 z) {
+        require((z = uint48(x)) == x);
+    }
+    function toUint128(uint256 x) internal pure returns (uint128 z) {
+        require((z = uint128(x)) == x);
     }
 
     /*
@@ -93,22 +102,23 @@ contract DssVest {
         @return id  The id of the vesting contract
     */
     function init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
-        require(_usr != address(0),                       "dss-vest/invalid-user");
-        require(_tot < uint128(-1),                       "dss-vest/amount-error");
-        require(_tot > 0,                                 "dss-vest/no-vest-total-amount");
-        require(_bgn < block.timestamp + TWENTY_YEARS,    "dss-vest/bgn-too-far");
-        require(_bgn > block.timestamp - TWENTY_YEARS,    "dss-vest/bgn-too-long-ago");
-        require(_tau > 0,                                 "dss-vest/tau-zero");
-        require(_tau <= TWENTY_YEARS,                     "dss-vest/tau-too-long");
-        require(_clf <= _tau,                             "dss-vest/clf-too-long");
+        require(_usr != address(0),                        "DssVest/invalid-user");
+        require(_tot < uint128(-1),                        "DssVest/amount-error");
+        require(_tot > 0,                                  "DssVest/no-vest-total-amount");
+        require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
+        require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
+        require(_tau > 0,                                  "DssVest/tau-zero");
+        require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
+        require(_clf <= _tau,                              "DssVest/clf-too-long");
+        require(id < uint256(-1),                          "DssVest/id-overflow");
 
         id = ++ids;
         awards[id] = Award({
             usr: _usr,
-            bgn: uint48(_bgn),
-            clf: uint48(_bgn + _clf),
-            fin: uint48(_bgn + _tau),
-            tot: uint128(_tot),
+            bgn: toUint48(_bgn),
+            clf: toUint48(add(_bgn, _clf)),
+            fin: toUint48(add(_bgn, _tau)),
+            tot: toUint128(_tot),
             rxd: 0,
             mgr: _mgr
         });
@@ -121,14 +131,11 @@ contract DssVest {
     */
     function vest(uint256 _id) external lock {
         Award memory _award = awards[_id];
-        require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
+        require(_award.usr == msg.sender, "DssVest/only-user-can-claim");
 
         uint256 amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
-        if (amt > 0) {
-            IERC20(gem).mint(_award.usr, amt);
-            awards[_id].rxd += uint128(amt);
-        }
-        if (block.timestamp >= _award.fin) delete awards[_id];
+        IERC20(gem).mint(_award.usr, amt);
+        awards[_id].rxd = toUint128(add(awards[_id].rxd, amt));
         emit Vest(_id, amt);
     }
 
@@ -138,7 +145,7 @@ contract DssVest {
     */
     function accrued(uint256 _id) external view returns (uint256 amt) {
         Award memory _award = awards[_id];
-        require(_award.usr != address(0), "dss-vest/invalid-award");
+        require(_award.usr != address(0), "DssVest/invalid-award");
         amt = accrued(_award.bgn, _award.fin, _award.tot);
     }
 
@@ -154,8 +161,8 @@ contract DssVest {
         } else if (block.timestamp >= _fin) {
             amt = _tot;
         } else {
-            uint256 t = (block.timestamp - _bgn) * WAD / (_fin - _bgn); // 0 <= t < WAD
-            amt = (_tot * t) / WAD; // 0 <= gem < _award.tot
+            uint256 t = mul(sub(block.timestamp, _bgn), WAD) / sub(_fin, _bgn); // 0 <= t < WAD
+            amt = mul(_tot, t) / WAD; // 0 <= gem < _award.tot
         }
     }
 
@@ -165,7 +172,7 @@ contract DssVest {
     */
     function unpaid(uint256 _id) external view returns (uint256 amt) {
         Award memory _award = awards[_id];
-        require(_award.usr != address(0), "dss-vest/invalid-award");
+        require(_award.usr != address(0), "DssVest/invalid-award");
         amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
     }
 
@@ -178,11 +185,7 @@ contract DssVest {
         @param _rxd the number of gems received
     */
     function unpaid(uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal view returns (uint256 amt) {
-        if (block.timestamp < _clf) {
-            amt = 0;
-        } else {
-            amt = sub(accrued(_bgn, _fin, _tot), _rxd);
-        }
+        amt = block.timestamp < _clf ? 0 : sub(accrued(_bgn, _fin, _tot), _rxd);
     }
 
     /*
@@ -190,16 +193,14 @@ contract DssVest {
         @param _id The id of the vesting contract
     */
     function yank(uint256 _id) external {
-        require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
+        require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "DssVest/not-authorized");
         Award memory _award = awards[_id];
-        require(_award.usr != address(0), "dss-vest/invalid-award");
-        uint256 amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
-        if (amt == 0) {
-            delete awards[_id];
-        } else {         // Contract is past cliff vest
-            awards[_id].fin = uint48(block.timestamp);
-            awards[_id].tot = uint128(add(amt, _award.rxd)) ;
-        }
+        require(_award.usr != address(0), "DssVest/invalid-award");
+        awards[_id].fin = uint48(block.timestamp);
+        awards[_id].tot = toUint128(add(
+                                    unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
+                                    _award.rxd)
+                                );
         emit Yank(_id);
     }
 
@@ -209,8 +210,8 @@ contract DssVest {
         @param _dst The address to send ownership of the contract to
     */
     function move(uint256 _id, address _dst) external {
-        require(awards[_id].usr == msg.sender, "dss-vest/only-user-can-move");
-        require(_dst != address(0), "dss-vest/zero-address-invalid");
+        require(awards[_id].usr == msg.sender, "DssVest/only-user-can-move");
+        require(_dst != address(0), "DssVest/zero-address-invalid");
         awards[_id].usr = _dst;
         emit Move(_id, _dst);
     }
@@ -220,6 +221,6 @@ contract DssVest {
         @param _id The id of the vesting contract
     */
     function valid(uint256 _id) external view returns (bool) {
-        return awards[_id].usr != address(0);
+        return awards[_id].rxd < awards[_id].tot;
     }
 }
