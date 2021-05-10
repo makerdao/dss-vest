@@ -139,6 +139,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(amt), 100 * 10**18);
         assertEq(uint256(rxd), 100 * 10**18);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 100*10**18);
+        assertTrue(!vest.valid(id));
     }
 
     function testMove() public {
