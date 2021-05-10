@@ -120,10 +120,10 @@ contract DssVest {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
-        uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
+        uint256 gem = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
         if (gem > _award.rxd) {
-            GEM.mint(_award.usr, sub(gem, _award.rxd));
-            awards[_id].rxd = uint128(gem);
+            GEM.mint(_award.usr, gem);
+            awards[_id].rxd += uint128(gem);
         }
         if (block.timestamp >= _award.fin) delete awards[_id];
         emit Vest(_id);

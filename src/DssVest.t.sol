@@ -100,6 +100,21 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 80*10**18);
     }
 
+    function testVestInsideCliff() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 50 days, address(0));
+
+        hevm.warp(now + 10 days);
+
+        vest.vest(id); // vest is inside cliff, no payout should happen
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * 10**18);
+        assertEq(uint256(rxd), 0);
+        assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 0);
+    }
+
     function testVestAfterTimeout() public {
         uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 0 days, address(0));
 
@@ -226,6 +241,17 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 0);
         vest.vest(id);
         assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 2 * days_vest);
+        assertTrue(!vest.valid(id));
+    }
+
+    function testYankInsideCliff() public {
+        Manager manager = new Manager();
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 50 days, address(manager));
+
+        hevm.warp(now + 10 days);
+
+        manager.yank(address(vest), id);
+
         assertTrue(!vest.valid(id));
     }
 
