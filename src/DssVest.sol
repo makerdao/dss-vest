@@ -75,6 +75,9 @@ contract DssVest {
         emit Rely(msg.sender);
     }
 
+    function add(uint x, uint y) internal pure returns (uint z) {
+        require((z = x + y) >= x);
+    }
     function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x);
     }
@@ -191,12 +194,12 @@ contract DssVest {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
 
-        uint256 gem = accrued(_award.bgn, _award.fin, _award.amt);
-        if (gem <= _award.rxd) {
+        uint256 gem = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
+        if (gem == 0) {
             delete awards[_id];
         } else {         // Contract is past cliff vest
             awards[_id].fin = uint48(block.timestamp);
-            awards[_id].amt = uint128(gem);
+            awards[_id].amt = uint128(add(gem, _award.rxd)) ;
         }
 
         emit Yank(_id);
