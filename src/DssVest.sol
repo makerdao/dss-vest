@@ -121,11 +121,7 @@ contract DssVest {
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
         uint256 gem = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
-<<<<<<< HEAD
-        if (gem > _award.rxd) {
-=======
         if (gem > 0) {
->>>>>>> 25486e04505a43455efdf1f9764ad76f3643d364
             GEM.mint(_award.usr, gem);
             awards[_id].rxd += uint128(gem);
         }
