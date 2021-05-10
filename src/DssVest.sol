@@ -221,6 +221,6 @@ contract DssVest {
         @param _id The id of the vesting contract
     */
     function valid(uint256 _id) external view returns (bool) {
-        return awards[_id].usr != address(0);
+        return awards[_id].rxd < awards[_id].tot;
     }
 }
