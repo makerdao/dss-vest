@@ -109,9 +109,11 @@ contract DssVestTest is DSTest {
         (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(clf), now + 40 days);
         assertEq(uint256(fin), now + 90 days);
         assertEq(uint256(amt), 100 * 10**18);
         assertEq(uint256(rxd), 0);
+        assertEq(mgr, address(0));
         assertEq(Token(address(vest.GEM())).balanceOf(address(this)), 0);
     }
 

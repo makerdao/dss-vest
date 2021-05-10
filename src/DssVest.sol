@@ -27,7 +27,7 @@ contract DssVest {
 
     IERC20  public   immutable GEM;
 
-    uint256 public   constant  MAX_VEST_PERIOD = 20 * 365 days;
+    uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
     uint256 internal constant  WAD = 10**18;
 
     uint256 internal locked;
@@ -96,10 +96,10 @@ contract DssVest {
         require(_usr != address(0),                       "dss-vest/invalid-user");
         require(_amt < uint128(-1),                       "dss-vest/amount-error");
         require(_amt > 0,                                 "dss-vest/no-vest-amt");
-        require(_bgn < block.timestamp + MAX_VEST_PERIOD, "dss-vest/bgn-too-far");
-        require(_bgn > block.timestamp - MAX_VEST_PERIOD, "dss-vest/bgn-too-long-ago");
+        require(_bgn < block.timestamp + TWENTY_YEARS,    "dss-vest/bgn-too-far");
+        require(_bgn > block.timestamp - TWENTY_YEARS,    "dss-vest/bgn-too-long-ago");
         require(_tau > 0,                                 "dss-vest/tau-zero");
-        require(_tau <= MAX_VEST_PERIOD,                  "dss-vest/tau-too-long");
+        require(_tau <= TWENTY_YEARS,                     "dss-vest/tau-too-long");
         require(_clf <= _tau,                             "dss-vest/clf-too-long");
 
         id = ++ids;
