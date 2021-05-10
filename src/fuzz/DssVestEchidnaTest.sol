@@ -22,12 +22,13 @@ contract DssVestEchidnaTest is EchidnaInterface {
     }
 
     // --- Math ---
-
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x);
+        z = x + y;
+        assert (z >= x); // check if there is an addition overflow
     }
     function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x);
+        z = x - y;
+        assert (z <= x); // check if there is a subtraction overflow
     }
 
     function test_init(uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf) public {
