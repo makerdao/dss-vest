@@ -117,7 +117,7 @@ contract DssVest {
 
     /*
         @dev Owner of a vesting contract calls this to claim rewards
-        @param id The id of the vesting contract
+        @param _id The id of the vesting contract
     */
     function vest(uint256 _id) external lock {
         Award memory _award = awards[_id];
@@ -134,60 +134,60 @@ contract DssVest {
 
     /*
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param id The id of the vesting contract
+        @param _id The id of the vesting contract
     */
-    function accrued(uint256 id) external view returns (uint256 amt) {
-        Award memory _award = awards[id];
+    function accrued(uint256 _id) external view returns (uint256 amt) {
+        Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
         amt = accrued(_award.bgn, _award.fin, _award.tot);
     }
 
     /*
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param bgn the start time of the contract
-        @param end the end time of the contract
-        @param amt the total amount of the contract
+        @param _bgn the start time of the contract
+        @param _end the end time of the contract
+        @param _amt the total amount of the contract
     */
-    function accrued(uint48 bgn, uint48 fin, uint128 tot) internal view returns (uint256 amt) {
-        if (block.timestamp < bgn) {
+    function accrued(uint48 _bgn, uint48 _fin, uint128 _tot) internal view returns (uint256 amt) {
+        if (block.timestamp < _bgn) {
             amt = 0;
-        } else if (block.timestamp >= fin) {
-            amt = tot;
+        } else if (block.timestamp >= _fin) {
+            amt = _tot;
         } else {
-            uint256 t = (block.timestamp - bgn) * WAD / (fin - bgn); // 0 <= t < WAD
-            amt = (tot * t) / WAD; // 0 <= gem < _award.tot
+            uint256 t = (block.timestamp - _bgn) * WAD / (_fin - _bgn); // 0 <= t < WAD
+            amt = (_tot * t) / WAD; // 0 <= gem < _award.tot
         }
     }
 
     /*
         @dev return the amount of vested, claimable GEM for a given ID
-        @param id The id of the vesting contract
+        @param _id The id of the vesting contract
     */
-    function unpaid(uint256 id) external view returns (uint256 amt) {
-        Award memory _award = awards[id];
+    function unpaid(uint256 _id) external view returns (uint256 amt) {
+        Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
         amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
     }
 
     /*
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param bgn the start time of the contract
-        @param clf the timestamp of the cliff
-        @param end the end time of the contract
-        @param tot the total amount of the contract
-        @param rxd the number of gems received
+        @param _bgn the start time of the contract
+        @param _clf the timestamp of the cliff
+        @param _end the end time of the contract
+        @param _tot the total amount of the contract
+        @param _rxd the number of gems received
     */
-    function unpaid(uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal view returns (uint256 amt) {
-        if (block.timestamp < clf) {
+    function unpaid(uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal view returns (uint256 amt) {
+        if (block.timestamp < _clf) {
             amt = 0;
         } else {
-            amt = sub(accrued(bgn, fin, tot), rxd);
+            amt = sub(accrued(_bgn, _fin, _tot), _rxd);
         }
     }
 
     /*
         @dev Allows governance or the manager to remove a vesting contract
-        @param id The id of the vesting contract
+        @param _id The id of the vesting contract
     */
     function yank(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
