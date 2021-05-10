@@ -35,7 +35,7 @@ contract DssVest {
     event Rely(address indexed usr);
     event Deny(address indexed usr);
     event Init(uint256 indexed id, address indexed usr);
-    event Vest(uint256 indexed id);
+    event Vest(uint256 indexed id, uint256 indexed amt);
     event Move(uint256 indexed id, address indexed dst);
     event Yank(uint256 indexed id);
 
@@ -129,7 +129,7 @@ contract DssVest {
             awards[_id].rxd += uint128(gem);
         }
         if (block.timestamp >= _award.fin) delete awards[_id];
-        emit Vest(_id);
+        emit Vest(_id, gem);
     }
 
     /*
