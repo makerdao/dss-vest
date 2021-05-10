@@ -25,7 +25,7 @@ interface IERC20 {
 
 contract DssVest {
 
-    IERC20  public   immutable GEM;
+    address public   immutable gem;
 
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
     uint256 internal constant  WAD = 10**18;
@@ -61,7 +61,7 @@ contract DssVest {
         uint48  bgn;   // Start of vesting period  [timestamp]
         uint48  clf;   // The cliff date           [timestamp]
         uint48  fin;   // End of vesting period    [timestamp]
-        uint128 amt;   // Total reward amount
+        uint128 tot;   // Total reward amount
         uint128 rxd;   // Amount of vest claimed
         address mgr;   // A manager address that can yank
     }
@@ -69,8 +69,8 @@ contract DssVest {
     uint256 public ids;
 
     // This contract must be authorized to 'mint' on the token
-    constructor(address gem) public {
-        GEM = IERC20(gem);
+    constructor(address _gem) public {
+        gem = _gem;
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
@@ -85,17 +85,17 @@ contract DssVest {
     /*
         @dev Govanance adds a vesting contract
         @param _usr The recipient of the reward
-        @param _amt The total amount of the vest
+        @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
         @param _tau The duration of the vest (in seconds)
         @param _clf The cliff duration in seconds (i.e. 1 years)
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function init(address _usr, uint256 _amt, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
+    function init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                       "dss-vest/invalid-user");
-        require(_amt < uint128(-1),                       "dss-vest/amount-error");
-        require(_amt > 0,                                 "dss-vest/no-vest-amt");
+        require(_tot < uint128(-1),                       "dss-vest/amount-error");
+        require(_tot > 0,                                 "dss-vest/no-vest-total-amount");
         require(_bgn < block.timestamp + TWENTY_YEARS,    "dss-vest/bgn-too-far");
         require(_bgn > block.timestamp - TWENTY_YEARS,    "dss-vest/bgn-too-long-ago");
         require(_tau > 0,                                 "dss-vest/tau-zero");
@@ -108,7 +108,7 @@ contract DssVest {
             bgn: uint48(_bgn),
             clf: uint48(_bgn + _clf),
             fin: uint48(_bgn + _tau),
-            amt: uint128(_amt),
+            tot: uint128(_tot),
             rxd: 0,
             mgr: _mgr
         });
@@ -123,13 +123,13 @@ contract DssVest {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "dss-vest/only-user-can-claim");
 
-        uint256 gem = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
-        if (gem > 0) {
-            GEM.mint(_award.usr, gem);
-            awards[_id].rxd += uint128(gem);
+        uint256 amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
+        if (amt > 0) {
+            IERC20(gem).mint(_award.usr, amt);
+            awards[_id].rxd += uint128(amt);
         }
         if (block.timestamp >= _award.fin) delete awards[_id];
-        emit Vest(_id, gem);
+        emit Vest(_id, amt);
     }
 
     /*
@@ -139,7 +139,7 @@ contract DssVest {
     function accrued(uint256 id) external view returns (uint256 amt) {
         Award memory _award = awards[id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
-        amt = accrued(_award.bgn, _award.fin, _award.amt);
+        amt = accrued(_award.bgn, _award.fin, _award.tot);
     }
 
     /*
@@ -148,14 +148,14 @@ contract DssVest {
         @param end the end time of the contract
         @param amt the total amount of the contract
     */
-    function accrued(uint48 bgn, uint48 fin, uint128 amt) internal view returns (uint256 gem) {
+    function accrued(uint48 bgn, uint48 fin, uint128 tot) internal view returns (uint256 amt) {
         if (block.timestamp < bgn) {
-            gem = 0;
+            amt = 0;
         } else if (block.timestamp >= fin) {
-            gem = amt;
+            amt = tot;
         } else {
             uint256 t = (block.timestamp - bgn) * WAD / (fin - bgn); // 0 <= t < WAD
-            gem = (amt * t) / WAD; // 0 <= gem < _award.amt
+            amt = (tot * t) / WAD; // 0 <= gem < _award.tot
         }
     }
 
@@ -163,10 +163,10 @@ contract DssVest {
         @dev return the amount of vested, claimable GEM for a given ID
         @param id The id of the vesting contract
     */
-    function unpaid(uint256 id) external view returns (uint256 gem) {
+    function unpaid(uint256 id) external view returns (uint256 amt) {
         Award memory _award = awards[id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
-        return unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
+        amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
     }
 
     /*
@@ -174,14 +174,14 @@ contract DssVest {
         @param bgn the start time of the contract
         @param clf the timestamp of the cliff
         @param end the end time of the contract
-        @param amt the total amount of the contract
+        @param tot the total amount of the contract
         @param rxd the number of gems received
     */
-    function unpaid(uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd) internal view returns (uint256 gem) {
+    function unpaid(uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal view returns (uint256 amt) {
         if (block.timestamp < clf) {
-            return 0;
+            amt = 0;
         } else {
-            return sub(accrued(bgn, fin, amt), rxd);
+            amt = sub(accrued(bgn, fin, tot), rxd);
         }
     }
 
@@ -193,15 +193,13 @@ contract DssVest {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "dss-vest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "dss-vest/invalid-award");
-
-        uint256 gem = unpaid(_award.bgn, _award.clf, _award.fin, _award.amt, _award.rxd);
-        if (gem == 0) {
+        uint256 amt = unpaid(_award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
+        if (amt == 0) {
             delete awards[_id];
         } else {         // Contract is past cliff vest
             awards[_id].fin = uint48(block.timestamp);
-            awards[_id].amt = uint128(add(gem, _award.rxd)) ;
+            awards[_id].tot = uint128(add(amt, _award.rxd)) ;
         }
-
         emit Yank(_id);
     }
 
