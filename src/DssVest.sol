@@ -155,7 +155,7 @@ contract DssVest {
         @param _end the end time of the contract
         @param _amt the total amount of the contract
     */
-    function accrued(uint256 _time, uint48 _bgn, uint48 _fin, uint128 _tot) internal view returns (uint256 amt) {
+    function accrued(uint256 _time, uint48 _bgn, uint48 _fin, uint128 _tot) internal pure returns (uint256 amt) {
         if (_time < _bgn) {
             amt = 0;
         } else if (_time >= _fin) {
@@ -184,7 +184,7 @@ contract DssVest {
         @param _tot the total amount of the contract
         @param _rxd the number of gems received
     */
-    function unpaid(uint256 _time, uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal view returns (uint256 amt) {
+    function unpaid(uint256 _time, uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal pure returns (uint256 amt) {
         amt = _time < _clf ? 0 : sub(accrued(_time, _bgn, _fin, _tot), _rxd);
     }
 
