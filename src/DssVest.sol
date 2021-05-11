@@ -210,7 +210,7 @@ contract DssVest {
         } else if (_end > _award.fin) {
             _end = _award.fin;
         }
-        awards[_id].fin = uint48(_end);
+        awards[_id].fin = toUint48(_end);
         awards[_id].tot = toUint128(add(
                                     unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
                                     _award.rxd)
