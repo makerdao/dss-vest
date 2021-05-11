@@ -151,9 +151,10 @@ contract DssVest {
 
     /*
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param _bgn the start time of the contract
-        @param _end the end time of the contract
-        @param _amt the total amount of the contract
+        @param _time the timestamp to perform the calculation
+        @param _bgn  the start time of the contract
+        @param _end  the end time of the contract
+        @param _amt  the total amount of the contract
     */
     function accrued(uint256 _time, uint48 _bgn, uint48 _fin, uint128 _tot) internal pure returns (uint256 amt) {
         if (_time < _bgn) {
@@ -178,11 +179,12 @@ contract DssVest {
 
     /*
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param _bgn the start time of the contract
-        @param _clf the timestamp of the cliff
-        @param _end the end time of the contract
-        @param _tot the total amount of the contract
-        @param _rxd the number of gems received
+        @param _time the timestamp to perform the calculation
+        @param _bgn  the start time of the contract
+        @param _clf  the timestamp of the cliff
+        @param _end  the end time of the contract
+        @param _tot  the total amount of the contract
+        @param _rxd  the number of gems received
     */
     function unpaid(uint256 _time, uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal pure returns (uint256 amt) {
         amt = _time < _clf ? 0 : sub(accrued(_time, _bgn, _fin, _tot), _rxd);
