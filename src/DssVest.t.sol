@@ -276,7 +276,7 @@ contract DssVestTest is DSTest {
     }
 
     function testYankAfterVest() public {
-        // Test case where vest is yanked twice, say by manager and then governance
+        // Test case where yanked is called after a partial vest
         uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
@@ -291,7 +291,7 @@ contract DssVestTest is DSTest {
         vest.yank(id); // yank 4 days after start
         (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
         assertEq(fin, block.timestamp);
-        assertEq(amt, 4 * days_vest);   // amt doesn't get updated on second yank
+        assertEq(amt, 4 * days_vest);
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.unpaid(id), 2 * days_vest);
