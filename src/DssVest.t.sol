@@ -271,7 +271,7 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 2 days);
         vest.yank(id); // yank again later
         (,,, fin, amt,,) = vest.awards(id);
-        assertEq(fin, block.timestamp); // fin gets updated on second yank
+        assertEq(fin, block.timestamp - 2 days); // fin stays the same as the first yank
         assertEq(amt, 2 * days_vest);   // amt doesn't get updated on second yank
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 999 days);
@@ -305,6 +305,85 @@ contract DssVestTest is DSTest {
         vest.vest(id); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 4 * days_vest);
+    }
+
+    function testYankSchedulePassed() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 20 days, address(0));
+        uint256 days_vest = 1000000000000000000;
+
+        hevm.warp(block.timestamp + 51 days);
+
+        vest.yank(id, now - 10 days); // Try to yank before cliff
+
+        (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp);
+        assertEq(amt, 51 * days_vest);   // amt is total amount
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 999 days);
+        assertEq(vest.unpaid(id), 51 * days_vest);
+        assertEq(vest.accrued(id), 51 * days_vest);
+        vest.vest(id); // user collects at some future time
+        assertTrue(!vest.valid(id));
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 51 * days_vest);
+    }
+
+    function testYankScheduleFutureAfterCliff() public {
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 20 days, address(0));
+        uint256 days_vest = 1000000000000000000;
+
+        hevm.warp(block.timestamp + 11 days);
+
+        vest.yank(id, now + 10 days); // Schedule yank after cliff
+
+        (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp + 10 days);
+        assertEq(uint256(amt), 21 * days_vest);   // amt is total amount
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 999 days);
+        assertEq(vest.unpaid(id), 21 * days_vest);
+        assertEq(vest.accrued(id), 21 * days_vest);
+        vest.vest(id); // user collects at some future time
+        assertTrue(!vest.valid(id));
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 21 * days_vest);
+    }
+
+    function testYankScheduleFutureBeforeCliff() public {
+        // Test case where yank is scheduled but before the cliff
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 20 days, address(0));
+        vest.yank(id, now + 10 days); // Schedule yank before cliff
+
+        (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp + 10 days);
+        assertEq(uint256(amt), 0);   // amt is total amount
+        assertTrue(!vest.valid(id));
+        hevm.warp(block.timestamp + 999 days);
+        assertEq(vest.unpaid(id), 0);
+        assertEq(vest.accrued(id), 0);
+        vest.vest(id); // user collects at some future time
+        assertTrue(!vest.valid(id));
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
+    }
+
+    function testYankScheduleFutureAfterCompletion() public {
+        // When the sheduled yank takes place after the natural conclusion of the vest,
+        //  Pay out the remainder of the contract and no more.
+        uint256 id = vest.init(address(this), 100 * 10**18, block.timestamp, 100 days, 20 days, address(0));
+        uint256 days_vest = 1000000000000000000;
+
+        hevm.warp(block.timestamp + 11 days);
+
+        vest.yank(id, now + 999 days); // Schedule yank after completion
+
+        (,,, uint48 fin, uint128 amt,,) = vest.awards(id);
+        assertEq(fin, block.timestamp + 89 days);
+        assertEq(uint256(amt), 100 * days_vest);   // amt is total amount
+        assertTrue(vest.valid(id));
+        hevm.warp(block.timestamp + 999 days);
+        assertEq(vest.unpaid(id), 100 * days_vest);
+        assertEq(vest.accrued(id), 100 * days_vest);
+        vest.vest(id); // user collects at some future time
+        assertTrue(!vest.valid(id));
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 100 * days_vest);
     }
 
     function testMgrYank() public {
