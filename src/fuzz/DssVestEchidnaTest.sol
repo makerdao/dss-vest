@@ -46,7 +46,7 @@ contract DssVestEchidnaTest is EchidnaInterface {
     function test_init(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf) public {
         _tot = _tot % uint128(-1);
         if (_tot < WAD) _tot = (1 + _tot) * WAD;
-        _bgn = sub(salt, vest.TWENTY_YEARS()) + _bgn % add(salt,vest.TWENTY_YEARS());
+        _bgn = sub(salt, vest.TWENTY_YEARS() / 2) + _bgn % vest.TWENTY_YEARS();
         _tau = 1 + _tau % vest.TWENTY_YEARS();
         _clf = _clf % _tau;
         uint256 prevId = vest.ids();
@@ -67,7 +67,7 @@ contract DssVestEchidnaTest is EchidnaInterface {
     function test_vest(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf) public {
         _tot = _tot % uint128(-1);
         if (_tot < WAD) _tot = (1 + _tot) * WAD;
-        _bgn = sub(salt, vest.TWENTY_YEARS()) + _bgn % add(salt,vest.TWENTY_YEARS());
+        _bgn = sub(salt, vest.TWENTY_YEARS() / 2) + _bgn % vest.TWENTY_YEARS();
         _tau = 1 + _tau % vest.TWENTY_YEARS();
         _clf = _clf % _tau;
         uint256 id = vest.init(address(this), _tot, _bgn, _tau, _clf, echidna_mgr);
