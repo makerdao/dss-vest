@@ -57,6 +57,10 @@ Returns true if the plan id is valid and has not been claimed or yanked before t
 
 An authorized user (ex. governance) of the vesting contract, or an optional plan manager, can `yank` a vesting contract. If the contract is yanked prior to the plan cliff, no funds will be paid out. If a plan is `yank`ed after the contract cliff period has ended, new accruals will cease and the participant will be able to call `vest` to claim any vested funds.
 
+#### `yank(_id, _end)`
+
+Allows governance to schedule a point in the future to end the vest. Used for planned offboarding of contributors.
+
 ## Fuzz
 
 ### Install Echidna
