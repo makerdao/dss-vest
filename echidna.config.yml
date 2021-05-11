@@ -1,12 +1,14 @@
 #format can be "text" or "json" for different output (human or machine readable)
-format: "text"
+#format: "text"
 #checkAsserts checks assertions
 checkAsserts: true
 #coverage controls coverage guided testing
 coverage: false
 #seqLen defines how many transactions are in a test sequence
-#seqLen: 50
+#seqLen: 288
 #testLimit is the number of test sequences to run
 #testLimit: 100000
+#maximum time between generated txs; default is one week
+maxTimeDelay: 5184000 # roughly 2 months
 #estimateGas makes echidna perform analysis of maximum gas costs for functions (experimental)
 #estimateGas: true
