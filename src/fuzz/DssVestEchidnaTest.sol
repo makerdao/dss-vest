@@ -4,20 +4,17 @@ pragma solidity 0.6.12;
 
 import "../DssVest.sol";
 
-contract EchidnaInterface{
-    address internal echidna_mgr = address(0x41414141);
-}
-
-contract DssVestEchidnaTest is EchidnaInterface {
+contract DssVestEchidnaTest {
 
     DssVest internal vest;
-    IERC20 internal MKR;
+    IERC20 internal GEM;
 
     uint256 internal constant WAD = 10**18;
     uint256 internal immutable salt;
 
     constructor() public {
-      vest = new DssVest(address(MKR));
+      vest = new DssVest(address(GEM));
+      vest.rely(address(this));
       salt = block.timestamp;
     }
 
@@ -50,7 +47,7 @@ contract DssVestEchidnaTest is EchidnaInterface {
         _tau = 1 + _tau % vest.TWENTY_YEARS();
         _clf = _clf % _tau;
         uint256 prevId = vest.ids();
-        uint256 id = vest.init(address(this), _tot, _bgn, _tau, _clf, echidna_mgr);
+        uint256 id = vest.init(address(this), _tot, _bgn, _tau, _clf, address(this));
         assert(vest.ids() == add(prevId, 1));
         assert(vest.ids() == id);
         assert(vest.valid(id));
@@ -61,20 +58,14 @@ contract DssVestEchidnaTest is EchidnaInterface {
         assert(fin == toUint48(add(_bgn, _tau)));
         assert(tot == toUint128(_tot));
         assert(rxd == 0);
-        assert(mgr == echidna_mgr);
+        assert(mgr == address(this));
+        test_vest(id);
+        test_yank(id, block.timestamp);
     }
 
-    function test_vest(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf) public {
-        _tot = _tot % uint128(-1);
-        if (_tot < WAD) _tot = (1 + _tot) * WAD;
-        _bgn = sub(salt, vest.TWENTY_YEARS() / 2) + _bgn % vest.TWENTY_YEARS();
-        _tau = 1 + _tau % vest.TWENTY_YEARS();
-        _clf = _clf % _tau;
-        uint256 id = vest.init(address(this), _tot, _bgn, _tau, _clf, echidna_mgr);
-        assert(vest.valid(id));
-        uint256 ids = vest.ids();
+    function test_vest(uint256 id) internal {
         vest.vest(id);
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd,) = vest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         if (block.timestamp < clf) assert(amt == 0);
         else if (block.timestamp < bgn) assert(amt == rxd);
@@ -88,5 +79,16 @@ contract DssVestEchidnaTest is EchidnaInterface {
             assert(gem > tot);
             assert(amt == sub(gem, rxd));
         }
+    }
+
+    function test_yank(uint256 id, uint256 end) internal {
+        ( , , , uint48 _fin, , , ) = vest.awards(id);
+        if (end < block.timestamp)  end = block.timestamp;
+        else if (end > _fin) end = _fin;
+        vest.yank(id, end);
+        ( , , , uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
+        uint256 amt = vest.unpaid(id);
+        assert(fin == toUint48(end));
+        assert(tot == sub(amt, rxd));
     }
 }
