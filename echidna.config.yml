@@ -3,14 +3,14 @@
 #checkAsserts checks assertions
 checkAsserts: true
 #coverage controls coverage guided testing; when true, uncomment corpusDir
-coverage: false
+coverage: true
 #seqLen defines how many transactions are in a test sequence
-#seqLen: 288
+seqLen: 288
 #testLimit is the number of test sequences to run
-#testLimit: 100000
+testLimit: 100000
 #maximum time between generated txs; default is one week
 maxTimeDelay: 5184000 # roughly 2 months
 #estimateGas makes echidna perform analysis of maximum gas costs for functions (experimental)
-#estimateGas: true
+estimateGas: true
 #directory to save the corpus; by default is disabled
-#corpusDir: "corpus"
+corpusDir: "corpus"
