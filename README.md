@@ -68,16 +68,6 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 - Building using Nix
   `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
 
-### Local Fuzz Settings
-
-- Edit `echidna.config.yml`
-- Comment `format: "text"`
-- Set `coverage` to true
-- Uncomment `seqLen`
-- Uncomment `testLimit`
-- Uncomment `estimateGas` (optional)
-- Uncomment `corpusDir`
-
 ### Run Echidna Tests
 
 - Install solc 0.6.12:
