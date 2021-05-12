@@ -65,30 +65,8 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Precompiled Binaries (recommended)
-
-Before starting, make sure Slither is installed:
-`$ pip3 install slither-analyzer`
-
-To quickly test Echidna in Linux or MacOS:
-[release page](https://github.com/crytic/echidna/releases)
-
 - Building using Nix
   `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
-
-- Building using Docker
-  `$ docker pull docker.pkg.github.com/crytic/echidna/echidna:latest`
-
-Then, run via:
-`docker run -it -v `pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol --config echidna.config.yml`
-
-### Local Dependencies
-
-- Slither
-  `$ pip3 install slither-analyzer`
-
-- solc-select
-  `$ pip3 install solc-select`
 
 ### Local Fuzz Settings
 
@@ -102,13 +80,7 @@ Then, run via:
 
 ### Run Echidna Tests
 
-- Install solc version:
-  `$ solc-select install 0.6.12`
-
-- Select solc version:
-  `$ solc-select use 0.6.12`
-
-- If using Dapp Tools:
+- Install solc 0.6.12:
   `$ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-versions.solc_0_6_12`
 
 - Run Echidna Tests:
