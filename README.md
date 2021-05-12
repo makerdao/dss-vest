@@ -66,7 +66,7 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 ### Install Echidna
 
 - Building using Nix
-  `$ nix-env -i -f https://github.com/crytic/echidna/archive/refs/tags/v1.7.0.tar.gz`
+  `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
 
 ### Run Echidna Tests
 
