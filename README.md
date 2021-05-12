@@ -77,7 +77,7 @@ To quickly test Echidna in Linux or MacOS:
   `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
 
 - Building using Docker
-  `$ docker build -t echidna .`
+  `$ docker pull docker.pkg.github.com/crytic/echidna/echidna:latest`
 
 Then, run via:
 `docker run -it -v `pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol --config echidna.config.yml`
