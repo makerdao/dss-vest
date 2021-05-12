@@ -65,15 +65,6 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Building using Nix
-  `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
-
-- Building using Docker
-  `$ docker build -t echidna .`
-
-Then, run via:
-`docker run -it -v`pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol`
-
 - Precompiled Binaries (recommended)
 
 Before starting, make sure Slither is installed:
@@ -81,6 +72,15 @@ Before starting, make sure Slither is installed:
 
 To quickly test Echidna in Linux or MacOS:
 [release page](https://github.com/crytic/echidna/releases)
+
+- Building using Nix
+  `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
+
+- Building using Docker
+  `$ docker build -t echidna .`
+
+Then, run via:
+`docker run -it -v`pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol --config echidna.config.yml`
 
 ### Local Dependencies
 
@@ -98,6 +98,7 @@ To quickly test Echidna in Linux or MacOS:
 - Uncomment `seqLen`
 - Uncomment `testLimit`
 - Uncomment `estimateGas` (optional)
+- Uncomment `corpusDir`
 
 ### Run Echidna Tests
 
