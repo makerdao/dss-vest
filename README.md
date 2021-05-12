@@ -80,7 +80,7 @@ To quickly test Echidna in Linux or MacOS:
   `$ docker build -t echidna .`
 
 Then, run via:
-`docker run -it -v`pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol --config echidna.config.yml`
+`docker run -it -v `pwd`:/src echidna echidna-test /src/fuzz/DssVestEchidnaTest.sol --config echidna.config.yml`
 
 ### Local Dependencies
 
