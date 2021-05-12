@@ -40,7 +40,7 @@ contract DssVestEchidnaTest {
         assert(z == x);
     }
 
-    function test_init(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf) public {
+    function test_init(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _end) public {
         _tot = _tot % uint128(-1);
         if (_tot < WAD) _tot = (1 + _tot) * WAD;
         _bgn = sub(salt, vest.TWENTY_YEARS() / 2) + _bgn % vest.TWENTY_YEARS();
@@ -60,7 +60,7 @@ contract DssVestEchidnaTest {
         assert(rxd == 0);
         assert(mgr == address(this));
         test_vest(id);
-        test_yank(id, block.timestamp);
+        test_yank(id, _end);
     }
 
     function test_vest(uint256 id) internal {
