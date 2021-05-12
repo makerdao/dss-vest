@@ -57,8 +57,8 @@ contract DssVestEchidnaTest is EchidnaInterface {
         (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, address mgr) = vest.awards(id);
         assert(usr == address(this));
         assert(bgn == toUint48(_bgn));
-        assert(clf == toUint48(_bgn + _clf));
-        assert(fin == toUint48(_bgn + _tau));
+        assert(clf == toUint48(add(_bgn, _clf)));
+        assert(fin == toUint48(add(_bgn, _tau)));
         assert(tot == toUint128(_tot));
         assert(rxd == 0);
         assert(mgr == echidna_mgr);
