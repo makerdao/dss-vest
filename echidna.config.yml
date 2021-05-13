@@ -3,12 +3,12 @@
 #checkAsserts checks assertions
 checkAsserts: true
 #seqLen defines how many transactions are in a test sequence
-seqLen: 288
+seqLen: 200
 #testLimit is the number of test sequences to run
-testLimit: 100000
+testLimit: 1000000
 #maximum time between generated txs; default is one week
-maxTimeDelay: 5184000 # roughly 2 months
+maxTimeDelay: 15778800 # approximately 6 month
 #estimateGas makes echidna perform analysis of maximum gas costs for functions (experimental)
-estimateGas: true
+#estimateGas: true
 #directory to save the corpus; by default is disabled
 corpusDir: "corpus"
