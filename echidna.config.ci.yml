@@ -5,4 +5,4 @@ checkAsserts: true
 #coverage controls coverage guided testing
 coverage: false
 #maximum time between generated txs; default is one week
-maxTimeDelay: 5184000 # roughly 2 months
+maxTimeDelay: 31556952 # approximately 1 year
