@@ -83,9 +83,9 @@ contract DssVestEchidnaTest {
 
     function test_yank(uint256 id, uint256 end) internal {
         ( , , , uint48 _fin, , , ) = vest.awards(id);
+        vest.yank(id, end);
         if (end < block.timestamp)  end = block.timestamp;
         else if (end > _fin) end = _fin;
-        vest.yank(id, end);
         ( , , , uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         assert(fin == toUint48(end));
