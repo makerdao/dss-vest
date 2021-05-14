@@ -7,7 +7,7 @@ seqLen: 200
 #testLimit is the number of test sequences to run
 testLimit: 1000000
 #maximum time between generated txs; default is one week
-maxTimeDelay: 15778800 # approximately 6 month
+maxTimeDelay: 15778800 # approximately 6 months
 #estimateGas makes echidna perform analysis of maximum gas costs for functions (experimental)
 #estimateGas: true
 #directory to save the corpus; by default is disabled
