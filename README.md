@@ -1,10 +1,12 @@
+[![Fuzz](https://github.com/brianmcmichael/dss-vest/actions/workflows/fuzz.yml/badge.svg)](https://github.com/brianmcmichael/dss-vest/actions/workflows/fuzz.yml)
+
 # dss-vest
 
 A token vesting plan for contributors. Includes scheduling, cliff vesting, and third-party revocation.
 
 ### Requirements
 
-* [Dapptools](https://github.com/dapphub/dapptools)
+- [Dapptools](https://github.com/dapphub/dapptools)
 
 ### Deployment
 
@@ -12,21 +14,20 @@ A token vesting plan for contributors. Includes scheduling, cliff vesting, and t
 
 Pass the address of the vesting token to the constructor on deploy. This contract must be given authority to `mint()` tokens in the vesting contract.
 
-
 ### Creating a vest
 
 #### `init(_usr, _tot, _bgn, _tau, _clf, _mgr) returns (id)`
 
 Init a new vest to create a vesting plan.
 
-* `_usr`: The plan beneficiary
-* `_tot`: The total amount of the vesting plan, in token units
-    * ex. 100 MKR = `100 * 10**18`
-* `_bgn`: A unix-timestamp of the plan start date
-* `_tau`: The duration of the vesting plan (in seconds)
-* `_clf`: The cliff period, in which tokens are accrued but not payable. (in seconds)
-* `_mgr`: (Optional) The address of an authorized manager. This address has permission to remove the vesting plan when the contributor leaves the project.
-    * Note: `auth` users on this contract *always* have the ability to `yank` a vesting contract.
+- `_usr`: The plan beneficiary
+- `_tot`: The total amount of the vesting plan, in token units
+  - ex. 100 MKR = `100 * 10**18`
+- `_bgn`: A unix-timestamp of the plan start date
+- `_tau`: The duration of the vesting plan (in seconds)
+- `_clf`: The cliff period, in which tokens are accrued but not payable. (in seconds)
+- `_mgr`: (Optional) The address of an authorized manager. This address has permission to remove the vesting plan when the contributor leaves the project.
+  - Note: `auth` users on this contract _always_ have the ability to `yank` a vesting contract.
 
 ### Interacting with a vest
 
@@ -46,7 +47,6 @@ Returns the amount of accrued, vested, unpaid tokens.
 
 Returns the amount of tokens that have accrued from the beginning of the plan to the current block.
 
-
 #### `valid(_id) returns (bool)`
 
 Returns true if the plan id is valid and has not been claimed or yanked before the cliff.
@@ -60,3 +60,18 @@ An authorized user (ex. governance) of the vesting contract, or an optional plan
 #### `yank(_id, _end)`
 
 Allows governance to schedule a point in the future to end the vest. Used for planned offboarding of contributors.
+
+## Fuzz
+
+### Install Echidna
+
+- Building using Nix
+  `$ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
+
+### Run Echidna Tests
+
+- Install solc 0.6.12:
+  `$ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-versions.solc_0_6_12`
+
+- Run Echidna Tests:
+  `$ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml`

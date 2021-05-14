@@ -1,0 +1,8 @@
+#format can be "text" or "json" for different output (human or machine readable)
+format: "text"
+#checkAsserts checks assertions
+checkAsserts: true
+#coverage controls coverage guided testing
+coverage: false
+#maximum time between generated txs; default is one week
+maxTimeDelay: 31556952 # approximately 1 year
