@@ -41,7 +41,7 @@ contract DssVestTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
-        vest = new DssVest(MKR_TOKEN, 500 * WAD);
+        vest = new DssVest(MKR_TOKEN, (2000 * WAD) / (4 * 365 days));
 
         // Set testing contract as a MKR Auth
         hevm.store(
@@ -433,18 +433,18 @@ contract DssVestTest is DSTest {
         vest.init(address(this), 100 * days_vest + 1, block.timestamp, 100 days, 101 days, address(0));
     }
 
-    function testTop() public {
+    function testCap() public {
         // Test init at top limit
         uint256 id = vest.init(address(this), 500 * WAD, block.timestamp, 365 days, 0, address(0));
         assertEq(id, 1);
 
-        vest.file("top", 1000 * WAD);
+        vest.file("cap", 4000 * WAD / 4 * 365 days);
 
-        id = vest.init(address(this), 1000 * WAD, block.timestamp, 365 days, 0, address(0));
+        id = vest.init(address(this), 1001 * WAD, block.timestamp, 365 days, 0, address(0));
         assertEq(id, 2);
     }
 
-    function testFailTop() public {
+    function testFailCap() public {
         // Test failure at 1 over limit
         vest.init(address(this), 501 * WAD, block.timestamp, 365 days, 0, address(0));
     }
