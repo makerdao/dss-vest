@@ -113,7 +113,7 @@ contract DssVest {
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
         require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
         require(_tau > 0,                                  "DssVest/tau-zero");
-        require(_tot / _tau * ONE_YEAR <= top,             "DssVest/tot-too-high");
+        require(_tot / _tau <= top / 365 days,             "DssVest/tot-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
         require(_clf <= _tau,                              "DssVest/clf-too-long");
         require(id < uint256(-1),                          "DssVest/id-overflow");
