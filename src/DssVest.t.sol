@@ -438,9 +438,9 @@ contract DssVestTest is DSTest {
         uint256 id = vest.init(address(this), 500 * WAD, block.timestamp, 365 days, 0, address(0));
         assertEq(id, 1);
 
-        vest.file("cap", 4000 * WAD / 4 * 365 days);
+        vest.file("cap", (4000 * WAD) / (4 * 365 days));
 
-        id = vest.init(address(this), 1001 * WAD, block.timestamp, 365 days, 0, address(0));
+        id = vest.init(address(this), 1000 * WAD, block.timestamp, 365 days, 0, address(0));
         assertEq(id, 2);
     }
 
