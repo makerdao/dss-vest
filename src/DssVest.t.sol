@@ -37,6 +37,7 @@ contract DssVestTest is DSTest {
     address constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address constant VOW = 0xA950524441892A31ebddF91d3cEEFa04Bf454466;
     uint256 constant WAD = 10**18;
+    uint256 constant RAY = 10**27;
     uint256 constant days_vest = WAD;
 
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
@@ -449,16 +450,20 @@ contract DssVestTest is DSTest {
     }
 
     function testSuckableVest() public {
+        uint256 originalSin = VatAbstract(VAT).sin(VOW);
         uint256 id = suckableVest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
         assertTrue(suckableVest.valid(id));
         hevm.warp(block.timestamp + 1 days);
         suckableVest.vest(id);
         assertEq(DSTokenAbstract(DAI).balanceOf(address(this)), 1 * days_vest);
+        assertEq(VatAbstract(VAT).sin(VOW), originalSin + 1 * days_vest * RAY);
         hevm.warp(block.timestamp + 9 days);
         suckableVest.vest(id);
         assertEq(DSTokenAbstract(DAI).balanceOf(address(this)), 10 * days_vest);
+        assertEq(VatAbstract(VAT).sin(VOW), originalSin + 10 * days_vest * RAY);
         hevm.warp(block.timestamp + 365 days);
         suckableVest.vest(id);
         assertEq(DSTokenAbstract(DAI).balanceOf(address(this)), 100 * days_vest);
+        assertEq(VatAbstract(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
     }
 }
