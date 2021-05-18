@@ -27,8 +27,7 @@ contract DssVest {
 
     address public   immutable gem;
 
-    uint256 internal constant  ONE_YEAR = 365 days;
-    uint256 public   constant  TWENTY_YEARS = 20 * ONE_YEAR;
+    uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
     uint256 internal constant  WAD = 10**18;
 
     uint256 internal locked;
