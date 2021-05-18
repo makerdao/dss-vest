@@ -228,7 +228,7 @@ contract DssVest {
 
     function file(bytes32 what, uint256 data) external auth {
         if      (what == "top")         top = data;     // The maximum amount of tokens that can be streamed per year per vest
-        else revert("Clipper/file-unrecognized-param");
+        else revert("DssVest/file-unrecognized-param");
         emit File(what, data);
     }
 
