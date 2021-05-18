@@ -19,17 +19,10 @@
 
 pragma solidity 0.6.12;
 
-interface IERC20 {
-    function mint(address usr, uint256 amt) external;
-}
-
-interface VatLike {
-    function suck(address u, address v, uint rad) external;
-}
-
-interface DaiJoinLike {
-    function exit(address usr, uint amt) external;
-}
+import "dss-interfaces/dapp/DSTokenAbstract.sol";
+import "dss-interfaces/dss/ChainlogAbstract.sol";
+import "dss-interfaces/dss/DaiJoinAbstract.sol";
+import "dss-interfaces/dss/VatAbstract.sol";
 
 abstract contract DssVest {
 
@@ -254,32 +247,38 @@ abstract contract DssVest {
 
 contract DssVestMintable is DssVest {
 
-    address public immutable gem;
+    DSTokenAbstract public immutable gem;
 
     // This contract must be authorized to 'mint' on the token
     constructor(address _gem) public DssVest() {
-        gem = _gem;
+        gem = DSTokenAbstract(_gem);
     }
 
     function pay(address _guy, uint256 _amt) override internal {
-        IERC20(gem).mint(_guy, _amt);
+        gem.mint(_guy, _amt);
     }
 
 }
 
 contract DssVestSuckable is DssVest {
 
-    VatLike     public immutable vat;
-    DaiJoinLike public immutable daiJoin;
+    uint256 internal constant RAY = 10**27;
+
+    ChainlogAbstract public immutable chainlog;
+    VatAbstract      public immutable vat;
+    DaiJoinAbstract  public immutable daiJoin;
 
     // This contract must be authorized to 'suck' on the vat
     constructor(address _chainlog) public DssVest() {
-        vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
-        daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
+        chainlog = ChainlogAbstract(_chainlog);
+        vat = VatAbstract(ChainlogAbstract(_chainlog).getAddress("MCD_VAT"));
+        daiJoin = DaiJoinAbstract(ChainlogAbstract(_chainlog).getAddress("MCD_JOIN_DAI"));
+
+        VatAbstract(ChainlogAbstract(_chainlog).getAddress("MCD_VAT")).hope(ChainlogAbstract(_chainlog).getAddress("MCD_JOIN_DAI"));
     }
 
     function pay(address _guy, uint256 _amt) override internal {
-        vat.suck(address(this), mul(_amt, RAD));
+        vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
     }
 

@@ -6,14 +6,14 @@ import "../DssVest.sol";
 
 contract DssVestEchidnaTest {
 
-    DssVest internal vest;
-    IERC20 internal GEM;
+    DssVestMintable internal vest;
+    DSTokenAbstract internal GEM;
 
     uint256 internal constant WAD = 10**18;
     uint256 internal immutable salt;
 
     constructor() public {
-      vest = new DssVest(address(GEM));
+      vest = new DssVestMintable(address(GEM));
       vest.rely(address(this));
       salt = block.timestamp;
     }
