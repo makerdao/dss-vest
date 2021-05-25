@@ -226,7 +226,7 @@ contract DssVest {
     }
 
     function file(bytes32 what, uint256 data) external auth {
-        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per year per vest
+        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
         else revert("DssVest/file-unrecognized-param");
         emit File(what, data);
     }
