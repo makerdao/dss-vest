@@ -7,7 +7,7 @@ import "../DssVest.sol";
 contract DssVestEchidnaTest {
 
     DssVestMintable internal vest;
-    DSTokenAbstract internal GEM;
+    IERC20 internal GEM;
 
     uint256 internal constant WAD = 10**18;
     uint256 internal immutable salt;

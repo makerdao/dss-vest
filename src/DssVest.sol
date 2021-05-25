@@ -19,10 +19,25 @@
 
 pragma solidity 0.6.12;
 
-import "dss-interfaces/dapp/DSTokenAbstract.sol";
-import "dss-interfaces/dss/ChainlogAbstract.sol";
-import "dss-interfaces/dss/DaiJoinAbstract.sol";
-import "dss-interfaces/dss/VatAbstract.sol";
+interface IERC20 {
+    function mint(address, uint256) external;
+    function balanceOf(address) external view returns (uint256);
+}
+
+interface ChainlogLike {
+    function getAddress(bytes32) external view returns (address);
+}
+
+interface DaiJoinLike {
+    function exit(address, uint256) external;
+}
+
+interface VatLike {
+    function hope(address) external;
+    function wards(address) external view returns (uint256);
+    function suck(address, address, uint256) external;
+    function sin(address) external view returns (uint256);
+}
 
 abstract contract DssVest {
 
@@ -247,11 +262,11 @@ abstract contract DssVest {
 
 contract DssVestMintable is DssVest {
 
-    DSTokenAbstract public immutable gem;
+    IERC20 public immutable gem;
 
     // This contract must be authorized to 'mint' on the token
     constructor(address _gem) public DssVest() {
-        gem = DSTokenAbstract(_gem);
+        gem = IERC20(_gem);
     }
 
     function pay(address _guy, uint256 _amt) override internal {
@@ -264,17 +279,17 @@ contract DssVestSuckable is DssVest {
 
     uint256 internal constant RAY = 10**27;
 
-    ChainlogAbstract public immutable chainlog;
-    VatAbstract      public immutable vat;
-    DaiJoinAbstract  public immutable daiJoin;
+    ChainlogLike public immutable chainlog;
+    VatLike      public immutable vat;
+    DaiJoinLike  public immutable daiJoin;
 
     // This contract must be authorized to 'suck' on the vat
     constructor(address _chainlog) public DssVest() {
-        chainlog = ChainlogAbstract(_chainlog);
-        vat = VatAbstract(ChainlogAbstract(_chainlog).getAddress("MCD_VAT"));
-        daiJoin = DaiJoinAbstract(ChainlogAbstract(_chainlog).getAddress("MCD_JOIN_DAI"));
+        chainlog = ChainlogLike(_chainlog);
+        vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
+        daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
 
-        VatAbstract(ChainlogAbstract(_chainlog).getAddress("MCD_VAT")).hope(ChainlogAbstract(_chainlog).getAddress("MCD_JOIN_DAI"));
+        VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT")).hope(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
     }
 
     function pay(address _guy, uint256 _amt) override internal {

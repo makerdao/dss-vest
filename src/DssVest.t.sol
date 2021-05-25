@@ -65,7 +65,7 @@ contract DssVestTest is DSTest {
             keccak256(abi.encode(address(suckableVest), uint256(0))),
             bytes32(uint256(1))
         );
-        assertEq(VatAbstract(VAT).wards(address(suckableVest)), 1);
+        assertEq(VatLike(VAT).wards(address(suckableVest)), 1);
     }
 
     function testCost() public {
@@ -450,20 +450,20 @@ contract DssVestTest is DSTest {
     }
 
     function testSuckableVest() public {
-        uint256 originalSin = VatAbstract(VAT).sin(VOW);
+        uint256 originalSin = VatLike(VAT).sin(VOW);
         uint256 id = suckableVest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
         assertTrue(suckableVest.valid(id));
         hevm.warp(block.timestamp + 1 days);
         suckableVest.vest(id);
-        assertEq(DSTokenAbstract(DAI).balanceOf(address(this)), 1 * days_vest);
-        assertEq(VatAbstract(VAT).sin(VOW), originalSin + 1 * days_vest * RAY);
+        assertEq(IERC20(DAI).balanceOf(address(this)), 1 * days_vest);
+        assertEq(VatLike(VAT).sin(VOW), originalSin + 1 * days_vest * RAY);
         hevm.warp(block.timestamp + 9 days);
         suckableVest.vest(id);
-        assertEq(DSTokenAbstract(DAI).balanceOf(address(this)), 10 * days_vest);
-        assertEq(VatAbstract(VAT).sin(VOW), originalSin + 10 * days_vest * RAY);
+        assertEq(IERC20(DAI).balanceOf(address(this)), 10 * days_vest);
+        assertEq(VatLike(VAT).sin(VOW), originalSin + 10 * days_vest * RAY);
         hevm.warp(block.timestamp + 365 days);
         suckableVest.vest(id);
-        assertEq(DSTokenAbstract(DAI).balanceOf(address(this)), 100 * days_vest);
-        assertEq(VatAbstract(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
+        assertEq(IERC20(DAI).balanceOf(address(this)), 100 * days_vest);
+        assertEq(VatLike(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
     }
 }
