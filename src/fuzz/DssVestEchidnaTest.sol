@@ -65,8 +65,7 @@ contract DssVestEchidnaTest {
 
     function test_vest(uint256 id) internal {
         vest.vest(id);
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
-        usr;
+        (, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         if (block.timestamp < clf) assert(amt == 0);
         else if (block.timestamp < bgn) assert(amt == rxd);
