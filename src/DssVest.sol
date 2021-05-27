@@ -34,9 +34,10 @@ contract DssVest {
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event Init(uint256 indexed id, address indexed usr);
-    event Vest(uint256 indexed id, uint256 indexed amt);
-    event Move(uint256 indexed id, address indexed dst);
+    event Init(uint256 indexed id,   address indexed usr);
+    event Vest(uint256 indexed id,   uint256 indexed amt);
+    event Move(uint256 indexed id,   address indexed dst);
+    event File(bytes32 indexed what, uint256 indexed data);
     event Yank(uint256 indexed id);
 
     // --- Auth ---
@@ -68,9 +69,12 @@ contract DssVest {
     mapping (uint256 => Award) public awards;
     uint256 public ids;
 
+    uint256 public cap; // Maximum per-second issuance token rate
+
     // This contract must be authorized to 'mint' on the token
-    constructor(address _gem) public {
+    constructor(address _gem, uint256 _cap) public {
         gem = _gem;
+        cap = _cap;
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
@@ -108,6 +112,7 @@ contract DssVest {
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
         require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
         require(_tau > 0,                                  "DssVest/tau-zero");
+        require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
         require(_clf <= _tau,                              "DssVest/clf-too-long");
         require(id < uint256(-1),                          "DssVest/id-overflow");
@@ -218,6 +223,12 @@ contract DssVest {
                                     _award.rxd)
                                 );
         emit Yank(_id);
+    }
+
+    function file(bytes32 what, uint256 data) external auth {
+        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
+        else revert("DssVest/file-unrecognized-param");
+        emit File(what, data);
     }
 
     /*
