@@ -19,6 +19,11 @@ interface Token {
     function balanceOf(address) external returns (uint256);
 }
 
+interface VatLikeTest {
+    function wards(address) external view returns (uint256);
+    function sin(address) external view returns (uint256);
+}
+
 contract Manager {
     function yank(address dssvest, uint256 id) external {
         DssVest(dssvest).yank(id);
@@ -27,10 +32,17 @@ contract Manager {
 
 contract DssVestTest is DSTest {
     Hevm hevm;
-    DssVest vest;
+    DssVestMintable vest;
+    DssVestSuckable suckableVest;
 
     address constant MKR_TOKEN = 0x9f8F72aA9304c8B593d555F12eF6589cC3A579A2;
+    address constant CHAINLOG = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
+    address constant VAT = 0x35D1b3F3D7966A1DFe207aa4514C12a259A0492B;
+    address constant DAI_JOIN = 0x9759A6Ac90977b93B58547b4A71c78317f391A28;
+    address constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
+    address constant VOW = 0xA950524441892A31ebddF91d3cEEFa04Bf454466;
     uint256 constant WAD = 10**18;
+    uint256 constant RAY = 10**27;
     uint256 constant days_vest = WAD;
 
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
@@ -41,7 +53,8 @@ contract DssVestTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
-        vest = new DssVest(MKR_TOKEN, (2000 * WAD) / (4 * 365 days));
+        vest = new DssVestMintable(MKR_TOKEN, (2000 * WAD) / (4 * 365 days));
+        suckableVest = new DssVestSuckable(CHAINLOG, (2000 * WAD) / (4 * 365 days));
 
         // Set testing contract as a MKR Auth
         hevm.store(
@@ -50,10 +63,18 @@ contract DssVestTest is DSTest {
             bytes32(uint256(1))
         );
         assertEq(GovGuard(GOV_GUARD).wards(address(vest)), 1);
+
+        // Give admin access to vat
+        hevm.store(
+            address(VAT),
+            keccak256(abi.encode(address(suckableVest), uint256(0))),
+            bytes32(uint256(1))
+        );
+        assertEq(VatLikeTest(VAT).wards(address(suckableVest)), 1);
     }
 
     function testCost() public {
-        new DssVest(MKR_TOKEN, 500 * WAD);
+        new DssVestMintable(MKR_TOKEN, 500 * WAD);
     }
 
     function testInit() public {
@@ -431,6 +452,24 @@ contract DssVestTest is DSTest {
 
     function testFailClfAfterTau() public {
         vest.init(address(this), 100 * days_vest + 1, block.timestamp, 100 days, 101 days, address(0));
+    }
+
+    function testSuckableVest() public {
+        uint256 originalSin = VatLikeTest(VAT).sin(VOW);
+        uint256 id = suckableVest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
+        assertTrue(suckableVest.valid(id));
+        hevm.warp(block.timestamp + 1 days);
+        suckableVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(this)), 1 * days_vest);
+        assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 1 * days_vest * RAY);
+        hevm.warp(block.timestamp + 9 days);
+        suckableVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(this)), 10 * days_vest);
+        assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 10 * days_vest * RAY);
+        hevm.warp(block.timestamp + 365 days);
+        suckableVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(this)), 100 * days_vest);
+        assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
     }
 
     function testCap() public {

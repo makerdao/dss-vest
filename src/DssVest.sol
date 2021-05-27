@@ -19,13 +19,24 @@
 
 pragma solidity 0.6.12;
 
-interface IERC20 {
-    function mint(address usr, uint256 amt) external;
+interface MintLike {
+    function mint(address, uint256) external;
 }
 
-contract DssVest {
+interface ChainlogLike {
+    function getAddress(bytes32) external view returns (address);
+}
 
-    address public   immutable gem;
+interface DaiJoinLike {
+    function exit(address, uint256) external;
+}
+
+interface VatLike {
+    function hope(address) external;
+    function suck(address, address, uint256) external;
+}
+
+abstract contract DssVest {
 
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
     uint256 internal constant  WAD = 10**18;
@@ -72,8 +83,7 @@ contract DssVest {
     uint256 public cap; // Maximum per-second issuance token rate
 
     // This contract must be authorized to 'mint' on the token
-    constructor(address _gem, uint256 _cap) public {
-        gem = _gem;
+    constructor(uint256 _cap) public {
         cap = _cap;
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
@@ -139,7 +149,7 @@ contract DssVest {
         require(_award.usr == msg.sender, "DssVest/only-user-can-claim");
 
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
-        IERC20(gem).mint(_award.usr, amt);
+        pay(_award.usr, amt);
         awards[_id].rxd = toUint128(add(awards[_id].rxd, amt));
         emit Vest(_id, amt);
     }
@@ -250,4 +260,50 @@ contract DssVest {
     function valid(uint256 _id) external view returns (bool) {
         return awards[_id].rxd < awards[_id].tot;
     }
+
+    /*
+        @dev Override this to implement payment logic.
+        @param _guy The payment target.
+        @param _amt The payment amount.
+    */
+    function pay(address _guy, uint256 _amt) virtual internal;
+}
+
+contract DssVestMintable is DssVest {
+
+    MintLike public immutable gem;
+
+    // This contract must be authorized to 'mint' on the token
+    constructor(address _gem, uint256 _cap) public DssVest(_cap) {
+        gem = MintLike(_gem);
+    }
+
+    function pay(address _guy, uint256 _amt) override internal {
+        gem.mint(_guy, _amt);
+    }
+
+}
+
+contract DssVestSuckable is DssVest {
+
+    uint256 internal constant RAY = 10**27;
+
+    ChainlogLike public immutable chainlog;
+    VatLike      public immutable vat;
+    DaiJoinLike  public immutable daiJoin;
+
+    // This contract must be authorized to 'suck' on the vat
+    constructor(address _chainlog, uint256 _cap) public DssVest(_cap) {
+        chainlog = ChainlogLike(_chainlog);
+        VatLike _vat = vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
+        DaiJoinLike _daiJoin = daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
+
+        _vat.hope(address(_daiJoin));
+    }
+
+    function pay(address _guy, uint256 _amt) override internal {
+        vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
+        daiJoin.exit(_guy, _amt);
+    }
+
 }
