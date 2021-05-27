@@ -13,7 +13,7 @@ contract DssVestEchidnaTest {
     uint256 internal immutable salt;
 
     constructor() public {
-      vest = new DssVestMintable(address(GEM));
+      vest = new DssVestMintable(address(GEM), 500 * WAD);
       vest.rely(address(this));
       salt = block.timestamp;
     }
@@ -65,7 +65,7 @@ contract DssVestEchidnaTest {
 
     function test_vest(uint256 id) internal {
         vest.vest(id);
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
+        (, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         if (block.timestamp < clf) assert(amt == 0);
         else if (block.timestamp < bgn) assert(amt == rxd);

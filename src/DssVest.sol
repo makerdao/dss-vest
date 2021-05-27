@@ -2,7 +2,7 @@
 //
 // DssVest - Token vesting contract
 //
-// Copyright (C) 2020-2021  Servo Farms, LLC
+// Copyright (C) 2021 Dai Foundation
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU Affero General Public License as published by
@@ -48,9 +48,10 @@ abstract contract DssVest {
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event Init(uint256 indexed id, address indexed usr);
-    event Vest(uint256 indexed id, uint256 indexed amt);
-    event Move(uint256 indexed id, address indexed dst);
+    event Init(uint256 indexed id,   address indexed usr);
+    event Vest(uint256 indexed id,   uint256 indexed amt);
+    event Move(uint256 indexed id,   address indexed dst);
+    event File(bytes32 indexed what, uint256 indexed data);
     event Yank(uint256 indexed id);
 
     // --- Auth ---
@@ -82,7 +83,11 @@ abstract contract DssVest {
     mapping (uint256 => Award) public awards;
     uint256 public ids;
 
-    constructor() public {
+    uint256 public cap; // Maximum per-second issuance token rate
+
+    // This contract must be authorized to 'mint' on the token
+    constructor(uint256 _cap) public {
+        cap = _cap;
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
@@ -120,6 +125,7 @@ abstract contract DssVest {
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
         require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
         require(_tau > 0,                                  "DssVest/tau-zero");
+        require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
         require(_clf <= _tau,                              "DssVest/clf-too-long");
         require(id < uint256(-1),                          "DssVest/id-overflow");
@@ -232,6 +238,12 @@ abstract contract DssVest {
         emit Yank(_id);
     }
 
+    function file(bytes32 what, uint256 data) external auth {
+        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
+        else revert("DssVest/file-unrecognized-param");
+        emit File(what, data);
+    }
+
     /*
         @dev Allows owner to move a contract to a different address
         @param _id  The id of the vesting contract
@@ -265,7 +277,7 @@ contract DssVestMintable is DssVest {
     IERC20 public immutable gem;
 
     // This contract must be authorized to 'mint' on the token
-    constructor(address _gem) public DssVest() {
+    constructor(address _gem, uint256 _cap) public DssVest(_cap) {
         gem = IERC20(_gem);
     }
 
@@ -284,7 +296,7 @@ contract DssVestSuckable is DssVest {
     DaiJoinLike  public immutable daiJoin;
 
     // This contract must be authorized to 'suck' on the vat
-    constructor(address _chainlog) public DssVest() {
+    constructor(address _chainlog, uint256 _cap) public DssVest(_cap) {
         chainlog = ChainlogLike(_chainlog);
         vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
         daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));

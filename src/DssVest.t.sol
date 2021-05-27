@@ -48,8 +48,8 @@ contract DssVestTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
-        vest = new DssVestMintable(MKR_TOKEN);
-        suckableVest = new DssVestSuckable(CHAINLOG);
+        vest = new DssVestMintable(MKR_TOKEN, (2000 * WAD) / (4 * 365 days));
+        suckableVest = new DssVestSuckable(CHAINLOG, (2000 * WAD) / (4 * 365 days));
 
         // Set testing contract as a MKR Auth
         hevm.store(
@@ -69,7 +69,7 @@ contract DssVestTest is DSTest {
     }
 
     function testCost() public {
-        new DssVestMintable(MKR_TOKEN);
+        new DssVestMintable(MKR_TOKEN, 500 * WAD);
     }
 
     function testInit() public {
@@ -465,5 +465,21 @@ contract DssVestTest is DSTest {
         suckableVest.vest(id);
         assertEq(IERC20(DAI).balanceOf(address(this)), 100 * days_vest);
         assertEq(VatLike(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
+    }
+
+    function testCap() public {
+        // Test init at top limit
+        uint256 id = vest.init(address(this), 500 * WAD, block.timestamp, 365 days, 0, address(0));
+        assertEq(id, 1);
+
+        vest.file("cap", (4000 * WAD) / (4 * 365 days));
+
+        id = vest.init(address(this), 1000 * WAD, block.timestamp, 365 days, 0, address(0));
+        assertEq(id, 2);
+    }
+
+    function testFailCap() public {
+        // Test failure at 1 over limit
+        vest.init(address(this), 501 * WAD, block.timestamp, 365 days, 0, address(0));
     }
 }
