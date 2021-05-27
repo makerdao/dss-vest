@@ -19,9 +19,8 @@
 
 pragma solidity 0.6.12;
 
-interface IERC20 {
+interface MintLike {
     function mint(address, uint256) external;
-    function balanceOf(address) external view returns (uint256);
 }
 
 interface ChainlogLike {
@@ -34,9 +33,7 @@ interface DaiJoinLike {
 
 interface VatLike {
     function hope(address) external;
-    function wards(address) external view returns (uint256);
     function suck(address, address, uint256) external;
-    function sin(address) external view returns (uint256);
 }
 
 abstract contract DssVest {
@@ -274,11 +271,11 @@ abstract contract DssVest {
 
 contract DssVestMintable is DssVest {
 
-    IERC20 public immutable gem;
+    MintLike public immutable gem;
 
     // This contract must be authorized to 'mint' on the token
     constructor(address _gem, uint256 _cap) public DssVest(_cap) {
-        gem = IERC20(_gem);
+        gem = MintLike(_gem);
     }
 
     function pay(address _guy, uint256 _amt) override internal {
@@ -298,10 +295,10 @@ contract DssVestSuckable is DssVest {
     // This contract must be authorized to 'suck' on the vat
     constructor(address _chainlog, uint256 _cap) public DssVest(_cap) {
         chainlog = ChainlogLike(_chainlog);
-        vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
-        daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
+        VatLike _vat = vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
+        DaiJoinLike _daiJoin = daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
 
-        VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT")).hope(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
+        _vat.hope(address(_daiJoin));
     }
 
     function pay(address _guy, uint256 _amt) override internal {
