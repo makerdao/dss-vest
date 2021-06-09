@@ -10,9 +10,23 @@ A token vesting plan for contributors. Includes scheduling, cliff vesting, and t
 
 ### Deployment
 
-`dss-vest` allows DAOs to create a participant vesting plan via token mints.
+`dss-vest` allows DAOs to create a participant vesting plan via token mints or surplus withdrawals.
+
+```
+$ dapp update
+
+$ dapp deploy-mainnet-mintable
+or
+$ dapp deploy-mainnet-suckable
+```
+
+#### DssVestMintable
 
 Pass the address of the vesting token to the constructor on deploy. This contract must be given authority to `mint()` tokens in the vesting contract.
+
+#### DssVestSuckable
+
+Pass the MCD [chainlog](https://github.com/makerdao/dss-chain-log) address to the constructor to set up the contract for scheduled Dai `suck`s. Note: this contract must be given authority to `suck()` Dai from the `vat`'s surplus buffer.
 
 ### Creating a vest
 
