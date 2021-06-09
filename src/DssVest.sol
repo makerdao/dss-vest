@@ -267,7 +267,7 @@ abstract contract DssVest {
     /*
         @dev Override this to implement payment logic.
         @param _guy The payment target.
-        @param _amt The payment amount.
+        @param _amt The payment amount. [units are implementation-specific]
     */
     function pay(address _guy, uint256 _amt) virtual internal;
 }
@@ -320,7 +320,7 @@ contract DssVestSuckable is DssVest {
     /*
         @dev Override pay to handle suck logic
         @param _guy The recipient of the ERC-20 Dai
-        @param _amt The amount of Dai to send to the _guy
+        @param _amt The amount of Dai to send to the _guy [WAD]
     */
     function pay(address _guy, uint256 _amt) override internal {
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
