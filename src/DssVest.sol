@@ -82,7 +82,10 @@ abstract contract DssVest {
 
     uint256 public cap; // Maximum per-second issuance token rate
 
-    // This contract must be authorized to 'mint' on the token
+    /*
+        @dev Base vesting logic contract constructor
+        @param _cap The per-second rate of collateral distribution (in collateral units)
+    */
     constructor(uint256 _cap) public {
         cap = _cap;
         wards[msg.sender] = 1;
@@ -264,7 +267,7 @@ abstract contract DssVest {
     /*
         @dev Override this to implement payment logic.
         @param _guy The payment target.
-        @param _amt The payment amount.
+        @param _amt The payment amount. [units are implementation-specific]
     */
     function pay(address _guy, uint256 _amt) virtual internal;
 }
@@ -273,11 +276,20 @@ contract DssVestMintable is DssVest {
 
     MintLike public immutable gem;
 
-    // This contract must be authorized to 'mint' on the token
+    /*
+        @dev This contract must be authorized to 'mint' on the token
+        @param _gem The contract address of the mintable token
+        @param _cap The per-second rate of collateral distribution (in collateral units)
+    */
     constructor(address _gem, uint256 _cap) public DssVest(_cap) {
         gem = MintLike(_gem);
     }
 
+    /*
+        @dev Override pay to handle mint logic
+        @param _guy The recipient of the minted token
+        @param _amt The amount of token units to send to the _guy
+    */
     function pay(address _guy, uint256 _amt) override internal {
         gem.mint(_guy, _amt);
     }
@@ -292,7 +304,11 @@ contract DssVestSuckable is DssVest {
     VatLike      public immutable vat;
     DaiJoinLike  public immutable daiJoin;
 
-    // This contract must be authorized to 'suck' on the vat
+    /*
+        @dev This contract must be authorized to 'suck' on the vat
+        @param _chainlog The contract address of the MCD chainlog
+        @param _cap The per-second rate of collateral distribution (in collateral units)
+    */
     constructor(address _chainlog, uint256 _cap) public DssVest(_cap) {
         chainlog = ChainlogLike(_chainlog);
         VatLike _vat = vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
@@ -301,6 +317,11 @@ contract DssVestSuckable is DssVest {
         _vat.hope(address(_daiJoin));
     }
 
+    /*
+        @dev Override pay to handle suck logic
+        @param _guy The recipient of the ERC-20 Dai
+        @param _amt The amount of Dai to send to the _guy [WAD]
+    */
     function pay(address _guy, uint256 _amt) override internal {
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
