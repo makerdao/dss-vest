@@ -53,8 +53,10 @@ contract DssVestTest is DSTest {
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
-        vest = new DssVestMintable(MKR_TOKEN, (2000 * WAD) / (4 * 365 days));
-        suckableVest = new DssVestSuckable(CHAINLOG, (2000 * WAD) / (4 * 365 days));
+        vest = new DssVestMintable(MKR_TOKEN);
+        vest.file("cap", (2000 * WAD) / (4 * 365 days));
+        suckableVest = new DssVestSuckable(CHAINLOG);
+        suckableVest.file("cap", (2000 * WAD) / (4 * 365 days));
 
         // Set testing contract as a MKR Auth
         hevm.store(
@@ -74,7 +76,7 @@ contract DssVestTest is DSTest {
     }
 
     function testCost() public {
-        new DssVestMintable(MKR_TOKEN, 500 * WAD);
+        new DssVestMintable(MKR_TOKEN);
     }
 
     function testInit() public {
