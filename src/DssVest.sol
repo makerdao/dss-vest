@@ -84,13 +84,23 @@ abstract contract DssVest {
 
     /*
         @dev Base vesting logic contract constructor
-        @param _cap The per-second rate of collateral distribution (in collateral units)
     */
-    constructor(uint256 _cap) public {
-        cap = _cap;
+    constructor() public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
+
+    /*
+        @dev (Required) Set the per-second token issuance rate.
+        @param what  The tag of the value to change (ex. bytes32("cap"))
+        @param data  The value to update (ex. cap of 1000 tokens/yr == 1000*WAD/365 days)
+    */
+    function file(bytes32 what, uint256 data) external auth {
+        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
+        else revert("DssVest/file-unrecognized-param");
+        emit File(what, data);
+    }
+
 
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x);
@@ -238,12 +248,6 @@ abstract contract DssVest {
         emit Yank(_id);
     }
 
-    function file(bytes32 what, uint256 data) external auth {
-        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
-        else revert("DssVest/file-unrecognized-param");
-        emit File(what, data);
-    }
-
     /*
         @dev Allows owner to move a contract to a different address
         @param _id  The id of the vesting contract
@@ -279,9 +283,8 @@ contract DssVestMintable is DssVest {
     /*
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
-        @param _cap The per-second rate of collateral distribution (in collateral units)
     */
-    constructor(address _gem, uint256 _cap) public DssVest(_cap) {
+    constructor(address _gem) public DssVest() {
         gem = MintLike(_gem);
     }
 
@@ -307,9 +310,8 @@ contract DssVestSuckable is DssVest {
     /*
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
-        @param _cap The per-second rate of collateral distribution (in collateral units)
     */
-    constructor(address _chainlog, uint256 _cap) public DssVest(_cap) {
+    constructor(address _chainlog) public DssVest() {
         chainlog = ChainlogLike(_chainlog);
         VatLike _vat = vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
         DaiJoinLike _daiJoin = daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));

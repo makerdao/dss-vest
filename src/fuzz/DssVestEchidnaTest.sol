@@ -13,8 +13,8 @@ contract DssVestEchidnaTest {
     uint256 internal immutable salt;
 
     constructor() public {
-      vest = new DssVestMintable(address(GEM), 500 * WAD);
-      vest.rely(address(this));
+      vest = new DssVestMintable(address(GEM));
+      vest.file("cap", 500 * WAD / 365 days);
       salt = block.timestamp;
     }
 

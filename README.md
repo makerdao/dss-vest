@@ -24,9 +24,13 @@ $ dapp deploy-mainnet-suckable
 
 Pass the address of the vesting token to the constructor on deploy. This contract must be given authority to `mint()` tokens in the vesting contract.
 
+After deployment, governance must set the `cap` value using the `file` function.
+
 #### DssVestSuckable
 
 Pass the MCD [chainlog](https://github.com/makerdao/dss-chain-log) address to the constructor to set up the contract for scheduled Dai `suck`s. Note: this contract must be given authority to `suck()` Dai from the `vat`'s surplus buffer.
+
+After deployment, governance must set the `cap` value using the `file` function.
 
 ### Creating a vest
 
