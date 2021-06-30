@@ -69,6 +69,14 @@ Returns the amount of tokens that have accrued from the beginning of the plan to
 
 Returns true if the plan id is valid and has not been claimed or yanked before the cliff.
 
+#### `restrict(uint256)`
+
+Allows governance or the owner to restrict vesting to the owner only.
+
+#### `unrestrict(uint256)`
+
+Allows governance or the owner to enable permissionless vesting.
+
 ### Revoking a vest
 
 #### `yank(_id)`
