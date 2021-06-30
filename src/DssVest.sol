@@ -79,6 +79,7 @@ abstract contract DssVest {
     }
     mapping (uint256 => Award) public awards;
     uint256 public ids;
+    mapping (uint256 => uint256) public restricted;
 
     uint256 public cap; // Maximum per-second issuance token rate
 
@@ -159,8 +160,9 @@ abstract contract DssVest {
     */
     function vest(uint256 _id) external lock {
         Award memory _award = awards[_id];
-        require(_award.usr == msg.sender, "DssVest/only-user-can-claim");
-
+        if (restricted[_id] == 1) {
+            require(_award.usr == msg.sender, "DssVest/only-user-can-claim");
+        }
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         pay(_award.usr, amt);
         awards[_id].rxd = toUint128(add(awards[_id].rxd, amt));
@@ -216,6 +218,24 @@ abstract contract DssVest {
     */
     function unpaid(uint256 _time, uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal pure returns (uint256 amt) {
         amt = _time < _clf ? 0 : sub(accrued(_time, _bgn, _fin, _tot), _rxd);
+    }
+
+    /*
+        @dev Allows governance or the owner to restrict vesting to the owner only
+        @param _id The id of the vesting contract
+    */
+    function restrict(uint256 _id) public {
+        require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender);
+        restricted[_id] = 1;
+    }
+
+    /*
+        @dev Allows governance or the owner to enable permissionless vesting
+        @param _id The id of the vesting contract
+    */
+    function unrestrict(uint256 _id) public {
+        require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender);
+        restricted[_id] = 0;
     }
 
     /*
