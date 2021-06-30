@@ -10,6 +10,7 @@ contract DssVestEchidnaTest {
     MintLike internal GEM;
 
     uint256 internal constant WAD = 10**18;
+    uint256 internal constant MAX_UINT = type(uint256).max;
     uint256 internal immutable salt;
 
     constructor() public {
@@ -64,7 +65,7 @@ contract DssVestEchidnaTest {
     }
 
     function test_vest(uint256 id) internal {
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         (, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         if (block.timestamp < clf) assert(amt == 0);

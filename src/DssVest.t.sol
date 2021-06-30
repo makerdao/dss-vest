@@ -43,6 +43,7 @@ contract DssVestTest is DSTest {
     address constant VOW = 0xA950524441892A31ebddF91d3cEEFa04Bf454466;
     uint256 constant WAD = 10**18;
     uint256 constant RAY = 10**27;
+    uint256 constant MAX_UINT = type(uint256).max;
     uint256 constant days_vest = WAD;
 
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
@@ -104,7 +105,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(rxd), 0);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
 
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 10 days);
@@ -115,7 +116,7 @@ contract DssVestTest is DSTest {
 
         hevm.warp(now + 70 days);
 
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 80 days);
@@ -130,7 +131,7 @@ contract DssVestTest is DSTest {
 
         hevm.warp(now + 10 days);
 
-        vest.vest(id); // vest is inside cliff, no payout should happen
+        vest.vest(id, MAX_UINT); // vest is inside cliff, no payout should happen
         (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 10 days);
@@ -155,7 +156,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(rxd), 0);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
 
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         // After final payout, vesting information is removed
         assertEq(usr, address(this));
@@ -191,17 +192,17 @@ contract DssVestTest is DSTest {
         assertEq(vest.unpaid(id), days_vest * 2);       // past cliff
         hevm.warp(block.timestamp + 2 days);
         assertEq(vest.unpaid(id), days_vest * 4);       // past cliff
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(vest.unpaid(id), 0);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), days_vest * 4);
         hevm.warp(block.timestamp + 10 days);
         assertEq(vest.unpaid(id), days_vest * 10);
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(vest.unpaid(id), 0);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), days_vest * 14);
         hevm.warp(block.timestamp + 120 days);           // vesting complete
         assertEq(vest.unpaid(id), days_vest * 86);
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 100 * days_vest);
     }
 
@@ -219,21 +220,21 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 2 days);
         assertEq(vest.unpaid(id), days_vest * 4);       // past cliff
         assertEq(vest.accrued(id), days_vest * 4);
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(vest.unpaid(id), 0);
         assertEq(vest.accrued(id), days_vest * 4);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), days_vest * 4);
         hevm.warp(block.timestamp + 10 days);
         assertEq(vest.unpaid(id), days_vest * 10);
         assertEq(vest.accrued(id), days_vest * 14);
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(vest.unpaid(id), 0);
         assertEq(vest.accrued(id), days_vest * 14);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), days_vest * 14);
         hevm.warp(block.timestamp + 120 days);       // vesting complete
         assertEq(vest.unpaid(id), days_vest * 86);
         assertEq(vest.accrued(id), days_vest * 100);
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 100 * days_vest);
     }
 
@@ -260,7 +261,7 @@ contract DssVestTest is DSTest {
         vest.yank(id); // yank after cliff
         assertTrue(vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
-        vest.vest(id);
+        vest.vest(id, MAX_UINT);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 2 * days_vest);
         assertTrue(!vest.valid(id));
     }
@@ -293,7 +294,7 @@ contract DssVestTest is DSTest {
         assertEq(amt, 2 * days_vest);   // amt doesn't get updated on second yank
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 999 days);
-        vest.vest(id); // user collects at some future time
+        vest.vest(id, MAX_UINT); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 2 * days_vest);
     }
@@ -304,7 +305,7 @@ contract DssVestTest is DSTest {
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
         assertEq(vest.unpaid(id), 2 * days_vest);
-        vest.vest(id); // collect some now
+        vest.vest(id, MAX_UINT); // collect some now
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 2 * days_vest);
 
         hevm.warp(block.timestamp + 2 days);
@@ -319,7 +320,7 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.unpaid(id), 2 * days_vest);
         assertEq(vest.accrued(id), 4 * days_vest);
-        vest.vest(id); // user collects at some future time
+        vest.vest(id, MAX_UINT); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 4 * days_vest);
     }
@@ -338,7 +339,7 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.unpaid(id), 51 * days_vest);
         assertEq(vest.accrued(id), 51 * days_vest);
-        vest.vest(id); // user collects at some future time
+        vest.vest(id, MAX_UINT); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 51 * days_vest);
     }
@@ -357,7 +358,7 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.unpaid(id), 21 * days_vest);
         assertEq(vest.accrued(id), 21 * days_vest);
-        vest.vest(id); // user collects at some future time
+        vest.vest(id, MAX_UINT); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 21 * days_vest);
     }
@@ -374,7 +375,7 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.unpaid(id), 0);
         assertEq(vest.accrued(id), 0);
-        vest.vest(id); // user collects at some future time
+        vest.vest(id, MAX_UINT); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
     }
@@ -395,7 +396,7 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 999 days);
         assertEq(vest.unpaid(id), 100 * days_vest);
         assertEq(vest.accrued(id), 100 * days_vest);
-        vest.vest(id); // user collects at some future time
+        vest.vest(id, MAX_UINT); // user collects at some future time
         assertTrue(!vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 100 * days_vest);
     }
@@ -409,7 +410,7 @@ contract DssVestTest is DSTest {
         manager.yank(address(vest), id1);
         assertTrue(vest.valid(id1));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
-        vest.vest(id1);
+        vest.vest(id1, MAX_UINT);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 30 * days_vest);
         assertTrue(!vest.valid(id1));
 
@@ -461,15 +462,15 @@ contract DssVestTest is DSTest {
         uint256 id = suckableVest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
         assertTrue(suckableVest.valid(id));
         hevm.warp(block.timestamp + 1 days);
-        suckableVest.vest(id);
+        suckableVest.vest(id, MAX_UINT);
         assertEq(Token(DAI).balanceOf(address(this)), 1 * days_vest);
         assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 1 * days_vest * RAY);
         hevm.warp(block.timestamp + 9 days);
-        suckableVest.vest(id);
+        suckableVest.vest(id, MAX_UINT);
         assertEq(Token(DAI).balanceOf(address(this)), 10 * days_vest);
         assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 10 * days_vest * RAY);
         hevm.warp(block.timestamp + 365 days);
-        suckableVest.vest(id);
+        suckableVest.vest(id, MAX_UINT);
         assertEq(Token(DAI).balanceOf(address(this)), 100 * days_vest);
         assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
     }
@@ -488,5 +489,29 @@ contract DssVestTest is DSTest {
     function testFailCap() public {
         // Test failure at 1 over limit
         vest.init(address(this), 501 * WAD, block.timestamp, 365 days, 0, address(0));
+    }
+
+    function testVestPartialAmt() public {
+        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+
+        hevm.warp(now + 10 days);
+
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 0);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
+
+        vest.vest(id, 5 * days_vest);
+
+        (usr, bgn, clf, fin, amt, rxd, mgr)  = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 5 * days_vest);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 5 * days_vest);
     }
 }

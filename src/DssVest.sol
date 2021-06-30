@@ -101,7 +101,9 @@ abstract contract DssVest {
         emit File(what, data);
     }
 
-
+    function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
+        if (x > y) { z = y; } else { z = x; }
+    }
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x);
     }
@@ -155,13 +157,15 @@ abstract contract DssVest {
 
     /*
         @dev Owner of a vesting contract calls this to claim rewards
-        @param _id The id of the vesting contract
+        @param _id     The id of the vesting contract
+        @param _maxAmt The maximum amount to vest
     */
-    function vest(uint256 _id) external lock {
+    function vest(uint256 _id, uint256 _maxAmt) external lock {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "DssVest/only-user-can-claim");
 
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
+        amt = min(amt, _maxAmt);
         pay(_award.usr, amt);
         awards[_id].rxd = toUint128(add(awards[_id].rxd, amt));
         emit Vest(_id, amt);
