@@ -494,6 +494,7 @@ contract DssVestTest is DSTest {
     function testVestPartialAmt() public {
         uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
+        // Partial vesting
         hevm.warp(now + 10 days);
 
         (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
@@ -502,6 +503,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(fin), now + 90 days);
         assertEq(uint256(amt), 100 * days_vest);
         assertEq(uint256(rxd), 0);
+        assertEq(vest.unpaid(id), 10 * days_vest);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
 
         vest.vest(id, 5 * days_vest);
@@ -512,6 +514,53 @@ contract DssVestTest is DSTest {
         assertEq(uint256(fin), now + 90 days);
         assertEq(uint256(amt), 100 * days_vest);
         assertEq(uint256(rxd), 5 * days_vest);
+        assertEq(vest.unpaid(id), 5 * days_vest);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 5 * days_vest);
+
+        // Additional partial vesting calls, up to the entire amount owed at this time
+        vest.vest(id, 3 * days_vest);
+
+        (usr, bgn, clf, fin, amt, rxd, mgr)  = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 8 * days_vest);
+        assertEq(vest.unpaid(id), 2 * days_vest);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 8 * days_vest);
+
+        vest.vest(id, 2 * days_vest);
+
+        (usr, bgn, clf, fin, amt, rxd, mgr)  = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 10 * days_vest);
+        assertEq(vest.unpaid(id), 0);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 10 * days_vest);
+
+        // Another partial vesting after subsequent elapsed time
+        hevm.warp(now + 40 days);
+
+        (usr, bgn, clf, fin, amt, rxd, mgr)  = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 50 days);
+        assertEq(uint256(fin), now + 50 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 10 * days_vest);
+        assertEq(vest.unpaid(id), 40 * days_vest);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 10 * days_vest);
+
+        vest.vest(id, 20 * days_vest);
+
+        (usr, bgn, clf, fin, amt, rxd, mgr)  = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 50 days);
+        assertEq(uint256(fin), now + 50 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 30 * days_vest);
+        assertEq(vest.unpaid(id), 20 * days_vest);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 30 * days_vest);
     }
 }
