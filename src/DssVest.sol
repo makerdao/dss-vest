@@ -224,7 +224,7 @@ abstract contract DssVest {
         @dev Allows governance or the owner to restrict vesting to the owner only
         @param _id The id of the vesting contract
     */
-    function restrict(uint256 _id) public {
+    function restrict(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender);
         restricted[_id] = 1;
     }
@@ -233,7 +233,7 @@ abstract contract DssVest {
         @dev Allows governance or the owner to enable permissionless vesting
         @param _id The id of the vesting contract
     */
-    function unrestrict(uint256 _id) public {
+    function unrestrict(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender);
         restricted[_id] = 0;
     }
