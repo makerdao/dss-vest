@@ -495,7 +495,7 @@ contract DssVestTest is DSTest {
         alice.vest(address(vest), id);
     }
 
-    function testRestrict() public {
+    function testRestrictions() public {
         User bob = new User();
         uint256 id = vest.init(address(bob), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
@@ -504,17 +504,8 @@ contract DssVestTest is DSTest {
         bob.restrict(address(vest), id);
 
         assertEq(vest.restricted(id), 1);
-    }
 
-    function testUnrestrict() public {
-        User bob = new User();
-        uint256 id = vest.init(address(bob), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
-
-        assertEq(vest.restricted(id), 0);
-
-        bob.restrict(address(vest), id);
-
-        assertEq(vest.restricted(id), 1);
+        bob.vest(address(vest), id);
 
         bob.unrestrict(address(vest), id);
 
