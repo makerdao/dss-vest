@@ -105,7 +105,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(rxd), 0);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
 
-        vest.vest(id, MAX_UINT);
+        vest.vest(id);
         (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 10 days);
