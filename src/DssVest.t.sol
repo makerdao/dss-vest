@@ -43,7 +43,6 @@ contract DssVestTest is DSTest {
     address constant VOW = 0xA950524441892A31ebddF91d3cEEFa04Bf454466;
     uint256 constant WAD = 10**18;
     uint256 constant RAY = 10**27;
-    uint256 constant MAX_UINT = type(uint256).max;
     uint256 constant days_vest = WAD;
 
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
@@ -116,7 +115,7 @@ contract DssVestTest is DSTest {
 
         hevm.warp(now + 70 days);
 
-        vest.vest(id, MAX_UINT);
+        vest.vest(id, uint256(-1));
         (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 80 days);
