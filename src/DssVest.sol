@@ -156,11 +156,28 @@ abstract contract DssVest {
     }
 
     /*
+        @dev Owner of a vesting contract calls this to claim all available rewards
+        @param _id     The id of the vesting contract
+    */
+    function vest(uint256 _id) external lock {
+        _vest(_id, uint256(-1));
+    }
+
+    /*
         @dev Owner of a vesting contract calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
     function vest(uint256 _id, uint256 _maxAmt) external lock {
+        _vest(_id, _maxAmt);
+    }
+
+    /*
+        @dev Owner of a vesting contract calls this to claim rewards
+        @param _id     The id of the vesting contract
+        @param _maxAmt The maximum amount to vest
+    */
+    function _vest(uint256 _id, uint256 _maxAmt) internal {
         Award memory _award = awards[_id];
         require(_award.usr == msg.sender, "DssVest/only-user-can-claim");
 
