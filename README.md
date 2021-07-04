@@ -51,7 +51,11 @@ Init a new vest to create a vesting plan.
 
 #### `vest(_id)`
 
-The vesting plan participant calls `vest(id)` after the cliff period to pay out accrued and unpaid tokens.
+The vesting plan participant calls `vest(id)` after the cliff period to pay out all accrued and unpaid tokens.
+
+#### `vest(_id, _maxAmt)`
+
+The vesting plan participant calls `vest(id, maxAmt)` after the cliff period to pay out accrued and unpaid tokens, up to maxAmt.
 
 #### `move(_id, _dst)`
 
