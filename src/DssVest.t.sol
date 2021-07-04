@@ -30,6 +30,26 @@ contract Manager {
     }
 }
 
+contract ThirdPartyVest {
+    function vest(address dssvest, uint256 id) external {
+        DssVest(dssvest).vest(id);
+    }
+}
+
+contract User {
+    function vest(address dssvest, uint256 id) external {
+        DssVest(dssvest).vest(id);
+    }
+
+    function restrict(address dssvest, uint256 id) external {
+        DssVest(dssvest).restrict(id);
+    }
+
+    function unrestrict(address dssvest, uint256 id) external {
+        DssVest(dssvest).unrestrict(id);
+    }
+}
+
 contract DssVestTest is DSTest {
     Hevm hevm;
     DssVestMintable vest;
@@ -418,6 +438,87 @@ contract DssVestTest is DSTest {
         assertTrue(vest.valid(id2));
         manager.yank(address(vest), id2);
         assertTrue(!vest.valid(id2));
+    }
+
+    function testUnRestrictedVest() public {
+        ThirdPartyVest alice = new ThirdPartyVest();
+        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+
+        hevm.warp(now + 10 days);
+
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 amt, uint128 rxd, address mgr) = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 0);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
+
+        alice.vest(address(vest), id);
+
+        (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 10 * days_vest);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 10 * days_vest);
+
+        hevm.warp(now + 70 days);
+
+        alice.vest(address(vest), id);
+        (usr, bgn, clf, fin, amt, rxd, mgr) = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 80 days);
+        assertEq(uint256(fin), now + 20 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 80 * days_vest);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 80 * days_vest);
+    }
+
+    function testFailRestrictedVest() public {
+        ThirdPartyVest alice = new ThirdPartyVest();
+        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+
+        hevm.warp(now + 10 days);
+
+        (address usr, uint48 bgn,, uint48 fin, uint128 amt, uint128 rxd,) = vest.awards(id);
+        assertEq(usr, address(this));
+        assertEq(uint256(bgn), now - 10 days);
+        assertEq(uint256(fin), now + 90 days);
+        assertEq(uint256(amt), 100 * days_vest);
+        assertEq(uint256(rxd), 0);
+        assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
+
+        vest.restrict(id);
+
+        alice.vest(address(vest), id);
+    }
+
+    function testRestrictions() public {
+        User bob = new User();
+        uint256 id = vest.init(address(bob), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+
+        assertEq(vest.restricted(id), 0);
+
+        bob.restrict(address(vest), id);
+
+        assertEq(vest.restricted(id), 1);
+
+        bob.vest(address(vest), id);
+
+        bob.unrestrict(address(vest), id);
+
+        assertEq(vest.restricted(id), 0);
+
+        // also test auth ability
+        vest.restrict(id);
+
+        assertEq(vest.restricted(id), 1);
+
+        vest.unrestrict(id);
+
+        assertEq(vest.restricted(id), 0);
     }
 
     function testFailMgrYankUnauthed() public {
