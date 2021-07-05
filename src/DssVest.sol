@@ -258,11 +258,20 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Allows governance or the manager to remove a vesting contract
+        @dev Allows governance or the manager to remove a vesting contract immediately
         @param _id The id of the vesting contract
     */
     function yank(uint256 _id) external {
-        yank(_id, block.timestamp);
+        _yank(_id, block.timestamp);
+    }
+
+    /*
+        @dev Allows governance or the manager to remove a vesting contract at a future time
+        @param _id  The id of the vesting contract
+        @param _end A scheduled time to end the vest
+    */
+    function yank(uint256 _id, uint256 _end) external {
+        _yank(_id, _end);
     }
 
     /*
@@ -270,7 +279,7 @@ abstract contract DssVest {
         @param _id  The id of the vesting contract
         @param _end A scheduled time to end the vest
     */
-    function yank(uint256 _id, uint256 _end) public {
+    function _yank(uint256 _id, uint256 _end) internal {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "DssVest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
