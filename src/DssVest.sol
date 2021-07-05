@@ -312,8 +312,8 @@ abstract contract DssVest {
         @dev Return true if a contract is valid
         @param _id The id of the vesting contract
     */
-    function valid(uint256 _id) external view returns (bool) {
-        return awards[_id].rxd < awards[_id].tot;
+    function valid(uint256 _id) external view returns (bool isValid) {
+        isValid = awards[_id].rxd < awards[_id].tot;
     }
 
     /*
