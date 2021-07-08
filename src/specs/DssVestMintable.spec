@@ -69,10 +69,10 @@ rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, 
     assert(ids(e) == id, "Init did not return the Id as expected");
     assert(valid(e, id), "Init did not return a valid Id");
     assert(usr == _usr, "Init did not set usr as expected");
-    assert(_bgn <= max_uint96 / 2 => bgn == _bgn, "Init did not set bgn as expected");
-    assert(_bgn + _clf <= max_uint96 / 2 => clf == _bgn + _clf, "Init did not set clf as expected");
-    assert(_bgn + _tau <= max_uint96 / 2 => fin == _bgn + _tau, "Init did not set fin as expected");
-    assert(_tot <= max_uint128 => tot == _tot, "Init did not set tot as expected");
+    assert(bgn == _bgn, "Init did not set bgn as expected");
+    assert(clf == _bgn + _clf, "Init did not set clf as expected");
+    assert(fin == _bgn + _tau, "Init did not set fin as expected");
+    assert(tot == _tot, "Init did not set tot as expected");
     assert(rxd == 0, "Init did not set rxd as expected");
     assert(mgr == _mgr, "Init did not set mgr as expected");
 }
