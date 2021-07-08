@@ -58,17 +58,23 @@ rule deny_revert(address usr) {
 rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) {
     env e;
 
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     uint256 prevId = ids(e);
 
     uint256 id = init(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
 
-    //(address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, address mgr) = awards(e, id);
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(e, id);
 
     assert(ids(e) == prevId + 1, "Init did not increase the Ids as expected");
     assert(ids(e) == id, "Init did not return the Id as expected");
     assert(valid(e, id), "Init did not return a valid Id");
-    //assert(usr == _usr, "Init did not set usr as expected");
-
+    assert(usr == _usr, "Init did not set usr as expected");
+    assert(_bgn <= max_uint96 / 2 => bgn == _bgn, "Init did not set bgn as expected");
+    assert(_bgn + _clf <= max_uint96 / 2 => clf == _bgn + _clf, "Init did not set clf as expected");
+    assert(_bgn + _tau <= max_uint96 / 2 => fin == _bgn + _tau, "Init did not set fin as expected");
+    assert(_tot <= max_uint128 => tot == _tot, "Init did not set tot as expected");
+    assert(rxd == 0, "Init did not set rxd as expected");
+    assert(mgr == _mgr, "Init did not set mgr as expected");
 }
 
 // Verify revert rules on init
@@ -105,16 +111,16 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     assert(revert9  => lastReverted, "f");
     assert(revert10 => lastReverted, "g");
     assert(revert11 => lastReverted, "h");
-    //assert(revert12 => lastReverted, "i");
-    assert(lastReverted => revert1  ||
-                           revert2  ||
-                           revert3  ||
-                           revert4  ||
-                           revert5  ||
-                           revert6  ||
-                           revert7  ||
-                           revert8  ||
-                           revert9  ||
-                           revert10 ||
-                           revert11, "Revert rules are not covering all the cases");
+    assert(lastReverted =>
+            revert1  ||
+            revert2  ||
+            revert3  ||
+            revert4  ||
+            revert5  ||
+            revert6  ||
+            revert7  ||
+            revert8  ||
+            revert9  ||
+            revert10 ||
+            revert11, "Revert rules are not covering all the cases");
 }
