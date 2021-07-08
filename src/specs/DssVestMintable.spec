@@ -82,6 +82,9 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     env e;
 
     uint256 ward = wards(e, e.msg.sender);
+    uint256 twenty_years = TWENTY_YEARS(e);
+    uint256 _cap = cap(e);
+    uint256 _ids = ids(e);
 
     init@withrevert(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
 
@@ -89,17 +92,18 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     bool revert2  = _usr == 0;
     bool revert3  = _tot == max_uint128;
     bool revert4  = _tot == 0;
-    bool revert5  = _bgn >= e.block.timestamp + TWENTY_YEARS(e);
-    bool revert6  = _bgn <= e.block.timestamp - TWENTY_YEARS(e);
+    bool revert5  = _bgn >= e.block.timestamp + twenty_years;
+    bool revert6  = _bgn <= e.block.timestamp - twenty_years;
     bool revert7  = _tau == 0;
-    bool revert8  = _tot / _tau > cap(e);
-    bool revert9  = _tau > TWENTY_YEARS(e);
+    bool revert8  = _tot / _tau > _cap;
+    bool revert9  = _tau > twenty_years;
     bool revert10 = _clf > _tau;
-    bool revert11 = ids(e) == max_uint;
+    bool revert11 = _ids == max_uint;
     bool revert12 = _bgn > max_uint96 / 2;
     bool revert13 = _bgn + _clf > max_uint96 / 2;
     bool revert14 = _bgn + _tau > max_uint96 / 2;
     bool revert15 = _tot > max_uint128;
+    bool revert16 = e.msg.value > 0;
 
     assert(revert1  => lastReverted, "Lack of auth did not revert");
     assert(revert2  => lastReverted, "Invalid user did not revert");
@@ -116,11 +120,13 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     assert(revert13 => lastReverted, "Cliff toUint48 cast overflow did not revert");
     assert(revert14 => lastReverted, "Fin toUint48 cast overflow did not revert");
     assert(revert15 => lastReverted, "Tot toUint128 cast overflow did not revert");
+    assert(revert16 => lastReverted, "Sending ETH did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
             revert4  || revert5  || revert6  ||
             revert7  || revert8  || revert9  ||
             revert10 || revert11 || revert12 ||
-            revert13 || revert14 || revert15, "Revert rules are not covering all the cases");
+            revert13 || revert14 || revert15 ||
+            revert16, "Revert rules are not covering all the cases");
 }
