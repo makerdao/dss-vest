@@ -83,7 +83,6 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
 
     uint256 ward = wards(e, e.msg.sender);
 
-
     init@withrevert(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
 
     bool revert1  = ward != 1;
@@ -97,30 +96,31 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     bool revert9  = _tau > TWENTY_YEARS(e);
     bool revert10 = _clf > _tau;
     bool revert11 = ids(e) == max_uint;
+    bool revert12 = _bgn > max_uint96 / 2;
+    bool revert13 = _bgn + _clf > max_uint96 / 2;
+    bool revert14 = _bgn + _tau > max_uint96 / 2;
+    bool revert15 = _tot > max_uint128;
 
     assert(revert1  => lastReverted, "Lack of auth did not revert");
-    assert(revert2  => lastReverted, "Amount error did not revert");
-    assert(revert3  => lastReverted, "No vest total ammount did not revert");
-    assert(revert4  => lastReverted, "Starting timestamp too far did not revert");
-    assert(revert5  => lastReverted, "Starting timestamp too long ago did not revert");
-    assert(revert6  => lastReverted, "a");
-    assert(revert7  => lastReverted, "b");
-    assert(revert6  => lastReverted, "c");
-    assert(revert7  => lastReverted, "d");
-    assert(revert8  => lastReverted, "e");
-    assert(revert9  => lastReverted, "f");
-    assert(revert10 => lastReverted, "g");
-    assert(revert11 => lastReverted, "h");
+    assert(revert2  => lastReverted, "Invalid user did not revert");
+    assert(revert3  => lastReverted, "Amount error did not revert");
+    assert(revert4  => lastReverted, "No vest total ammount did not revert");
+    assert(revert5  => lastReverted, "Starting timestamp too far did not revert");
+    assert(revert6  => lastReverted, "Starting timestamp too long ago did not revert");
+    assert(revert7  => lastReverted, "Tau zero did not revert");
+    assert(revert8  => lastReverted, "Rate too high did not revert");
+    assert(revert9  => lastReverted, "Tau too long did not revert");
+    assert(revert10 => lastReverted, "Cliff too long did not revert");
+    assert(revert11 => lastReverted, "Ids overflow did not revert");
+    assert(revert12 => lastReverted, "Starting timestamp toUint48 cast did not revert");
+    assert(revert13 => lastReverted, "Cliff toUint48 cast overflow did not revert");
+    assert(revert14 => lastReverted, "Fin toUint48 cast overflow did not revert");
+    assert(revert15 => lastReverted, "Tot toUint128 cast overflow did not revert");
+
     assert(lastReverted =>
-            revert1  ||
-            revert2  ||
-            revert3  ||
-            revert4  ||
-            revert5  ||
-            revert6  ||
-            revert7  ||
-            revert8  ||
-            revert9  ||
-            revert10 ||
-            revert11, "Revert rules are not covering all the cases");
+            revert1  || revert2  || revert3  ||
+            revert4  || revert5  || revert6  ||
+            revert7  || revert8  || revert9  ||
+            revert10 || revert11 || revert12 ||
+            revert13 || revert14 || revert15, "Revert rules are not covering all the cases");
 }
