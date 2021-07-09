@@ -256,6 +256,32 @@ rule vest_revert(uint256 _id) {
     assert(lastReverted => revert1 || revert2 || revert3 || revert4 || revert5, "Revert rules are not covering all the cases");
 }
 
+// Verify that amt behaves correctly on accrued
+rule accrued(uint256 _id) {
+    env e;
+
+    uint256 WAD = 10^18;
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+
+    require(fin > bgn);
+
+    uint256 gem = (
+        e.block.timestamp >= fin
+            ? tot
+            : tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD
+    );
+
+    bool timeLeBgn = e.block.timestamp < bgn;
+    bool timeHioEqFin = e.block.timestamp >= fin;
+
+    uint256 amt = accrued(e, _id);
+
+    assert(timeLeBgn => amt == 0, "Accrued did not return amt equal to zero as expected");
+    assert(!timeLeBgn && timeHioEqFin => amt == tot, "Accrued did not return amt equal to tot as expected");
+    assert(!timeLeBgn && !timeHioEqFin => amt == gem, "Accrued did not return amt equal to gem as expected");
+}
+
 // Verify that restricted behaves correctly on restrict
 rule restrict(uint256 _id) {
     env e;
