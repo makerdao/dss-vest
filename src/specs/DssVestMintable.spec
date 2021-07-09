@@ -157,29 +157,33 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
 rule vest(uint256 _id) {
     env e;
 
-    address _usr; uint48 _bgn; uint48 _clf; uint48 _fin; uint128 _tot; uint128 _rxd; address _mgr;
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     uint256 WAD = 10^18;
 
-    _usr, _bgn, _clf, _fin, _tot, _rxd, _mgr  = awards(e, _id);
+    address _usrB; uint48 _bgnB; uint48 _clfB; uint48 _finB; uint128 _totB; uint128 _rxdB; address _mgrB;
+    _usrB, _bgnB, _clfB, _finB, _totB, _rxdB, _mgrB  = awards(e, _id);
+
+    require(_finB > 0);
+
     uint256 amt = unpaid(e, _id);
-    uint256 t = (e.block.timestamp - _bgn) * WAD / _fin;
-    uint256 gem = _tot * t / WAD;
+    // uint256 t = (e.block.timestamp - _bgn) * WAD / _fin;
+
+    bool timeLeClif = e.block.timestamp < _clfB;
+    bool timeLeBgn = e.block.timestamp < _bgnB;
+    bool timeHioEqFin = e.block.timestamp >= _finB;
 
     vest(e, _id);
 
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
-    bool timeLeClif = e.block.timestamp < _clf;
-    bool timeLeBgn = e.block.timestamp < _bgn;
-    bool timeMoEqFin = e.block.timestamp >= _fin;
+    // address _usrA; uint48 _bgnA; uint48 _clfA; uint48 _finA; uint128 _totA; uint128 _rxdA; address _mgrA;
+    // usrA, bgnA, clfA, finA, totA, rxdA, mgrA  = awards(e, _id);
+    // uint256 gem = _totA * t / WAD;
 
     assert(timeLeClif => amt == 0, "Vest did not set amt as expected");
-    assert(!timeLeClif && timeLeBgn => amt == _rxd, "Vest did not set amt as expected");
-    assert(!timeLeClif && !timeLeBgn && timeMoEqFin => amt == _tot - _rxd, "Vest did not set amt as expected");
-    assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => t >= 0 && t < WAD, "T exceed expected range");
-    assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => gem >= 0 && gem < tot, "Gem exceed expected range");
-    assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => amt == gem - _rxd, "Vest did not set amt as expected");
-    assert(amt < max_uint => rxd == amt + _rxd, "Vest did not set rxd as expected");
+    // assert(!timeLeClif && timeLeBgn => amt == _rxd, "Vest did not set amt as expected");
+    assert(!timeLeClif && !timeLeBgn && timeHioEqFin => amt == _totB - _rxdB, "Vest did not set amt as expected");
+    // assert(!timeLeClif && !timeLeBgn && !timeHioEqFin => t >= 0 && t < WAD, "T exceed expected range");
+    // assert(!timeLeClif && !timeLeBgn && !timeHioEqFin => gem >= 0 && gem < tot, "Gem exceed expected range");
+    // assert(!timeLeClif && !timeLeBgn && !timeHioEqFin => amt == gem - _rxd, "Vest did not set amt as expected");
+    // assert(amt < max_uint => rxd == amt + _rxd, "Vest did not set rxd as expected");
 }
 
 // Verify revert rules on vest
