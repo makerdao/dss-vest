@@ -1,5 +1,15 @@
 // DssVestMintable.spec
 
+ghost lockedGhost() returns uint256;
+
+hook Sstore locked uint256 n_locked STORAGE {
+    havoc lockedGhost assuming lockedGhost@new() == n_locked;
+}
+
+hook Sload uint256 value locked STORAGE {
+    require lockedGhost() == value;
+}
+
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
     env e;
@@ -87,51 +97,51 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     uint256 _ids = ids(e);
 
     init@withrevert(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
+    uint256 locked = lockedGhost();
 
     uint256 clf = _bgn + _clf;
     uint256 fin = _bgn + _tau;
 
+    uint256 max_uint48 = 2^48 - 1;
+
     bool revert1  = ward != 1;
-    bool revert2  = _usr == 0;
-    bool revert3  = _tot == max_uint128;
+    bool revert2  = locked != 0;
+    bool revert3  = _usr == 0;
     bool revert4  = _tot == 0;
-    bool revert5  = _bgn >= e.block.timestamp + twenty_years;
-    bool revert6  = _bgn <= e.block.timestamp - twenty_years;
-    bool revert7  = _tau == 0;
-    bool revert8  = _tot / _tau > _cap;
-    bool revert9  = _tau > twenty_years;
-    bool revert10 = _clf > _tau;
-    bool revert11 = _ids == max_uint;
-    bool revert12 = _bgn > max_uint96 / 2;
-    bool revert13 = clf > max_uint96 / 2;
-    bool revert14 = fin > max_uint96 / 2;
-    bool revert15 = _tot > max_uint128;
-    bool revert16 = e.msg.value > 0;
-    bool revert17 = e.block.timestamp + twenty_years < e.block.timestamp;
-    bool revert18 = e.block.timestamp - twenty_years > e.block.timestamp;
-    bool revert19 = clf < _bgn;
-    bool revert20 = fin < _bgn;
+    bool revert5  = e.block.timestamp + twenty_years > max_uint;
+    bool revert6  = _bgn >= e.block.timestamp + twenty_years;
+    bool revert7  = e.block.timestamp < twenty_years;
+    bool revert8  = _bgn <= e.block.timestamp - twenty_years;
+    bool revert9  = _tau == 0;
+    bool revert10 = _tot / _tau > _cap;
+    bool revert11 = _tau > twenty_years;
+    bool revert12 = _clf > _tau;
+    bool revert13 = _ids >= max_uint;
+    bool revert14 = _bgn > max_uint48;
+    bool revert15 = clf > max_uint48;
+    bool revert16 = fin > max_uint48;
+    // Remove the - 1 from the next rule when the require(_tot < uint128(-1)) is removed from the code
+    bool revert17 = _tot > max_uint128 - 1;
+    bool revert18 = e.msg.value > 0;
 
     assert(revert1  => lastReverted, "Lack of auth did not revert");
-    assert(revert2  => lastReverted, "Invalid user did not revert");
-    assert(revert3  => lastReverted, "Amount error did not revert");
+    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert3  => lastReverted, "Invalid user did not revert");
     assert(revert4  => lastReverted, "No vest total ammount did not revert");
-    assert(revert5  => lastReverted, "Starting timestamp too far did not revert");
-    assert(revert6  => lastReverted, "Starting timestamp too long ago did not revert");
-    assert(revert7  => lastReverted, "Tau zero did not revert");
-    assert(revert8  => lastReverted, "Rate too high did not revert");
-    assert(revert9  => lastReverted, "Tau too long did not revert");
-    assert(revert10 => lastReverted, "Cliff too long did not revert");
-    assert(revert11 => lastReverted, "Ids overflow did not revert");
-    assert(revert12 => lastReverted, "Starting timestamp toUint48 cast did not revert");
-    assert(revert13 => lastReverted, "Cliff toUint48 cast overflow did not revert");
-    assert(revert14 => lastReverted, "Fin toUint48 cast overflow did not revert");
-    assert(revert15 => lastReverted, "Tot toUint128 cast overflow did not revert");
-    assert(revert16 => lastReverted, "Sending ETH did not revert");
-    assert(revert17 => lastReverted, "Addition overflow did not revert");
-    assert(revert18 => lastReverted, "Subtraction underflow did not revert");
-    assert(revert19 => lastReverted, "Addition overflow did not revert");
-    assert(revert20 => lastReverted, "Addition overflow did not revert");
+    assert(revert5 => lastReverted, "Addition overflow did not revert 17");
+    assert(revert6  => lastReverted, "Starting timestamp too far did not revert");
+    assert(revert7 => lastReverted, "Subtraction underflow did not revert");
+    assert(revert8  => lastReverted, "Starting timestamp too long ago did not revert");
+    assert(revert9  => lastReverted, "Tau zero did not revert");
+    assert(revert10  => lastReverted, "Rate too high did not revert");
+    assert(revert11  => lastReverted, "Tau too long did not revert");
+    assert(revert12 => lastReverted, "Cliff too long did not revert");
+    assert(revert13 => lastReverted, "Ids overflow did not revert");
+    assert(revert14 => lastReverted, "Starting timestamp toUint48 cast did not revert");
+    assert(revert15 => lastReverted, "Cliff toUint48 cast overflow did not revert");
+    assert(revert16 => lastReverted, "Fin toUint48 cast overflow did not revert");
+    assert(revert17 => lastReverted, "Tot toUint128 cast overflow did not revert");
+    assert(revert18 => lastReverted, "Sending ETH did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -139,8 +149,7 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
             revert7  || revert8  || revert9  ||
             revert10 || revert11 || revert12 ||
             revert13 || revert14 || revert15 ||
-            revert16 || revert17 || revert18 ||
-            revert19 || revert20, "Revert rules are not covering all the cases");
+            revert16 || revert17 || revert18, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behaves correctly on vest
