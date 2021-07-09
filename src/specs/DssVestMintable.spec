@@ -14,8 +14,6 @@ hook Sload uint256 value locked STORAGE {
 rule rely(address usr) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
-
     rely(e, usr);
 
     assert(wards(e, usr) == 1, "Rely did not set the wards as expected");
@@ -40,8 +38,6 @@ rule rely_revert(address usr) {
 // Verify that wards behaves correctly on deny
 rule deny(address usr) {
     env e;
-
-    uint256 ward = wards(e, e.msg.sender);
 
     deny(e, usr);
 
