@@ -147,23 +147,27 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
 rule vest(uint256 _id) {
     env e;
 
+    address _usr; uint48 _bgn; uint48 _clf; uint48 _fin; uint128 _tot; uint128 _rxd; address _mgr;
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     uint256 WAD = 10^18;
+
+    _usr, _bgn, _clf, _fin, _tot, _rxd, _mgr  = awards(e, _id);
+    uint256 amt = unpaid(e, _id);
+    uint256 t = (e.block.timestamp - _bgn) * WAD / _fin;
+    uint256 gem = _tot * t / WAD;
 
     vest(e, _id);
 
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
-    uint256 amt = unpaid(e, _id);
-    uint256 t = (e.block.timestamp - bgn) * WAD / fin - bgn;
-    uint256 gem = tot * t / WAD;
-    bool timeLeClif = e.block.timestamp < clf;
-    bool timeLeBgn = e.block.timestamp < bgn;
-    bool timeMoEqFin = e.block.timestamp >= fin;
+    bool timeLeClif = e.block.timestamp < _clf;
+    bool timeLeBgn = e.block.timestamp < _bgn;
+    bool timeMoEqFin = e.block.timestamp >= _fin;
 
     assert(timeLeClif => amt == 0, "Vest did not set amt as expected");
-    assert(!timeLeClif && timeLeBgn => amt == rxd, "Vest did not set amt as expected");
-    assert(!timeLeClif && !timeLeBgn && timeMoEqFin => amt == tot - rxd, "Vest did not set amt as expected");
+    assert(!timeLeClif && timeLeBgn => amt == _rxd, "Vest did not set amt as expected");
+    assert(!timeLeClif && !timeLeBgn && timeMoEqFin => amt == _tot - _rxd, "Vest did not set amt as expected");
     assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => t >= 0 && t < WAD, "T exceed expected range");
     assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => gem >= 0 && gem < tot, "Gem exceed expected range");
-    assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => amt == gem - rxd, "Vest did not set amt as expected");
+    assert(!timeLeClif && !timeLeBgn && !timeMoEqFin => amt == gem - _rxd, "Vest did not set amt as expected");
+    assert(amt < max_uint => rxd == amt + _rxd, "Vest did not set rxd as expected");
 }
