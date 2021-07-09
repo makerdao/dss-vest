@@ -288,3 +288,35 @@ rule unrestrict_revert(uint256 _id) {
     assert(revert2 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
+
+// Verify that dst behaves correctly on move
+rule move(uint256 _id, address _dst) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+
+    move(e, _id, _dst);
+
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+
+    assert(usr == _dst, "Move did not set usr as expected");
+}
+
+// Verify revert rules on move
+rule move_revert(uint256 _id, address _dst) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+
+    move@withrevert(e, _id, _dst);
+
+    bool revert1 = usr != e.msg.sender;
+    bool revert2 = _dst == 0;
+    bool revert3 = e.msg.value > 0;
+
+    assert(revert1 => lastReverted, "Only user can move did not revert");
+    assert(revert2 => lastReverted, "Zero address invalid did not revert");
+    assert(revert3 => lastReverted, "Sending ETH did not revert");
+    assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
+}
