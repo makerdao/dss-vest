@@ -1,5 +1,9 @@
 // DssVestMintable.spec
 
+// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol --link DssVestMintable:gem=DSToken --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop
+
+using DSToken as token
+
 ghost lockedGhost() returns uint256;
 
 hook Sstore locked uint256 n_locked STORAGE {
@@ -182,31 +186,48 @@ rule vest(uint256 _id) {
 
     uint256 WAD = 10^18;
 
-    address _usrB; uint48 _bgnB; uint48 _clfB; uint48 _finB; uint128 _totB; uint128 _rxdB; address _mgrB;
-    _usrB, _bgnB, _clfB, _finB, _totB, _rxdB, _mgrB  = awards(e, _id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(e, _id);
 
-    require(_finB > 0);
+    require(usr != 0);
+    require(tot > 0);
+    require(fin > bgn);
+    require(fin >= clf);
+    require(clf >= bgn);
+    require(rxd <= tot);
 
-    uint256 amt = unpaid(e, _id);
-    // uint256 t = (e.block.timestamp - _bgn) * WAD / _fin;
+    uint256 amt = (
+        e.block.timestamp >= fin
+            ? tot
+            : tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD
+    ) - rxd;
 
-    bool timeLeClif = e.block.timestamp < _clfB;
-    bool timeLeBgn = e.block.timestamp < _bgnB;
-    bool timeHioEqFin = e.block.timestamp >= _finB;
+    uint256 balanceBefore = token.balanceOf(e, usr);
+    uint256 supplyBefore = token.totalSupply(e);
 
     vest(e, _id);
 
-    // address _usrA; uint48 _bgnA; uint48 _clfA; uint48 _finA; uint128 _totA; uint128 _rxdA; address _mgrA;
-    // usrA, bgnA, clfA, finA, totA, rxdA, mgrA  = awards(e, _id);
-    // uint256 gem = _totA * t / WAD;
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
+    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(e, _id);
 
-    assert(timeLeClif => amt == 0, "Vest did not set amt as expected");
-    // assert(!timeLeClif && timeLeBgn => amt == _rxd, "Vest did not set amt as expected");
-    assert(!timeLeClif && !timeLeBgn && timeHioEqFin => amt == _totB - _rxdB, "Vest did not set amt as expected");
-    // assert(!timeLeClif && !timeLeBgn && !timeHioEqFin => t >= 0 && t < WAD, "T exceed expected range");
-    // assert(!timeLeClif && !timeLeBgn && !timeHioEqFin => gem >= 0 && gem < tot, "Gem exceed expected range");
-    // assert(!timeLeClif && !timeLeBgn && !timeHioEqFin => amt == gem - _rxd, "Vest did not set amt as expected");
-    // assert(amt < max_uint => rxd == amt + _rxd, "Vest did not set rxd as expected");
+    uint256 balanceAfter = token.balanceOf(e, usr);
+    uint256 supplyAfter = token.totalSupply(e);
+
+    assert(usr2 == usr, "usr changed");
+    assert(bgn2 == bgn, "bgn changed");
+    assert(clf2 == clf, "clf changed");
+    assert(fin2 == fin, "fin changed");
+    assert(tot2 == tot, "tot changed");
+    assert(mgr2 == mgr, "mgr changed");
+    assert(rxd2 <= tot, "rxd got higher than total");
+    assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
+    assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
+    assert(e.block.timestamp < clf => supplyAfter == supplyBefore, "supply did not remain as expected");
+    assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
+    assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
+    assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
+    assert(e.block.timestamp >= clf => balanceAfter == balanceBefore + amt, "balance did not increase as expected");
+    assert(e.block.timestamp >= clf => supplyAfter == supplyBefore + amt, "supply did not increase as expected");
 }
 
 // Verify revert rules on vest
