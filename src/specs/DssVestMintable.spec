@@ -238,3 +238,30 @@ rule vest_revert(uint256 _id) {
     assert(revert5 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted => revert1 || revert2 || revert3 || revert4 || revert5, "Revert rules are not covering all the cases");
 }
+
+// Verify that restricted behaves correctly on restrict
+rule restrict(uint256 _id) {
+    env e;
+
+    restrict(e, _id);
+
+    assert(restricted(e, _id) == 1, "Restrict did not set restricted as expected");
+}
+
+// Verify revert rules on restrict
+rule restrict_revert(uint256 _id) {
+    env e;
+
+    uint256 ward = wards(e, e.msg.sender);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+
+    restrict@withrevert(e, _id);
+
+    bool revert1 = ward != 1 && usr != e.msg.sender;
+    bool revert2 = e.msg.value > 0;
+
+    assert(revert1 => lastReverted, "Only governance or owner can restrict did not revert");
+    assert(revert2 => lastReverted, "Sending ETH did not revert");
+    assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
+}
