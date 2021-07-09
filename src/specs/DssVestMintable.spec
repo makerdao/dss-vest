@@ -121,20 +121,21 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     bool revert15 = clf > max_uint48;
     bool revert16 = fin > max_uint48;
     // Remove the - 1 from the next rule when the require(_tot < uint128(-1)) is removed from the code
+    // toUint128(tot) already protects from overflow
     bool revert17 = _tot > max_uint128 - 1;
     bool revert18 = e.msg.value > 0;
 
     assert(revert1  => lastReverted, "Lack of auth did not revert");
-    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert2  => lastReverted, "Locked did not revert");
     assert(revert3  => lastReverted, "Invalid user did not revert");
     assert(revert4  => lastReverted, "No vest total ammount did not revert");
-    assert(revert5 => lastReverted, "Addition overflow did not revert 17");
+    assert(revert5  => lastReverted, "Addition overflow did not revert 17");
     assert(revert6  => lastReverted, "Starting timestamp too far did not revert");
-    assert(revert7 => lastReverted, "Subtraction underflow did not revert");
+    assert(revert7  => lastReverted, "Subtraction underflow did not revert");
     assert(revert8  => lastReverted, "Starting timestamp too long ago did not revert");
     assert(revert9  => lastReverted, "Tau zero did not revert");
-    assert(revert10  => lastReverted, "Rate too high did not revert");
-    assert(revert11  => lastReverted, "Tau too long did not revert");
+    assert(revert10 => lastReverted, "Rate too high did not revert");
+    assert(revert11 => lastReverted, "Tau too long did not revert");
     assert(revert12 => lastReverted, "Cliff too long did not revert");
     assert(revert13 => lastReverted, "Ids overflow did not revert");
     assert(revert14 => lastReverted, "Starting timestamp toUint48 cast did not revert");
