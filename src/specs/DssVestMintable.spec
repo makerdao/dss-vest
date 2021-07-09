@@ -64,6 +64,33 @@ rule deny_revert(address usr) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
+// Verify that cap behave correctly on file
+rule file(bytes32 what, uint256 data) {
+    env e;
+
+    file(e, what, data);
+
+    assert(cap(e) == data, "File did not set cap as expected");
+}
+
+// Verify revert rules on file
+rule file_revert(bytes32 what, uint256 data) {
+    env e;
+
+    uint256 ward = wards(e, e.msg.sender);
+
+    file@withrevert(e, what, data);
+
+    bool revert1 = ward != 1;
+    bool revert2 = what != 0x6361700000000000000000000000000000000000000000000000000000000000; // what != "cap"
+    bool revert3 = e.msg.value > 0;
+
+    assert(revert1 => lastReverted, "Lack of auth did not revert");
+    assert(revert2 => lastReverted, "File unrecognized param did not revert");
+    assert(revert3 => lastReverted, "Sending ETH did not revert");
+    assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
+}
+
 // Verify that awards behaves correctly on init
 rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) {
     env e;
