@@ -192,15 +192,18 @@ rule vest_revert(uint256 _id) {
     uint256 amt = unpaid(e, _id);
 
     vest@withrevert(e, _id);
+    uint256 locked = lockedGhost();
 
-    bool revert1 = rstd != 0 && e.msg.sender != usr;
-    bool revert2 = rxd + amt < rxd;
-    bool revert3 = rxd + amt > max_uint128;
-    bool revert4 = e.msg.value > 0;
+    bool revert1 = locked != 0;
+    bool revert2 = rstd != 0 && e.msg.sender != usr;
+    bool revert3 = rxd + amt < rxd;
+    bool revert4 = rxd + amt > max_uint128;
+    bool revert5 = e.msg.value > 0;
 
-    assert(revert1 => lastReverted, "Only user can claim did not revert");
-    assert(revert2 => lastReverted, "Addition overflow did not revert");
-    assert(revert3 => lastReverted, "Rxd toUint128 cast overflow did not revert");
-    assert(revert4 => lastReverted, "Sending ETH did not revert");
-    assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
+    assert(revert1 => lastReverted, "Locked did not revert");
+    assert(revert2 => lastReverted, "Only user can claim did not revert");
+    assert(revert3 => lastReverted, "Addition overflow did not revert");
+    assert(revert4 => lastReverted, "Rxd toUint128 cast overflow did not revert");
+    assert(revert5 => lastReverted, "Sending ETH did not revert");
+    assert(lastReverted => revert1 || revert2 || revert3 || revert4 || revert5, "Revert rules are not covering all the cases");
 }
