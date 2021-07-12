@@ -341,6 +341,43 @@ rule unpaid(uint256 _id) {
     assert(e.block.timestamp >= clf => amt == amtAccrued - rxd, "Unpaid did not return amt as expected");
 }
 
+// Verify revert rules on unpaid
+rule unpaid_revert(uint256 _id) {
+    env e;
+
+    uint256 WAD = 10^18;
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    uint256 timeDelta = e.block.timestamp - bgn;
+    uint amtAccrued = accrued(e, _id);
+
+    require(fin > bgn);
+
+    uint256 t = (e.block.timestamp - bgn) * WAD / (fin - bgn);
+
+    unpaid@withrevert(e, _id);
+
+    bool revert1 = usr == 0;
+    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
+    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD) / WAD != timeDelta;
+    bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
+    bool revert5 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * t / t != tot;
+    bool revert6 = e.block.timestamp >= clf && amtAccrued - rxd > amtAccrued;
+    bool revert7 = e.msg.value > 0;
+
+    assert(revert1 => lastReverted, "Invalid award did not revert");
+    assert(revert2 => lastReverted, "Subtraction underflow timeDelta did not revert");
+    assert(revert3 => lastReverted, "Multiplication overflow did not revert");
+    assert(revert4 => lastReverted, "Subtraction underflow fin did not revert");
+    assert(revert5 => lastReverted, "Substraction underflow amtAccrued did not revert");
+    assert(revert6 => lastReverted, "Multiplication overflow tot did not revert");
+    assert(revert7 => lastReverted, "Sending ETH did not revert");
+    assert(lastReverted =>
+            revert1 || revert2 || revert3 ||
+            revert4 || revert5 || revert6 ||
+            revert7, "Revert rules are not covering all the cases");
+}
+
 // Verify that restricted behaves correctly on restrict
 rule restrict(uint256 _id) {
     env e;
