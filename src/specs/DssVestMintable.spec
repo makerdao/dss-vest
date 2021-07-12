@@ -235,8 +235,13 @@ rule vest_revert(uint256 _id) {
     env e;
 
     uint256 rstd = restricted(e, _id);
+    address owner = token.owner(e);
+    address authority = token.authority(e);
+    bool stop = token.stopped(e);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    uint256 usrBalance = token.balanceOf(e, usr);
+    uint256 supply = token.totalSupply(e);
     uint256 amt = unpaid(e, _id);
 
     vest@withrevert(e, _id);
@@ -247,13 +252,26 @@ rule vest_revert(uint256 _id) {
     bool revert3 = rxd + amt < rxd;
     bool revert4 = rxd + amt > max_uint128;
     bool revert5 = e.msg.value > 0;
+    bool revert6 = e.msg.sender != owner && e.msg.sender != currentContract && authority == 0;
+    //TODO authority.canCall(src, address(this), sig) return false
+    bool revert7 = stop == true;
+    bool revert8 = usrBalance + amt < usrBalance;
+    bool revert9 = supply + amt < supply;
+
 
     assert(revert1 => lastReverted, "Locked did not revert");
     assert(revert2 => lastReverted, "Only user can claim did not revert");
     assert(revert3 => lastReverted, "Addition overflow did not revert");
     assert(revert4 => lastReverted, "Rxd toUint128 cast overflow did not revert");
     assert(revert5 => lastReverted, "Sending ETH did not revert");
-    assert(lastReverted => revert1 || revert2 || revert3 || revert4 || revert5, "Revert rules are not covering all the cases");
+    assert(revert6 => lastReverted, "Lack of auth did not revert");
+    assert(revert7 => lastReverted, "Stopped did not revert");
+    assert(revert8 => lastReverted, "Usr balance overflow did not revert");
+    assert(revert9 => lastReverted, "Total supply overflow did not revert");
+    assert(lastReverted =>
+            revert1 || revert2 || revert3 ||
+            revert4 || revert5 || revert6 ||
+            revert7 || revert8 || revert9, "Revert rules are not covering all the cases");
 }
 
 // Verify that amt behaves correctly on accrued
