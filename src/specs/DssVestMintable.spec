@@ -327,6 +327,20 @@ rule accrued_revert(uint256 _id) {
             revert4 || revert5, "Revert rules are not covering all the cases");
 }
 
+// Verify that amt behaves correctly on unpaid
+rule unpaid(uint256 _id) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    uint amtAccrued = accrued(e, _id);
+
+    uint256 amt = unpaid(e, _id);
+
+    assert(e.block.timestamp < clf => amt == 0, "Unpaid did not return amt equal to zero as expected");
+    assert(e.block.timestamp >= clf => amt == amtAccrued - rxd, "Unpaid did not return amt as expected");
+}
+
 // Verify that restricted behaves correctly on restrict
 rule restrict(uint256 _id) {
     env e;
