@@ -284,20 +284,13 @@ rule accrued(uint256 _id) {
 
     require(fin > bgn);
 
-    uint256 gem = (
-        e.block.timestamp >= fin
-            ? tot
-            : tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD
-    );
-
-    bool timeLeBgn = e.block.timestamp < bgn;
-    bool timeHioEqFin = e.block.timestamp >= fin;
+    uint256 gem = tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD;
 
     uint256 amt = accrued(e, _id);
 
-    assert(timeLeBgn => amt == 0, "Accrued did not return amt equal to zero as expected");
-    assert(!timeLeBgn && timeHioEqFin => amt == tot, "Accrued did not return amt equal to tot as expected");
-    assert(!timeLeBgn && !timeHioEqFin => amt == gem, "Accrued did not return amt equal to gem as expected");
+    assert(e.block.timestamp < bgn => amt == 0, "Accrued did not return amt equal to zero as expected");
+    assert(e.block.timestamp >= bgn && e.block.timestamp >= fin => amt == tot, "Accrued did not return amt equal to tot as expected");
+    assert(e.block.timestamp >= bgn && e.block.timestamp < fin => amt == gem, "Accrued did not return amt equal to gem as expected");
 }
 
 // Verify revert rules on accrued
@@ -432,7 +425,7 @@ rule unrestrict_revert(uint256 _id) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on vest
+// Verify that awards behaves correctly on yank
 rule yank(uint256 _id) {
     env e;
 
