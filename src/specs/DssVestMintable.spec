@@ -432,6 +432,36 @@ rule unrestrict_revert(uint256 _id) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
+// Verify that awards behaves correctly on vest
+rule yank(uint256 _id) {
+    env e;
+
+    uint256 WAD = 10^18;
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(e, _id);
+
+    require(usr != 0);
+    require(tot > 0);
+    require(fin > bgn);
+    require(fin >= clf);
+    require(clf >= bgn);
+    require(rxd <= tot);
+
+    uint256 amt = (
+        e.block.timestamp >= fin
+            ? tot
+            : tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD
+    );
+
+    yank(e, _id);
+
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
+    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(e, _id);
+
+    assert(e.block.timestamp > fin => fin2 == fin, "Yank did not set fin as expected");
+    assert(e.block.timestamp >= clf => tot2 == amt, "Yank did not set tot as expected");
+}
+
 // Verify that dst behaves correctly on move
 rule move(uint256 _id, address _dst) {
     env e;
