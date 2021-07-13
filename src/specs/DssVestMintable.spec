@@ -459,6 +459,7 @@ rule yank(uint256 _id) {
     usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(e, _id);
 
     assert(e.block.timestamp > fin => fin2 == fin, "Yank did not set fin as expected");
+    assert(e.block.timestamp < clf => tot2 == rxd, "Yank did not set tot as expected");
     assert(e.block.timestamp >= clf => tot2 == amt, "Yank did not set tot as expected");
 }
 
