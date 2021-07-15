@@ -4,6 +4,12 @@
 
 using DSToken as token
 
+methods {
+    wards(address) returns (uint256) envfree
+    ids() returns (uint256) envfree
+    cap() returns (uint256) envfree
+}
+
 ghost lockedGhost() returns uint256;
 
 hook Sstore locked uint256 n_locked STORAGE {
@@ -20,14 +26,14 @@ rule rely(address usr) {
 
     rely(e, usr);
 
-    assert(wards(e, usr) == 1, "Rely did not set the wards as expected");
+    assert(wards(usr) == 1, "Rely did not set the wards as expected");
 }
 
 // Verify revert rules on rely
 rule rely_revert(address usr) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
 
     rely@withrevert(e, usr);
 
@@ -45,14 +51,14 @@ rule deny(address usr) {
 
     deny(e, usr);
 
-    assert(wards(e, usr) == 0, "Deny did not set the wards as expected");
+    assert(wards(usr) == 0, "Deny did not set the wards as expected");
 }
 
 // Verify revert rules on deny
 rule deny_revert(address usr) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
 
     deny@withrevert(e, usr);
 
@@ -70,14 +76,14 @@ rule file(bytes32 what, uint256 data) {
 
     file(e, what, data);
 
-    assert(cap(e) == data, "File did not set cap as expected");
+    assert(cap() == data, "File did not set cap as expected");
 }
 
 // Verify revert rules on file
 rule file_revert(bytes32 what, uint256 data) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
 
     file@withrevert(e, what, data);
 
@@ -96,14 +102,14 @@ rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, 
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    uint256 prevId = ids(e);
+    uint256 prevId = ids();
 
     uint256 id = init(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
 
     usr, bgn, clf, fin, tot, rxd, mgr = awards(e, id);
 
-    assert(ids(e) == prevId + 1, "Init did not increase the Ids as expected");
-    assert(ids(e) == id, "Init did not return the Id as expected");
+    assert(ids() == prevId + 1, "Init did not increase the Ids as expected");
+    assert(ids() == id, "Init did not return the Id as expected");
     assert(valid(e, id), "Init did not return a valid Id");
     assert(usr == _usr, "Init did not set usr as expected");
     assert(bgn == _bgn, "Init did not set bgn as expected");
@@ -118,10 +124,10 @@ rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, 
 rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
     uint256 twenty_years = TWENTY_YEARS(e);
-    uint256 _cap = cap(e);
-    uint256 _ids = ids(e);
+    uint256 _cap = cap();
+    uint256 _ids = ids();
 
     init@withrevert(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
     uint256 locked = lockedGhost();
@@ -384,7 +390,7 @@ rule restrict(uint256 _id) {
 rule restrict_revert(uint256 _id) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
 
@@ -411,7 +417,7 @@ rule unrestrict(uint256 _id) {
 rule unrestrict_revert(uint256 _id) {
     env e;
 
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
 
@@ -456,14 +462,13 @@ rule yank(uint256 _id) {
     assert(e.block.timestamp >= clf => tot2 == amt, "Yank did not set tot as expected");
 }
 
-
 // Verify revert rules on yank
 rule yank_revert(uint256 _id) {
     env e;
 
     uint256 WAD = 10^18;
     uint256 max_uint48 = 2^48 - 1;
-    uint256 ward = wards(e, e.msg.sender);
+    uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
     uint256 timeDelta = e.block.timestamp - bgn;
