@@ -1,6 +1,6 @@
 // DssVestMintable.spec
 
-// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestMintable:gem=DSToken --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop --rule_sanity
+// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestMintable:gem=DSToken DSToken:authority=MockAuthority --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop --rule_sanity
 
 using DSToken as token
 using MockAuthority as authorityInstance
@@ -242,9 +242,10 @@ rule vest(uint256 _id) {
 rule vest_revert(uint256 _id) {
     env e;
 
-    uint256 rstd = restricted(e, _id);
+    uint256 _restricted = restricted(e, _id);
     address owner = token.owner(e);
     address authority = token.authority(e);
+    bool canCall = authorityInstance.canCall(e, e.msg.sender, currentContract, e.msg.sig);
     bool stop = token.stopped(e);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
@@ -256,11 +257,11 @@ rule vest_revert(uint256 _id) {
     vest@withrevert(e, _id);
 
     bool revert1 = locked != 0;
-    bool revert2 = rstd != 0 && e.msg.sender != usr;
+    bool revert2 = _restricted != 0 && usr != e.msg.sender;
     bool revert3 = rxd + amt < rxd;
     bool revert4 = rxd + amt > max_uint128;
     bool revert5 = e.msg.value > 0;
-    bool revert6 = e.msg.sender != owner && e.msg.sender != currentContract && authority == 0 && authorityInstance.canCall(e, e.msg.sender, currentContract, e.msg.sig);
+    bool revert6 = e.msg.sender != owner && e.msg.sender != currentContract && authority == 0 && canCall == false;
     bool revert7 = stop == true;
     bool revert8 = usrBalance + amt < usrBalance;
     bool revert9 = supply + amt < supply;
