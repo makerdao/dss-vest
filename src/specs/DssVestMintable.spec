@@ -11,6 +11,7 @@ methods {
 }
 
 definition WAD() returns uint256 = 10^18;
+definition max_uint48() returns uint256 = 2^48 - 1;
 
 ghost lockedGhost() returns uint256;
 
@@ -137,8 +138,6 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     uint256 clf = _bgn + _clf;
     uint256 fin = _bgn + _tau;
 
-    uint256 max_uint48 = 2^48 - 1;
-
     bool revert1  = ward != 1;
     bool revert2  = locked != 0;
     bool revert3  = _usr == 0;
@@ -152,9 +151,9 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     bool revert11 = _tau > twenty_years;
     bool revert12 = _clf > _tau;
     bool revert13 = _ids >= max_uint;
-    bool revert14 = _bgn > max_uint48;
-    bool revert15 = clf > max_uint48;
-    bool revert16 = fin > max_uint48;
+    bool revert14 = _bgn > max_uint48();
+    bool revert15 = clf > max_uint48();
+    bool revert16 = fin > max_uint48();
     // Remove the - 1 from the next rule when the require(_tot < uint128(-1)) is removed from the code
     // toUint128(tot) already protects from overflow
     bool revert17 = _tot > max_uint128 - 1;
@@ -462,7 +461,6 @@ rule yank(uint256 _id) {
 rule yank_revert(uint256 _id) {
     env e;
 
-    uint256 max_uint48 = 2^48 - 1;
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
@@ -475,7 +473,7 @@ rule yank_revert(uint256 _id) {
 
     bool revert1  = ward != 1 && mgr != e.msg.sender;
     bool revert2  = usr == 0;
-    bool revert3  = fin > max_uint48;
+    bool revert3  = fin > max_uint48();
     bool revert4  = e.block.timestamp < clf && 0 + rxd < 0;
     bool revert5  = e.block.timestamp >= clf && amt + rxd > max_uint128;
     bool revert6  = e.block.timestamp >= clf && amt + rxd < amt;
