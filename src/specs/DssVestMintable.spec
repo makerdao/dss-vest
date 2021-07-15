@@ -10,6 +10,8 @@ methods {
     cap() returns (uint256) envfree
 }
 
+definition WAD() returns uint256 = 10^18;
+
 ghost lockedGhost() returns uint256;
 
 hook Sstore locked uint256 n_locked STORAGE {
@@ -190,8 +192,6 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
 rule vest(uint256 _id) {
     env e;
 
-    uint256 WAD = 10^18;
-
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr = awards(e, _id);
 
@@ -205,7 +205,7 @@ rule vest(uint256 _id) {
     uint256 amt = (
         e.block.timestamp >= fin
             ? tot
-            : tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD
+            : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
     ) - rxd;
 
     uint256 balanceBefore = token.balanceOf(e, usr);
@@ -284,13 +284,12 @@ rule vest_revert(uint256 _id) {
 rule accrued(uint256 _id) {
     env e;
 
-    uint256 WAD = 10^18;
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
 
     require(fin > bgn);
 
-    uint256 gem = tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD;
+    uint256 gem = tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD();
 
     uint256 amt = accrued(e, _id);
 
@@ -303,7 +302,6 @@ rule accrued(uint256 _id) {
 rule accrued_revert(uint256 _id) {
     env e;
 
-    uint256 WAD = 10^18;
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
     uint256 timeDelta = e.block.timestamp - bgn;
@@ -312,7 +310,7 @@ rule accrued_revert(uint256 _id) {
 
     bool revert1 = usr == 0;
     bool revert2 = e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert3 = e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD) / WAD != timeDelta;
+    bool revert3 = e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
     bool revert4 = e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
     bool revert5 = e.msg.value > 0;
 
@@ -344,7 +342,6 @@ rule unpaid(uint256 _id) {
 rule unpaid_revert(uint256 _id) {
     env e;
 
-    uint256 WAD = 10^18;
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
     uint256 timeDelta = e.block.timestamp - bgn;
@@ -352,13 +349,13 @@ rule unpaid_revert(uint256 _id) {
 
     require(fin > bgn);
 
-    uint256 t = (e.block.timestamp - bgn) * WAD / (fin - bgn);
+    uint256 t = (e.block.timestamp - bgn) * WAD() / (fin - bgn);
 
     unpaid@withrevert(e, _id);
 
     bool revert1 = usr == 0;
     bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD) / WAD != timeDelta;
+    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
     bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
     bool revert5 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * t / t != tot;
     bool revert6 = e.block.timestamp >= clf && amtAccrued - rxd > amtAccrued;
@@ -435,7 +432,6 @@ rule unrestrict_revert(uint256 _id) {
 rule yank(uint256 _id) {
     env e;
 
-    uint256 WAD = 10^18;
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr = awards(e, _id);
 
@@ -449,7 +445,7 @@ rule yank(uint256 _id) {
     uint256 amt = (
         e.block.timestamp >= fin
             ? tot
-            : tot * ((e.block.timestamp - bgn) * WAD / (fin - bgn)) / WAD
+            : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
     );
 
     yank(e, _id);
@@ -466,7 +462,6 @@ rule yank(uint256 _id) {
 rule yank_revert(uint256 _id) {
     env e;
 
-    uint256 WAD = 10^18;
     uint256 max_uint48 = 2^48 - 1;
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
@@ -485,7 +480,7 @@ rule yank_revert(uint256 _id) {
     bool revert5  = e.block.timestamp >= clf && amt + rxd > max_uint128;
     bool revert6  = e.block.timestamp >= clf && amt + rxd < amt;
     bool revert7  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert8  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD) / WAD != timeDelta;
+    bool revert8  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
     bool revert9  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
     bool revert10 = e.msg.value > 0;
 
