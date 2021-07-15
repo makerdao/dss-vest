@@ -8,6 +8,7 @@ methods {
     wards(address) returns (uint256) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
+    TWENTY_YEARS() returns (uint256) envfree
 }
 
 definition WAD() returns uint256 = 10^18;
@@ -128,12 +129,12 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     env e;
 
     uint256 ward = wards(e.msg.sender);
-    uint256 twenty_years = TWENTY_YEARS(e);
+    uint256 twenty_years = TWENTY_YEARS();
     uint256 _cap = cap();
     uint256 _ids = ids();
+    uint256 locked = lockedGhost();
 
     init@withrevert(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
-    uint256 locked = lockedGhost();
 
     uint256 clf = _bgn + _clf;
     uint256 fin = _bgn + _tau;
@@ -248,9 +249,9 @@ rule vest_revert(uint256 _id) {
     uint256 usrBalance = token.balanceOf(e, usr);
     uint256 supply = token.totalSupply(e);
     uint256 amt = unpaid(e, _id);
+    uint256 locked = lockedGhost();
 
     vest@withrevert(e, _id);
-    uint256 locked = lockedGhost();
 
     bool revert1 = locked != 0;
     bool revert2 = rstd != 0 && e.msg.sender != usr;
