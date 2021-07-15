@@ -1,14 +1,16 @@
 // DssVestMintable.spec
 
-// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol --link DssVestMintable:gem=DSToken --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop
+// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestMintable:gem=DSToken --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop --rule_sanity
 
 using DSToken as token
+using MockAuthority as authorityInstance
 
 methods {
     wards(address) returns (uint256) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     TWENTY_YEARS() returns (uint256) envfree
+    canCall(address, address, bytes4) returns bool => DISPATCHER(true) UNRESOLVED
 }
 
 definition WAD() returns uint256 = 10^18;
@@ -258,8 +260,7 @@ rule vest_revert(uint256 _id) {
     bool revert3 = rxd + amt < rxd;
     bool revert4 = rxd + amt > max_uint128;
     bool revert5 = e.msg.value > 0;
-    bool revert6 = e.msg.sender != owner && e.msg.sender != currentContract && authority == 0;
-    //TODO authority.canCall(src, address(this), sig) return false
+    bool revert6 = e.msg.sender != owner && e.msg.sender != currentContract && authority == 0 && authorityInstance.canCall(e, e.msg.sender, currentContract, e.msg.sig);
     bool revert7 = stop == true;
     bool revert8 = usrBalance + amt < usrBalance;
     bool revert9 = supply + amt < supply;
