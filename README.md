@@ -97,16 +97,16 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 - Building using Nix
   ```
-  $ nix-env -i -f https://github.com/crytic/echidna/tarball/master`
+  $ nix-env -i -f https://github.com/crytic/echidna/tarball/master
   ```
 
 ### Run Echidna Tests
 
 - Install solc 0.6.12:
   ```
-  $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-versions.solc_0_6_12`
+  $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-versions.solc_0_6_12
   ```
 - Run Echidna Tests:
   ```
-  $ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml`
+  $ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml
   ```
