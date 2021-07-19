@@ -3,14 +3,13 @@
 // certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestMintable:gem=DSToken DSToken:authority=MockAuthority --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop --rule_sanity
 
 using DSToken as token
-using MockAuthority as authorityInstance
+using MockAuthority as authority
 
 methods {
     wards(address) returns (uint256) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     TWENTY_YEARS() returns (uint256) envfree
-    canCall(address, address, bytes4) returns bool => DISPATCHER(true) UNRESOLVED
 }
 
 definition WAD() returns uint256 = 10^18;
@@ -243,9 +242,9 @@ rule vest_revert(uint256 _id) {
     env e;
 
     uint256 _restricted = restricted(e, _id);
-    address owner = token.owner(e);
-    address authority = token.authority(e);
-    bool canCall = authorityInstance.canCall(e, e.msg.sender, currentContract, e.msg.sig);
+    address tokenOwner = token.owner(e);
+    bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
+    // bool isAuthorized = token.isAuthorized(e, currentContract, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
     bool stop = token.stopped(e);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
@@ -261,11 +260,11 @@ rule vest_revert(uint256 _id) {
     bool revert3 = rxd + amt < rxd;
     bool revert4 = rxd + amt > max_uint128;
     bool revert5 = e.msg.value > 0;
-    bool revert6 = e.msg.sender != owner && e.msg.sender != currentContract && authority == 0 && canCall == false;
+    bool revert6 = currentContract != token && currentContract != tokenOwner && (authority == 0 || !canCall);
+    // bool revert6 = !isAuthorized;
     bool revert7 = stop == true;
-    bool revert8 = usrBalance + amt < usrBalance;
-    bool revert9 = supply + amt < supply;
-
+    bool revert8 = usrBalance + amt > max_uint256;
+    bool revert9 = supply + amt > max_uint256;
 
     assert(revert1 => lastReverted, "Locked did not revert");
     assert(revert2 => lastReverted, "Only user can claim did not revert");
