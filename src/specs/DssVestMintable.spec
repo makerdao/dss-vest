@@ -10,6 +10,8 @@ methods {
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     TWENTY_YEARS() returns (uint256) envfree
+    token.balanceOf(address) returns (uint256) envfree
+    token.totalSupply() returns (uint256) envfree
 }
 
 definition WAD() returns uint256 = 10^18;
@@ -209,16 +211,16 @@ rule vest(uint256 _id) {
             : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
     ) - rxd;
 
-    uint256 balanceBefore = token.balanceOf(e, usr);
-    uint256 supplyBefore = token.totalSupply(e);
+    uint256 balanceBefore = token.balanceOf(usr);
+    uint256 supplyBefore = token.totalSupply();
 
     vest(e, _id);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
     usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(e, _id);
 
-    uint256 balanceAfter = token.balanceOf(e, usr);
-    uint256 supplyAfter = token.totalSupply(e);
+    uint256 balanceAfter = token.balanceOf(usr);
+    uint256 supplyAfter = token.totalSupply();
 
     assert(usr2 == usr, "usr changed");
     assert(bgn2 == bgn, "bgn changed");
@@ -248,8 +250,8 @@ rule vest_revert(uint256 _id) {
     bool stop = token.stopped(e);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
-    uint256 usrBalance = token.balanceOf(e, usr);
-    uint256 supply = token.totalSupply(e);
+    uint256 usrBalance = token.balanceOf(usr);
+    uint256 supply = token.totalSupply();
     uint256 amt = unpaid(e, _id);
     uint256 locked = lockedGhost();
 
