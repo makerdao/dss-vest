@@ -7,6 +7,7 @@ using MockAuthority as authority
 
 methods {
     wards(address) returns (uint256) envfree
+    awards(uint256) returns (address, uint48, uint48, uint48, uint128, uint128, address) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     gem() returns (address) envfree
@@ -115,7 +116,7 @@ rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, 
 
     uint256 id = init(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
 
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(e, id);
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(id);
 
     assert(ids() == prevId + 1, "Init did not increase the Ids as expected");
     assert(ids() == id, "Init did not return the Id as expected");
@@ -198,7 +199,7 @@ rule vest(uint256 _id) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
 
     require(usr != 0);
     require(tot > 0);
@@ -219,7 +220,7 @@ rule vest(uint256 _id) {
     vest(e, _id);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
-    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(e, _id);
+    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(_id);
 
     uint256 balanceAfter = token.balanceOf(usr);
     uint256 supplyAfter = token.totalSupply();
@@ -253,7 +254,7 @@ rule vest_revert(uint256 _id) {
     bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
     bool stop = token.stopped(e);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
     uint256 usrBalance = token.balanceOf(usr);
     uint256 supply = token.totalSupply();
     uint256 amt = unpaid(e, _id);
@@ -291,7 +292,7 @@ rule accrued(uint256 _id) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
 
     require(fin > bgn);
 
@@ -309,7 +310,7 @@ rule accrued_revert(uint256 _id) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
     uint256 timeDelta = e.block.timestamp - bgn;
 
     accrued@withrevert(e, _id);
@@ -335,7 +336,7 @@ rule unpaid(uint256 _id) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
     uint amtAccrued = accrued(e, _id);
 
     uint256 amt = unpaid(e, _id);
@@ -349,7 +350,7 @@ rule unpaid_revert(uint256 _id) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
     uint256 timeDelta = e.block.timestamp - bgn;
     uint amtAccrued = accrued(e, _id);
 
@@ -395,7 +396,7 @@ rule restrict_revert(uint256 _id) {
 
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
 
     restrict@withrevert(e, _id);
 
@@ -422,7 +423,7 @@ rule unrestrict_revert(uint256 _id) {
 
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
 
     unrestrict@withrevert(e, _id);
 
@@ -439,7 +440,7 @@ rule yank(uint256 _id) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
 
     require(usr != 0);
     require(tot > 0);
@@ -457,7 +458,7 @@ rule yank(uint256 _id) {
     yank(e, _id);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
-    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(e, _id);
+    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(_id);
 
     assert(e.block.timestamp > fin => fin2 == fin, "Yank did not set fin as expected");
     assert(e.block.timestamp < clf => tot2 == rxd, "Yank did not set tot as expected");
@@ -470,7 +471,7 @@ rule yank_revert(uint256 _id) {
 
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
     uint256 timeDelta = e.block.timestamp - bgn;
     uint256 amt = unpaid(e, _id);
 
@@ -514,7 +515,7 @@ rule move(uint256 _id, address _dst) {
 
     move(e, _id, _dst);
 
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
 
     assert(usr == _dst, "Move did not set usr as expected");
 }
@@ -524,7 +525,7 @@ rule move_revert(uint256 _id, address _dst) {
     env e;
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
 
     move@withrevert(e, _id, _dst);
 
