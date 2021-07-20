@@ -9,9 +9,11 @@ methods {
     wards(address) returns (uint256) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
+    gem() returns (address) envfree
     TWENTY_YEARS() returns (uint256) envfree
     token.balanceOf(address) returns (uint256) envfree
     token.totalSupply() returns (uint256) envfree
+    token.authority() returns (address) envfree
 }
 
 definition WAD() returns uint256 = 10^18;
@@ -243,10 +245,12 @@ rule vest(uint256 _id) {
 rule vest_revert(uint256 _id) {
     env e;
 
+    require(token == gem());
+    require(authority == token.authority());
+
     uint256 _restricted = restricted(e, _id);
     address tokenOwner = token.owner(e);
     bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
-    // bool isAuthorized = token.isAuthorized(e, currentContract, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
     bool stop = token.stopped(e);
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(e, _id);
@@ -263,7 +267,6 @@ rule vest_revert(uint256 _id) {
     bool revert4 = rxd + amt > max_uint128;
     bool revert5 = e.msg.value > 0;
     bool revert6 = currentContract != token && currentContract != tokenOwner && (authority == 0 || !canCall);
-    // bool revert6 = !isAuthorized;
     bool revert7 = stop == true;
     bool revert8 = usrBalance + amt > max_uint256;
     bool revert9 = supply + amt > max_uint256;
