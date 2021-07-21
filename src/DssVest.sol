@@ -133,7 +133,6 @@ abstract contract DssVest {
     */
     function init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
-        require(_tot < uint128(-1),                        "DssVest/amount-error");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
         require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
