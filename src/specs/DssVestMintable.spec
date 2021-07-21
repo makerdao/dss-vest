@@ -231,13 +231,13 @@ rule vest(uint256 _id) {
     assert(fin2 == fin, "fin changed");
     assert(tot2 == tot, "tot changed");
     assert(mgr2 == mgr, "mgr changed");
-    assert(rxd2 <= tot, "rxd got higher than total");
+    // assert(rxd2 <= tot, "rxd got higher than total");
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
     assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
     assert(e.block.timestamp < clf => supplyAfter == supplyBefore, "supply did not remain as expected");
     assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
     assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
-    assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
+    // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
     assert(e.block.timestamp >= clf => balanceAfter == balanceBefore + amt, "balance did not increase as expected");
     assert(e.block.timestamp >= clf => supplyAfter == supplyBefore + amt, "supply did not increase as expected");
 }
