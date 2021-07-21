@@ -141,7 +141,7 @@ abstract contract DssVest {
         require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
         require(_clf <= _tau,                              "DssVest/clf-too-long");
-        require(ids < uint256(-1),                         "DssVest/id-overflow");
+        require(id < uint256(-1),                          "DssVest/id-overflow");
 
         id = ++ids;
         awards[id] = Award({
@@ -345,6 +345,54 @@ contract DssVestMintable is DssVest {
         gem.mint(_guy, _amt);
     }
 
+	function certoraFunctionFinder0(uint256 p0, uint48 p1, uint48 p2, uint48 p3, uint128 p4, uint128 p5) external returns (uint256) {
+		require(block.gaslimit == 0xbeef1b01);
+		return unpaid(p0, p1, p2, p3, p4, p5);
+	}
+	function certoraFunctionFinder1(uint256 p0, uint256 p1) external returns (uint256) {
+		require(block.gaslimit == 0xbeef1b01);
+		return add(p0, p1);
+	}
+	function certoraFunctionFinder2(uint256 p0, uint256 p1) external  {
+		require(block.gaslimit == 0xbeef1b01);
+		 _yank(p0, p1);
+	}
+	function certoraFunctionFinder3(address p0, uint256 p1) external  {
+		require(block.gaslimit == 0xbeef1b01);
+		 pay(p0, p1);
+	}
+	function certoraFunctionFinder4(uint256 p0, uint256 p1) external returns (uint256) {
+		require(block.gaslimit == 0xbeef1b01);
+		return min(p0, p1);
+	}
+	function certoraFunctionFinder5(uint256 p0, uint48 p1, uint48 p2, uint128 p3) external returns (uint256) {
+		require(block.gaslimit == 0xbeef1b01);
+		return accrued(p0, p1, p2, p3);
+	}
+	function certoraFunctionFinder6(uint256 p0) external returns (uint48) {
+		require(block.gaslimit == 0xbeef1b01);
+		return toUint48(p0);
+	}
+	function certoraFunctionFinder7(uint256 p0, uint256 p1) external returns (uint256) {
+		require(block.gaslimit == 0xbeef1b01);
+		return sub(p0, p1);
+	}
+	function certoraFunctionFinder8(address p0, uint256 p1) external  {
+		require(block.gaslimit == 0xbeef1b01);
+		 pay(p0, p1);
+	}
+	function certoraFunctionFinder9(uint256 p0, uint256 p1) external  {
+		require(block.gaslimit == 0xbeef1b01);
+		 _vest(p0, p1);
+	}
+	function certoraFunctionFinder10(uint256 p0, uint256 p1) external returns (uint256) {
+		require(block.gaslimit == 0xbeef1b01);
+		return mul(p0, p1);
+	}
+	function certoraFunctionFinder11(uint256 p0) external returns (uint128) {
+		require(block.gaslimit == 0xbeef1b01);
+		return toUint128(p0);
+	}
 }
 
 contract DssVestSuckable is DssVest {

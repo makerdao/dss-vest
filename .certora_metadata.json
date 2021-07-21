@@ -1,0 +1,118 @@
+{
+    "args": {
+        "address": {},
+        "assert_contracts": null,
+        "build_only": false,
+        "cache": null,
+        "check_args": false,
+        "cloud": null,
+        "coinbaseMode": false,
+        "contracts": [
+            "DssVestMintable",
+            "MockAuthority",
+            "DSToken"
+        ],
+        "debug": false,
+        "delay_fetch_output_seconds": null,
+        "disableLocalTypeChecking": false,
+        "env": "production",
+        "file_paths": [
+            "src/DssVest.sol",
+            "src/specs/DSToken.sol",
+            "src/specs/MockAuthority.sol"
+        ],
+        "file_to_contract": {
+            "src/DssVest.sol": "DssVestMintable",
+            "src/specs/DSToken.sol": "DSToken",
+            "src/specs/MockAuthority.sol": "MockAuthority"
+        },
+        "files": [
+            "src/DssVest.sol:DssVestMintable",
+            "src/specs/DSToken.sol",
+            "src/specs/MockAuthority.sol"
+        ],
+        "internal_funcs": null,
+        "jar": null,
+        "java_args": null,
+        "key": "903b2f2496c75ae5c8b242f1bd211395f3b0e594",
+        "link": [
+            "DSToken:authority=MockAuthority",
+            "DssVestMintable:gem=DSToken"
+        ],
+        "local": false,
+        "log_query_frequency_seconds": null,
+        "loop_iter": null,
+        "max_attempts_to_fetch_output": null,
+        "max_graph_depth": null,
+        "max_poll_minutes": null,
+        "method": null,
+        "mode": "Mode.VERIFY",
+        "msg": null,
+        "no_compare": false,
+        "optimistic_loop": true,
+        "packages": null,
+        "packages_path": "/Users/gonzalo/Ethereum/dss-vest/node_modules",
+        "path": "/Users/gonzalo/Ethereum/dss-vest",
+        "process": "emv",
+        "queue_wait_minutes": null,
+        "rule": "vest",
+        "rule_sanity": true,
+        "settings": [
+            "-assumeUnwindCond",
+            "-rule=vest",
+            "-ruleSanityChecks"
+        ],
+        "short_output": false,
+        "smt_timeout": null,
+        "solc": "/usr/local/bin/solc",
+        "solc_args": null,
+        "solc_map": null,
+        "spec_files": [
+            "src/specs/DssVestMintable.spec"
+        ],
+        "staging": null,
+        "struct_link": null,
+        "tool_output": null,
+        "verify": [
+            "DssVestMintable:src/specs/DssVestMintable.spec"
+        ]
+    },
+    "branch": "certora-proofs",
+    "conf": {
+        "files": [
+            "src/DssVest.sol:DssVestMintable",
+            "src/specs/DSToken.sol",
+            "src/specs/MockAuthority.sol"
+        ],
+        "link": [
+            "DSToken:authority=MockAuthority",
+            "DssVestMintable:gem=DSToken"
+        ],
+        "optimistic_loop": true,
+        "process": "emv",
+        "rule": "vest",
+        "rule_sanity": true,
+        "verify": [
+            "DssVestMintable:src/specs/DssVestMintable.spec"
+        ]
+    },
+    "cwd_relative": ".",
+    "dirty": true,
+    "origin": "git@github.com:makerdao/dss-vest.git",
+    "raw_args": [
+        "/usr/local/bin/certoraRun",
+        "src/DssVest.sol:DssVestMintable",
+        "src/specs/DSToken.sol",
+        "src/specs/MockAuthority.sol",
+        "--link",
+        "DssVestMintable:gem=DSToken",
+        "DSToken:authority=MockAuthority",
+        "--verify",
+        "DssVestMintable:src/specs/DssVestMintable.spec",
+        "--optimistic_loop",
+        "--rule_sanity",
+        "--rule",
+        "vest"
+    ],
+    "revision": "08da781a8aca5c3b6b622f2d0cea11b1df816225"
+}

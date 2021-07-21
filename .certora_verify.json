@@ -1,0 +1,7 @@
+[
+    {
+        "primary_contract": "DssVestMintable",
+        "specfile": ".certora_config/0_DssVestMintable.spec",
+        "type": "spec"
+    }
+]
