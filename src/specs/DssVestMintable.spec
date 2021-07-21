@@ -442,8 +442,6 @@ rule yank(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
 
-    require(usr != 0);
-    require(tot > 0);
     require(fin > bgn);
     require(fin >= clf);
     require(clf >= bgn);
