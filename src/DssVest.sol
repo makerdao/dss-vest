@@ -73,9 +73,9 @@ abstract contract DssVest {
         uint48  bgn;   // Start of vesting period  [timestamp]
         uint48  clf;   // The cliff date           [timestamp]
         uint48  fin;   // End of vesting period    [timestamp]
+        address mgr;   // A manager address that can yank
         uint128 tot;   // Total reward amount
         uint128 rxd;   // Amount of vest claimed
-        address mgr;   // A manager address that can yank
     }
     mapping (uint256 => Award) public awards;
     uint256 public ids;
