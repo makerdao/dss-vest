@@ -314,14 +314,27 @@ abstract contract DssVest {
         require(_award.usr != address(0), "DssVest/invalid-award");
         if (_end < block.timestamp) {
             _end = block.timestamp;
-        } else if (_end > _award.fin) {
-            _end = _award.fin;
         }
-        awards[_id].fin = toUint48(_end);
-        awards[_id].tot = toUint128(add(
-                                    unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
-                                    _award.rxd)
+        if (_end < _award.fin) {
+            uint48 end = toUint48(_end);
+            awards[_id].fin = end;
+            if (end < _award.bgn) {
+                awards[_id].bgn = end;
+                awards[_id].clf = end;
+                awards[_id].tot = 0;
+            } else if (end < _award.clf) {
+                awards[_id].clf = end;
+                awards[_id].tot = 0;
+            } else {
+                awards[_id].tot = toUint128(
+                                    add(
+                                        unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
+                                        _award.rxd
+                                    )
                                 );
+            }
+        }
+
         emit Yank(_id, _end);
     }
 

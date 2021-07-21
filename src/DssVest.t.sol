@@ -282,6 +282,10 @@ contract DssVestTest is DSTest {
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
         vest.yank(id); // yank after cliff
+        (, uint48 bgn, uint48 clf, uint48 fin,,,) = vest.awards(id);
+        assertEq(bgn, block.timestamp - 2 days);
+        assertEq(clf, block.timestamp - 1 days);
+        assertEq(fin, block.timestamp);
         assertTrue(vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
         vest.vest(id);
@@ -293,9 +297,32 @@ contract DssVestTest is DSTest {
         Manager manager = new Manager();
         uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(manager));
 
-        hevm.warp(now + 10 days);
+        hevm.warp(block.timestamp + 10 days);
 
         manager.yank(address(vest), id);
+
+        (, uint48 bgn, uint48 clf, uint48 fin,,,) = vest.awards(id);
+
+        assertEq(bgn, block.timestamp - 10 days);
+        assertEq(clf, block.timestamp);
+        assertEq(fin, block.timestamp);
+
+        assertTrue(!vest.valid(id));
+    }
+
+    function testYankBeforeBgn() public {
+        Manager manager = new Manager();
+        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 50 days, address(manager));
+
+        hevm.warp(block.timestamp + 5 days);
+
+        manager.yank(address(vest), id);
+
+        (, uint48 bgn, uint48 clf, uint48 fin,,,) = vest.awards(id);
+
+        assertEq(bgn, block.timestamp);
+        assertEq(clf, block.timestamp);
+        assertEq(fin, block.timestamp);
 
         assertTrue(!vest.valid(id));
     }
