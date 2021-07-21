@@ -49,7 +49,7 @@ abstract contract DssVest {
     event Vest(uint256 indexed id,   uint256 indexed amt);
     event Move(uint256 indexed id,   address indexed dst);
     event File(bytes32 indexed what, uint256 indexed data);
-    event Yank(uint256 indexed id);
+    event Yank(uint256 indexed id,   uint256         end);
 
     // --- Auth ---
     mapping (address => uint256) public wards;
@@ -322,7 +322,7 @@ abstract contract DssVest {
                                     unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
                                     _award.rxd)
                                 );
-        emit Yank(_id);
+        emit Yank(_id, _end);
     }
 
     /*
