@@ -505,6 +505,36 @@ rule yank_revert(uint256 _id) {
             revert10, "Revert rules are not covering all the cases");
 }
 
+// Verify that awards behaves correctly on yank with arbitrary end
+rule yank_end(uint256 _id, uint256 _end) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
+
+    require(fin > bgn);
+    require(fin >= clf);
+    require(clf >= bgn);
+    require(rxd <= tot);
+
+    uint256 amt = (
+        e.block.timestamp >= fin
+            ? tot
+            : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
+    );
+
+    yank(e, _id, _end);
+
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
+    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(_id);
+
+    assert(_end < e.block.timestamp => fin2 == e.block.timestamp, "Yank did not set fin equal block timestamp as expected");
+    assert(_end >= e.block.timestamp && _end > fin => fin2 == fin, "Yank did not set fin as expected");
+    assert(_end < e.block.timestamp && e.block.timestamp < clf => tot2 == rxd, "Yank did not set tot equal rxd as expected");
+    assert(_end < e.block.timestamp && e.block.timestamp >= clf => tot2 == amt, "Yank did not set tot equal amt as expected");
+    assert(_end > fin && fin >= clf => tot2 == tot, "Yank did not set tot as expected");
+}
+
 // Verify that dst behaves correctly on move
 rule move(uint256 _id, address _dst) {
     env e;
