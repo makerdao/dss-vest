@@ -208,6 +208,7 @@ abstract contract DssVest {
     */
     function _vest(uint256 _id, uint256 _maxAmt) internal {
         Award memory _award = awards[_id];
+        require(_award.usr != address(0), "DssVest/invalid-award");
         require(restricted[_id] == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         amt = min(amt, _maxAmt);

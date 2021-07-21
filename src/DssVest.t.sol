@@ -145,6 +145,10 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 80 * days_vest);
     }
 
+    function testFailVestNonExistingAward() public {
+        vest.vest(9999);
+    }
+
     function testVestInsideCliff() public {
         uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(0));
 
