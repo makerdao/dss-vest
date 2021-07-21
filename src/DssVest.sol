@@ -83,6 +83,35 @@ abstract contract DssVest {
 
     uint256 public cap; // Maximum per-second issuance token rate
 
+    // Getters to access only to the value desired
+    function usr(uint256 _id) public view returns (address) {
+        return awards[_id].usr;
+    }
+
+    function bgn(uint256 _id) public view returns (uint256) {
+        return awards[_id].bgn;
+    }
+
+    function clf(uint256 _id) public view returns (uint256) {
+        return awards[_id].clf;
+    }
+
+    function fin(uint256 _id) public view returns (uint256) {
+        return awards[_id].fin;
+    }
+
+    function tot(uint256 _id) public view returns (uint256) {
+        return awards[_id].tot;
+    }
+
+    function rxd(uint256 _id) public view returns (uint256) {
+        return awards[_id].rxd;
+    }
+
+    function mgr(uint256 _id) public view returns (address) {
+        return awards[_id].mgr;
+    }
+
     /*
         @dev Base vesting logic contract constructor
     */
