@@ -169,7 +169,7 @@ abstract contract DssVest {
         require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
         require(_clf <= _tau,                              "DssVest/clf-too-long");
-        require(ids < uint256(-1),                         "DssVest/id-overflow");
+        require(ids < uint256(-1),                         "DssVest/ids-overflow");
 
         id = ++ids;
         awards[id] = Award({
