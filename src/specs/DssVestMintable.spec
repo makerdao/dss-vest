@@ -11,6 +11,7 @@ methods {
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     gem() returns (address) envfree
+    valid(uint256) returns (bool) envfree
     TWENTY_YEARS() returns (uint256) envfree
     token.balanceOf(address) returns (uint256) envfree
     token.totalSupply() returns (uint256) envfree
@@ -120,7 +121,7 @@ rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, 
 
     assert(ids() == prevId + 1, "Init did not increase the Ids as expected");
     assert(ids() == id, "Init did not return the Id as expected");
-    assert(valid(e, id), "Init did not return a valid Id");
+    assert(valid(id), "Init did not return a valid Id");
     assert(usr == _usr, "Init did not set usr as expected");
     assert(bgn == _bgn, "Init did not set bgn as expected");
     assert(clf == _bgn + _clf, "Init did not set clf as expected");
@@ -635,14 +636,12 @@ rule move_revert(uint256 _id, address _dst) {
 
 // Verify that id behaves correctly on valid
 rule valid(uint256 _id) {
-    env e;
-
     address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
     usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
 
     bool validContract = rxd < tot;
 
-    bool isValid = valid(e, _id);
+    bool isValid = valid(_id);
 
     assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
     assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
