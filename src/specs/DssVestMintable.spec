@@ -632,3 +632,18 @@ rule move_revert(uint256 _id, address _dst) {
     assert(revert3 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
 }
+
+// Verify that id behaves correctly on valid
+rule valid(uint256 _id) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+
+    bool validContract = rxd < tot;
+
+    bool isValid = valid(e, _id);
+
+    assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
+    assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
+}
