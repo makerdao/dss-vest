@@ -135,7 +135,7 @@ contract DssVestTest is DSTest {
 
         hevm.warp(now + 70 days);
 
-        vest.vest(id, uint256(-1));
+        vest.vest(id, type(uint256).max);
         (usr, bgn, clf, fin, mgr, amt, rxd,) = vest.awards(id);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now - 80 days);

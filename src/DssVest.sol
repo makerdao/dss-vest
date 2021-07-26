@@ -173,7 +173,7 @@ abstract contract DssVest {
         require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
         require(_clf <= _tau,                              "DssVest/clf-too-long");
-        require(ids < uint256(-1),                         "DssVest/ids-overflow");
+        require(ids < type(uint256).max,                   "DssVest/ids-overflow");
 
         id = ++ids;
         awards[id] = Award({
@@ -194,7 +194,7 @@ abstract contract DssVest {
         @param _id     The id of the vesting contract
     */
     function vest(uint256 _id) external lock {
-        _vest(_id, uint256(-1));
+        _vest(_id, type(uint256).max);
     }
 
     /*
