@@ -217,8 +217,8 @@ abstract contract DssVest {
         require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         amt = min(amt, _maxAmt);
-        pay(_award.usr, amt);
         awards[_id].rxd = toUint128(add(awards[_id].rxd, amt));
+        pay(_award.usr, amt);
         emit Vest(_id, amt);
     }
 
