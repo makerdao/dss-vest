@@ -245,8 +245,7 @@ abstract contract DssVest {
         } else if (_time >= _fin) {
             amt = _tot;
         } else {
-            uint256 t = mul(sub(_time, _bgn), WAD) / sub(_fin, _bgn); // 0 <= t < WAD
-            amt = mul(_tot, t) / WAD; // 0 <= gem < _award.tot
+            amt = mul(_tot, sub(_time, _bgn)) / sub(_fin, _bgn); // 0 <= amt < _award.tot
         }
     }
 
