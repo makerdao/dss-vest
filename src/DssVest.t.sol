@@ -100,7 +100,7 @@ contract DssVestTest is DSTest {
     }
 
     function testInit() public {
-        vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));
+        vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));
         (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr, uint128 amt, uint128 rxd,) = vest.awards(1);
         assertEq(usr, address(this));
         assertEq(uint256(bgn), now);
@@ -112,7 +112,7 @@ contract DssVestTest is DSTest {
     }
 
     function testVest() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         hevm.warp(now + 10 days);
 
@@ -150,7 +150,7 @@ contract DssVestTest is DSTest {
     }
 
     function testVestInsideCliff() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(0));
 
         hevm.warp(now + 10 days);
 
@@ -167,7 +167,7 @@ contract DssVestTest is DSTest {
     }
 
     function testVestAfterTimeout() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         hevm.warp(now + 200 days);
 
@@ -192,7 +192,7 @@ contract DssVestTest is DSTest {
     }
 
     function testMove() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
         vest.move(id, address(3));
 
         (address usr,,,,,,,) = vest.awards(id);
@@ -200,12 +200,12 @@ contract DssVestTest is DSTest {
     }
 
     function testFailMoveToZeroAddress() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
         vest.move(id, address(0));
     }
 
     function testUnpaid() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(vest.valid(id));
 
         assertEq(vest.unpaid(id), 0);
@@ -230,7 +230,7 @@ contract DssVestTest is DSTest {
     }
 
     function testAccrued() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 0, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 0, address(0));
         assertTrue(vest.valid(id));
 
         assertEq(vest.accrued(id), 0);
@@ -262,7 +262,7 @@ contract DssVestTest is DSTest {
     }
 
     function testFutureAccrual() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 0, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 0, address(0));
         assertEq(vest.accrued(id), 0);               // accrual starts in 10 days
         hevm.warp(block.timestamp + 9 days);
         assertEq(vest.accrued(id), 0);               // accrual starts in 1 days
@@ -273,12 +273,12 @@ contract DssVestTest is DSTest {
     }
 
     function testYank() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(vest.valid(id));
         vest.yank(id); // yank before cliff
         assertTrue(!vest.valid(id));
 
-        id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
+        id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
         vest.yank(id); // yank after cliff
@@ -295,7 +295,7 @@ contract DssVestTest is DSTest {
 
     function testYankInsideCliff() public {
         Manager manager = new Manager();
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(manager));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(manager));
 
         hevm.warp(block.timestamp + 10 days);
 
@@ -312,7 +312,7 @@ contract DssVestTest is DSTest {
 
     function testYankBeforeBgn() public {
         Manager manager = new Manager();
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 50 days, address(manager));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 50 days, address(manager));
 
         hevm.warp(block.timestamp + 5 days);
 
@@ -329,7 +329,7 @@ contract DssVestTest is DSTest {
 
     function testDoubleYank() public {
         // Test case where vest is yanked twice, say by manager and then governance
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
         vest.yank(id); // accrued two days before yank
@@ -351,7 +351,7 @@ contract DssVestTest is DSTest {
 
     function testYankAfterVest() public {
         // Test case where yanked is called after a partial vest
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
         assertEq(vest.unpaid(id), 2 * days_vest);
@@ -376,7 +376,7 @@ contract DssVestTest is DSTest {
     }
 
     function testYankSchedulePassed() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
 
         hevm.warp(block.timestamp + 51 days);
 
@@ -395,7 +395,7 @@ contract DssVestTest is DSTest {
     }
 
     function testYankScheduleFutureAfterCliff() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
 
         hevm.warp(block.timestamp + 11 days);
 
@@ -415,7 +415,7 @@ contract DssVestTest is DSTest {
 
     function testYankScheduleFutureBeforeCliff() public {
         // Test case where yank is scheduled but before the cliff
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
         vest.yank(id, now + 10 days); // Schedule yank before cliff
 
         (,,, uint48 fin,, uint128 amt,,) = vest.awards(id);
@@ -433,7 +433,7 @@ contract DssVestTest is DSTest {
     function testYankScheduleFutureAfterCompletion() public {
         // When the sheduled yank takes place after the natural conclusion of the vest,
         //  Pay out the remainder of the contract and no more.
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 20 days, address(0));
 
         hevm.warp(block.timestamp + 11 days);
 
@@ -453,7 +453,7 @@ contract DssVestTest is DSTest {
 
     function testMgrYank() public {
         Manager manager = new Manager();
-        uint256 id1 = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(manager));
+        uint256 id1 = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(manager));
 
         assertTrue(vest.valid(id1));
         hevm.warp(block.timestamp + 30 days);
@@ -464,7 +464,7 @@ contract DssVestTest is DSTest {
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 30 * days_vest);
         assertTrue(!vest.valid(id1));
 
-        uint256 id2 = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 30 days, address(manager));
+        uint256 id2 = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 30 days, address(manager));
         assertTrue(id1 != id2);
         assertTrue(vest.valid(id2));
         manager.yank(address(vest), id2);
@@ -473,7 +473,7 @@ contract DssVestTest is DSTest {
 
     function testUnRestrictedVest() public {
         ThirdPartyVest alice = new ThirdPartyVest();
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         hevm.warp(now + 10 days);
 
@@ -509,7 +509,7 @@ contract DssVestTest is DSTest {
 
     function testFailRestrictedVest() public {
         ThirdPartyVest alice = new ThirdPartyVest();
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         hevm.warp(now + 10 days);
 
@@ -528,7 +528,7 @@ contract DssVestTest is DSTest {
 
     function testRestrictions() public {
         User bob = new User();
-        uint256 id = vest.init(address(bob), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(bob), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         assertEq(vest.res(id), 0);
 
@@ -554,43 +554,43 @@ contract DssVestTest is DSTest {
 
     function testFailMgrYankUnauthed() public {
         Manager manager = new Manager();
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));
         manager.yank(address(vest), id);
     }
 
     function testLive() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
         assertTrue(vest.valid(id));
         assertTrue(!vest.valid(5));
     }
 
     function testFailAmtTooHigh() public {
-        vest.init(address(this), uint128(-1) + 1, block.timestamp, 100 days, 0 days, address(0));
+        vest.create(address(this), uint128(-1) + 1, block.timestamp, 100 days, 0 days, address(0));
     }
 
     function testFailZeroUser() public {
-        vest.init(address(0), 100 * days_vest + 1, block.timestamp, 100 days, 0 days, address(0));
+        vest.create(address(0), 100 * days_vest + 1, block.timestamp, 100 days, 0 days, address(0));
     }
 
     function testFailStartTooFarInTheFuture() public {
-        vest.init(address(this), 100 * days_vest + 1, block.timestamp + (21 * 365 days), 100 days, 0 days, address(0));
+        vest.create(address(this), 100 * days_vest + 1, block.timestamp + (21 * 365 days), 100 days, 0 days, address(0));
     }
 
     function testFailStartTooFarInThePast() public {
-        vest.init(address(this), 100 * days_vest + 1, block.timestamp - (21 * 365 days), 100 days, 0 days, address(0));
+        vest.create(address(this), 100 * days_vest + 1, block.timestamp - (21 * 365 days), 100 days, 0 days, address(0));
     }
 
     function testFailStartTooLong() public {
-        vest.init(address(this), 100 * days_vest + 1, block.timestamp, 21 * 365 days, 0 days, address(0));
+        vest.create(address(this), 100 * days_vest + 1, block.timestamp, 21 * 365 days, 0 days, address(0));
     }
 
     function testFailClfAfterTau() public {
-        vest.init(address(this), 100 * days_vest + 1, block.timestamp, 100 days, 101 days, address(0));
+        vest.create(address(this), 100 * days_vest + 1, block.timestamp, 100 days, 101 days, address(0));
     }
 
     function testSuckableVest() public {
         uint256 originalSin = VatLikeTest(VAT).sin(VOW);
-        uint256 id = suckableVest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
+        uint256 id = suckableVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
         assertTrue(suckableVest.valid(id));
         hevm.warp(block.timestamp + 1 days);
         suckableVest.vest(id);
@@ -608,22 +608,22 @@ contract DssVestTest is DSTest {
 
     function testCap() public {
         // Test init at top limit
-        uint256 id = vest.init(address(this), 500 * WAD, block.timestamp, 365 days, 0, address(0));
+        uint256 id = vest.create(address(this), 500 * WAD, block.timestamp, 365 days, 0, address(0));
         assertEq(id, 1);
 
         vest.file("cap", (4000 * WAD) / (4 * 365 days));
 
-        id = vest.init(address(this), 1000 * WAD, block.timestamp, 365 days, 0, address(0));
+        id = vest.create(address(this), 1000 * WAD, block.timestamp, 365 days, 0, address(0));
         assertEq(id, 2);
     }
 
     function testFailCap() public {
         // Test failure at 1 over limit
-        vest.init(address(this), 501 * WAD, block.timestamp, 365 days, 0, address(0));
+        vest.create(address(this), 501 * WAD, block.timestamp, 365 days, 0, address(0));
     }
 
     function testVestPartialAmt() public {
-        uint256 id = vest.init(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+        uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         // Partial vesting
         hevm.warp(now + 10 days);

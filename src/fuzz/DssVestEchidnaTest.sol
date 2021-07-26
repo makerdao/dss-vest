@@ -47,7 +47,7 @@ contract DssVestEchidnaTest {
         _tau = 1 + _tau % vest.TWENTY_YEARS();
         _clf = _clf % _tau;
         uint256 prevId = vest.ids();
-        uint256 id = vest.init(address(this), _tot, _bgn, _tau, _clf, address(this));
+        uint256 id = vest.create(address(this), _tot, _bgn, _tau, _clf, address(this));
         assert(vest.ids() == add(prevId, 1));
         assert(vest.ids() == id);
         assert(vest.valid(id));
