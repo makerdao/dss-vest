@@ -45,11 +45,14 @@ abstract contract DssVest {
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event Init(uint256 indexed id,   address indexed usr);
-    event Vest(uint256 indexed id,   uint256 indexed amt);
-    event Move(uint256 indexed id,   address indexed dst);
+    event Init(uint256 indexed id, address indexed usr);
+    event Vest(uint256 indexed id, uint256 indexed amt);
+    event Move(uint256 indexed id, address indexed dst);
     event File(bytes32 indexed what, uint256 indexed data);
-    event Yank(uint256 indexed id,   uint256         end);
+    event Yank(uint256 indexed id, uint256 end);
+    event Restrict(uint256 indexed id);
+    event Unrestrict(uint256 indexed id);
+
 
     // --- Auth ---
     mapping (address => uint256) public wards;
@@ -279,6 +282,7 @@ abstract contract DssVest {
     function restrict(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender, "DssVest/not-authorized");
         awards[_id].res = 1;
+        emit Restrict(_id);
     }
 
     /*
@@ -288,6 +292,7 @@ abstract contract DssVest {
     function unrestrict(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender, "DssVest/not-authorized");
         awards[_id].res = 0;
+        emit Unrestrict(_id);
     }
 
     /*
