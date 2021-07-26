@@ -76,10 +76,10 @@ abstract contract DssVest {
         address mgr;   // A manager address that can yank
         uint128 tot;   // Total reward amount
         uint128 rxd;   // Amount of vest claimed
+        uint256 res;   // Restricted
     }
     mapping (uint256 => Award) public awards;
     uint256 public ids;
-    mapping (uint256 => uint256) public restricted;
 
     uint256 public cap; // Maximum per-second issuance token rate
 
@@ -110,6 +110,10 @@ abstract contract DssVest {
 
     function mgr(uint256 _id) public view returns (address) {
         return awards[_id].mgr;
+    }
+
+    function res(uint256 _id) public view returns (uint256) {
+        return awards[_id].res;
     }
 
     /*
@@ -179,7 +183,8 @@ abstract contract DssVest {
             fin: toUint48(add(_bgn, _tau)),
             tot: toUint128(_tot),
             rxd: 0,
-            mgr: _mgr
+            mgr: _mgr,
+            res: 0
         });
         emit Init(id, _usr);
     }
@@ -209,7 +214,7 @@ abstract contract DssVest {
     function _vest(uint256 _id, uint256 _maxAmt) internal {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
-        require(restricted[_id] == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
+        require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         amt = min(amt, _maxAmt);
         pay(_award.usr, amt);
@@ -274,7 +279,7 @@ abstract contract DssVest {
     */
     function restrict(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender, "DssVest/not-authorized");
-        restricted[_id] = 1;
+        awards[_id].res = 1;
     }
 
     /*
@@ -283,7 +288,7 @@ abstract contract DssVest {
     */
     function unrestrict(uint256 _id) external {
         require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender, "DssVest/not-authorized");
-        restricted[_id] = 0;
+        awards[_id].res = 0;
     }
 
     /*
