@@ -207,7 +207,7 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Owner of a vesting contract calls this to claim rewards
+        @dev Anyone (or just owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
