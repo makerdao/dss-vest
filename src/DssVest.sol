@@ -136,7 +136,7 @@ abstract contract DssVest {
     }
 
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        if (x > y) { z = y; } else { z = x; }
+        z = x > y ? y : x;
     }
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x);
