@@ -193,7 +193,7 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Owner of a vesting contract calls this to claim all available rewards
+        @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim all available rewards
         @param _id     The id of the vesting contract
     */
     function vest(uint256 _id) external lock {
@@ -201,7 +201,7 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Owner of a vesting contract calls this to claim rewards
+        @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
@@ -210,7 +210,7 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Anyone (or just owner of a vesting contract if restricted) calls this to claim rewards
+        @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
