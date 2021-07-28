@@ -313,7 +313,7 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Allows governance or the manager to remove a vesting contract
+        @dev Allows governance or the manager to end pre-maturely a vesting contract
         @param _id  The id of the vesting contract
         @param _end A scheduled time to end the vest
     */
