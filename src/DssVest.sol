@@ -415,11 +415,11 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _chainlog) public DssVest() {
-        chainlog = ChainlogLike(_chainlog);
-        VatLike _vat = vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
-        DaiJoinLike _daiJoin = daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
+        ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
+        VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
+        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
 
-        _vat.hope(address(_daiJoin));
+        vat_.hope(address(daiJoin_));
     }
 
     /*
