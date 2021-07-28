@@ -282,10 +282,11 @@ contract DssVestTest is DSTest {
         assertTrue(vest.valid(id));
         hevm.warp(block.timestamp + 2 days);
         vest.yank(id); // yank after cliff
-        (, uint48 bgn, uint48 clf, uint48 fin,,,,) = vest.awards(id);
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot,) = vest.awards(id);
         assertEq(bgn, block.timestamp - 2 days);
         assertEq(clf, block.timestamp - 1 days);
         assertEq(fin, block.timestamp);
+        assertEq(uint256(tot), 100 * days_vest * 2 / 100);
         assertTrue(vest.valid(id));
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 0);
         vest.vest(id);
@@ -301,11 +302,12 @@ contract DssVestTest is DSTest {
 
         manager.yank(address(vest), id);
 
-        (, uint48 bgn, uint48 clf, uint48 fin,,,,) = vest.awards(id);
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot,) = vest.awards(id);
 
         assertEq(bgn, block.timestamp - 10 days);
         assertEq(clf, block.timestamp);
         assertEq(fin, block.timestamp);
+        assertEq(uint256(tot), 0);
 
         assertTrue(!vest.valid(id));
     }
@@ -318,11 +320,12 @@ contract DssVestTest is DSTest {
 
         manager.yank(address(vest), id);
 
-        (, uint48 bgn, uint48 clf, uint48 fin,,,,) = vest.awards(id);
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot,) = vest.awards(id);
 
         assertEq(bgn, block.timestamp);
         assertEq(clf, block.timestamp);
         assertEq(fin, block.timestamp);
+        assertEq(uint256(tot), 0);
 
         assertTrue(!vest.valid(id));
     }
