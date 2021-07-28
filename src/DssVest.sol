@@ -163,11 +163,11 @@ abstract contract DssVest {
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
         @param _tau The duration of the vest (in seconds)
-        @param _clf The cliff duration in seconds (i.e. 1 years)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
@@ -175,14 +175,14 @@ abstract contract DssVest {
         require(_tau > 0,                                  "DssVest/tau-zero");
         require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
-        require(_clf <= _tau,                              "DssVest/clf-too-long");
+        require(_eta <= _tau,                              "DssVest/eta-too-long");
         require(ids < type(uint256).max,                   "DssVest/ids-overflow");
 
         id = ++ids;
         awards[id] = Award({
             usr: _usr,
             bgn: toUint48(_bgn),
-            clf: toUint48(add(_bgn, _clf)),
+            clf: toUint48(add(_bgn, _eta)),
             fin: toUint48(add(_bgn, _tau)),
             tot: toUint128(_tot),
             rxd: 0,
