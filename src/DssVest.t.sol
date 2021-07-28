@@ -552,6 +552,14 @@ contract DssVestTest is DSTest {
         assertEq(vest.res(id), 0);
     }
 
+    function testFailRestrictNonExistingAward() public {
+        vest.restrict(9999);
+    }
+
+    function testFailUnrestrictNonExistingAward() public {
+        vest.unrestrict(9999);
+    }
+
     function testFailMgrYankUnauthed() public {
         Manager manager = new Manager();
         uint256 id = vest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));

@@ -280,7 +280,9 @@ abstract contract DssVest {
         @param _id The id of the vesting contract
     */
     function restrict(uint256 _id) external {
-        require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender, "DssVest/not-authorized");
+        address usr_ = awards[_id].usr;
+        require(usr_ != address(0), "DssVest/invalid-award");
+        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
         awards[_id].res = 1;
         emit Restrict(_id);
     }
@@ -290,7 +292,9 @@ abstract contract DssVest {
         @param _id The id of the vesting contract
     */
     function unrestrict(uint256 _id) external {
-        require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender, "DssVest/not-authorized");
+        address usr_ = awards[_id].usr;
+        require(usr_ != address(0), "DssVest/invalid-award");
+        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
         awards[_id].res = 0;
         emit Unrestrict(_id);
     }
