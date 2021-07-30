@@ -468,13 +468,13 @@ rule yank(uint256 _id) {
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
     usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
-    assert(e.block.timestamp <  fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
-    assert(e.block.timestamp <  fin && e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp <  fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp <  fin && e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp <  fin && e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
-    assert(e.block.timestamp <  fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp end is less than clf");
-    assert(e.block.timestamp <  fin && e.block.timestamp > bgn && e.block.timestamp > clf => tot2 == amt, "Yank did not set tot as expected");
+    assert(e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
+    assert(e.block.timestamp < fin && e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < fin && e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < fin && e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
+    assert(e.block.timestamp < fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp end is less than clf");
+    assert(e.block.timestamp < fin && e.block.timestamp > bgn && e.block.timestamp > clf => tot2 == amt, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank
