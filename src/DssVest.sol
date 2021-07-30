@@ -36,6 +36,10 @@ interface VatLike {
     function suck(address, address, uint256) external;
 }
 
+interface TokenLike {
+    function transferFrom(address, address, uint256) external returns (bool);
+}
+
 abstract contract DssVest {
 
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
@@ -430,6 +434,39 @@ contract DssVestSuckable is DssVest {
     function pay(address _guy, uint256 _amt) override internal {
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
+    }
+
+}
+
+/**
+    Transferrable token DssVest. Can be used to enable streaming payments of
+     any arbitrary token from an address (i.e. CU multisig) to individual
+     contributors.
+ */
+contract DssVestTransferrable is DssVest {
+
+    uint256 internal constant RAY = 10**27;
+
+    address   public immutable czar;
+    TokenLike public immutable gem;
+
+    /*
+        @dev This contract must be approved for transfer of the gem on the czar
+        @param _czar The owner of the tokens to be distributed
+        @param _gem  The token to be distributed
+    */
+    constructor(address _czar, address _gem) public DssVest() {
+        czar = _czar;
+        gem  = TokenLike(_gem);
+    }
+
+    /*
+        @dev Override pay to handle transfer logic
+        @param _guy The recipient of the ERC-20 Dai
+        @param _amt The amount of gem to send to the _guy (in native token units)
+    */
+    function pay(address _guy, uint256 _amt) override internal {
+        require(gem.transferFrom(czar, _guy, _amt));
     }
 
 }
