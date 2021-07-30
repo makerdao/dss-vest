@@ -96,6 +96,30 @@ rule deny_revert(address usr) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
+// Verify that id behave correctly on award getters
+rule award(uint256 _id) {
+    address _usr; uint48 _bgn; uint48 _clf; uint48 _fin; address _mgr; uint8 _res; uint128 _tot; uint128 _rxd;
+    _usr, _bgn, _clf, _fin, _mgr, _res, _tot, _rxd = awards(_id);
+
+    address usr_ = usr(_id);
+    uint256 bgn_ = bgn(_id);
+    uint256 clf_ = clf(_id);
+    uint256 fin_ = fin(_id);
+    address mgr_ = mgr(_id);
+    uint256 res_ = res(_id);
+    uint256 tot_ = tot(_id);
+    uint256 rxd_ = rxd(_id);
+
+    assert(_usr == usr_, "Usr did not return the award usr as expected");
+    assert(_bgn == bgn_, "Bgn did not return the award bgn as expected");
+    assert(_clf == clf_, "Clf did not return the award clf as expected");
+    assert(_fin == fin_, "Fin did not return the award fin as expected");
+    assert(_mgr == mgr_, "Mgr did not return the award mgr as expected");
+    assert(_res == res_, "Res did not return the award res as expected");
+    assert(_tot == tot_, "Tot did not return the award tot as expected");
+    assert(_rxd == rxd_, "Rxd did not return the award rxd as expected");
+}
+
 // Verify that cap behave correctly on file
 rule file(bytes32 what, uint256 data) {
     env e;
