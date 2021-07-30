@@ -34,9 +34,9 @@ After deployment, governance must set the `cap` value using the `file` function.
 
 ### Creating a vest
 
-#### `init(_usr, _tot, _bgn, _tau, _eta, _mgr) returns (id)`
+#### `create(_usr, _tot, _bgn, _tau, _eta, _mgr) returns (id)`
 
-Init a new vest to create a vesting plan.
+Create a new vesting plan.
 
 - `_usr`: The plan beneficiary
 - `_tot`: The total amount of the vesting plan, in token units
