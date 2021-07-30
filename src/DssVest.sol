@@ -45,11 +45,14 @@ abstract contract DssVest {
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
-    event Init(uint256 indexed id,   address indexed usr);
-    event Vest(uint256 indexed id,   uint256 indexed amt);
-    event Move(uint256 indexed id,   address indexed dst);
-    event File(bytes32 indexed what, uint256 indexed data);
-    event Yank(uint256 indexed id);
+    event Init(uint256 indexed id, address indexed usr);
+    event Vest(uint256 indexed id, uint256 amt);
+    event Move(uint256 indexed id, address indexed dst);
+    event File(bytes32 indexed what, uint256 data);
+    event Yank(uint256 indexed id, uint256 end);
+    event Restrict(uint256 indexed id);
+    event Unrestrict(uint256 indexed id);
+
 
     // --- Auth ---
     mapping (address => uint256) public wards;
@@ -73,15 +76,48 @@ abstract contract DssVest {
         uint48  bgn;   // Start of vesting period  [timestamp]
         uint48  clf;   // The cliff date           [timestamp]
         uint48  fin;   // End of vesting period    [timestamp]
+        address mgr;   // A manager address that can yank
+        uint8   res;   // Restricted
         uint128 tot;   // Total reward amount
         uint128 rxd;   // Amount of vest claimed
-        address mgr;   // A manager address that can yank
     }
     mapping (uint256 => Award) public awards;
     uint256 public ids;
-    mapping (uint256 => uint256) public restricted;
 
     uint256 public cap; // Maximum per-second issuance token rate
+
+    // Getters to access only to the value desired
+    function usr(uint256 _id) public view returns (address) {
+        return awards[_id].usr;
+    }
+
+    function bgn(uint256 _id) public view returns (uint256) {
+        return awards[_id].bgn;
+    }
+
+    function clf(uint256 _id) public view returns (uint256) {
+        return awards[_id].clf;
+    }
+
+    function fin(uint256 _id) public view returns (uint256) {
+        return awards[_id].fin;
+    }
+
+    function tot(uint256 _id) public view returns (uint256) {
+        return awards[_id].tot;
+    }
+
+    function rxd(uint256 _id) public view returns (uint256) {
+        return awards[_id].rxd;
+    }
+
+    function mgr(uint256 _id) public view returns (address) {
+        return awards[_id].mgr;
+    }
+
+    function res(uint256 _id) public view returns (uint256) {
+        return awards[_id].res;
+    }
 
     /*
         @dev Base vesting logic contract constructor
@@ -103,22 +139,22 @@ abstract contract DssVest {
     }
 
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        if (x > y) { z = y; } else { z = x; }
+        z = x > y ? y : x;
     }
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x + y) >= x);
+        require((z = x + y) >= x, "DssVest/add-overflow");
     }
     function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require((z = x - y) <= x);
+        require((z = x - y) <= x, "DssVest/sub-underflow");
     }
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        require(y == 0 || (z = x * y) / y == x);
+        require(y == 0 || (z = x * y) / y == x, "DssVest/mul-overflow");
     }
     function toUint48(uint256 x) internal pure returns (uint48 z) {
-        require((z = uint48(x)) == x);
+        require((z = uint48(x)) == x, "DssVest/uint48-overflow");
     }
     function toUint128(uint256 x) internal pure returns (uint128 z) {
-        require((z = uint128(x)) == x);
+        require((z = uint128(x)) == x, "DssVest/uint128-overflow");
     }
 
     /*
@@ -127,45 +163,45 @@ abstract contract DssVest {
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
         @param _tau The duration of the vest (in seconds)
-        @param _clf The cliff duration in seconds (i.e. 1 years)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) external auth lock returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external auth lock returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
-        require(_tot < uint128(-1),                        "DssVest/amount-error");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
         require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
         require(_tau > 0,                                  "DssVest/tau-zero");
         require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
         require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
-        require(_clf <= _tau,                              "DssVest/clf-too-long");
-        require(id < uint256(-1),                          "DssVest/id-overflow");
+        require(_eta <= _tau,                              "DssVest/eta-too-long");
+        require(ids < type(uint256).max,                   "DssVest/ids-overflow");
 
         id = ++ids;
         awards[id] = Award({
             usr: _usr,
             bgn: toUint48(_bgn),
-            clf: toUint48(add(_bgn, _clf)),
+            clf: toUint48(add(_bgn, _eta)),
             fin: toUint48(add(_bgn, _tau)),
             tot: toUint128(_tot),
             rxd: 0,
-            mgr: _mgr
+            mgr: _mgr,
+            res: 0
         });
         emit Init(id, _usr);
     }
 
     /*
-        @dev Owner of a vesting contract calls this to claim all available rewards
+        @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim all available rewards
         @param _id     The id of the vesting contract
     */
     function vest(uint256 _id) external lock {
-        _vest(_id, uint256(-1));
+        _vest(_id, type(uint256).max);
     }
 
     /*
-        @dev Owner of a vesting contract calls this to claim rewards
+        @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
@@ -174,17 +210,18 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Owner of a vesting contract calls this to claim rewards
+        @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
     function _vest(uint256 _id, uint256 _maxAmt) internal {
         Award memory _award = awards[_id];
-        require(restricted[_id] == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
+        require(_award.usr != address(0), "DssVest/invalid-award");
+        require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         amt = min(amt, _maxAmt);
+        awards[_id].rxd = toUint128(add(_award.rxd, amt));
         pay(_award.usr, amt);
-        awards[_id].rxd = toUint128(add(awards[_id].rxd, amt));
         emit Vest(_id, amt);
     }
 
@@ -211,8 +248,7 @@ abstract contract DssVest {
         } else if (_time >= _fin) {
             amt = _tot;
         } else {
-            uint256 t = mul(sub(_time, _bgn), WAD) / sub(_fin, _bgn); // 0 <= t < WAD
-            amt = mul(_tot, t) / WAD; // 0 <= gem < _award.tot
+            amt = mul(_tot, sub(_time, _bgn)) / sub(_fin, _bgn); // 0 <= amt < _award.tot
         }
     }
 
@@ -244,8 +280,11 @@ abstract contract DssVest {
         @param _id The id of the vesting contract
     */
     function restrict(uint256 _id) external {
-        require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender);
-        restricted[_id] = 1;
+        address usr_ = awards[_id].usr;
+        require(usr_ != address(0), "DssVest/invalid-award");
+        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        awards[_id].res = 1;
+        emit Restrict(_id);
     }
 
     /*
@@ -253,8 +292,11 @@ abstract contract DssVest {
         @param _id The id of the vesting contract
     */
     function unrestrict(uint256 _id) external {
-        require(wards[msg.sender] == 1 || awards[_id].usr == msg.sender);
-        restricted[_id] = 0;
+        address usr_ = awards[_id].usr;
+        require(usr_ != address(0), "DssVest/invalid-award");
+        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        awards[_id].res = 0;
+        emit Unrestrict(_id);
     }
 
     /*
@@ -275,7 +317,7 @@ abstract contract DssVest {
     }
 
     /*
-        @dev Allows governance or the manager to remove a vesting contract
+        @dev Allows governance or the manager to end pre-maturely a vesting contract
         @param _id  The id of the vesting contract
         @param _end A scheduled time to end the vest
     */
@@ -285,15 +327,28 @@ abstract contract DssVest {
         require(_award.usr != address(0), "DssVest/invalid-award");
         if (_end < block.timestamp) {
             _end = block.timestamp;
-        } else if (_end > _award.fin) {
-            _end = _award.fin;
         }
-        awards[_id].fin = toUint48(_end);
-        awards[_id].tot = toUint128(add(
-                                    unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
-                                    _award.rxd)
+        if (_end < _award.fin) {
+            uint48 end = toUint48(_end);
+            awards[_id].fin = end;
+            if (end < _award.bgn) {
+                awards[_id].bgn = end;
+                awards[_id].clf = end;
+                awards[_id].tot = 0;
+            } else if (end < _award.clf) {
+                awards[_id].clf = end;
+                awards[_id].tot = 0;
+            } else {
+                awards[_id].tot = toUint128(
+                                    add(
+                                        unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
+                                        _award.rxd
+                                    )
                                 );
-        emit Yank(_id);
+            }
+        }
+
+        emit Yank(_id, _end);
     }
 
     /*
@@ -360,11 +415,11 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _chainlog) public DssVest() {
-        chainlog = ChainlogLike(_chainlog);
-        VatLike _vat = vat = VatLike(ChainlogLike(_chainlog).getAddress("MCD_VAT"));
-        DaiJoinLike _daiJoin = daiJoin = DaiJoinLike(ChainlogLike(_chainlog).getAddress("MCD_JOIN_DAI"));
+        ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
+        VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
+        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
 
-        _vat.hope(address(_daiJoin));
+        vat_.hope(address(daiJoin_));
     }
 
     /*

@@ -47,11 +47,11 @@ contract DssVestEchidnaTest {
         _tau = 1 + _tau % vest.TWENTY_YEARS();
         _clf = _clf % _tau;
         uint256 prevId = vest.ids();
-        uint256 id = vest.init(address(this), _tot, _bgn, _tau, _clf, address(this));
+        uint256 id = vest.create(address(this), _tot, _bgn, _tau, _clf, address(this));
         assert(vest.ids() == add(prevId, 1));
         assert(vest.ids() == id);
         assert(vest.valid(id));
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, address mgr) = vest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = vest.awards(id);
         assert(usr == address(this));
         assert(bgn == toUint48(_bgn));
         assert(clf == toUint48(add(_bgn, _clf)));
@@ -65,7 +65,7 @@ contract DssVestEchidnaTest {
 
     function test_vest(uint256 id) internal {
         vest.vest(id);
-        (, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         if (block.timestamp < clf) assert(amt == 0);
         else if (block.timestamp < bgn) assert(amt == rxd);
@@ -82,11 +82,11 @@ contract DssVestEchidnaTest {
     }
 
     function test_yank(uint256 id, uint256 end) internal {
-        ( , , , uint48 _fin, , , ) = vest.awards(id);
+        (,,, uint48 _fin,,,,) = vest.awards(id);
         vest.yank(id, end);
         if (end < block.timestamp)  end = block.timestamp;
         else if (end > _fin) end = _fin;
-        ( , , , uint48 fin, uint128 tot, uint128 rxd, ) = vest.awards(id);
+        (,,, uint48 fin,,, uint128 tot, uint128 rxd) = vest.awards(id);
         uint256 amt = vest.unpaid(id);
         assert(fin == toUint48(end));
         assert(tot == sub(amt, rxd));
