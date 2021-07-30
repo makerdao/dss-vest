@@ -10,6 +10,7 @@ methods {
     awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
     usr(uint256) returns (address) envfree
     bgn(uint256) returns (uint256) envfree
+    clf(uint256) returns (uint256) envfree
     fin(uint256) returns (uint256) envfree
     tot(uint256) returns (uint256) envfree
     rxd(uint256) returns (uint256) envfree
@@ -343,50 +344,49 @@ rule accrued_revert(uint256 _id) {
 rule unpaid(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
-    uint amtAccrued = accrued(e, _id);
+    uint256 _clf = clf(_id);
+    uint256 _rxd = rxd(_id);
+    uint256 amtAccrued = accrued(e, _id);
 
     uint256 amt = unpaid(e, _id);
 
-    assert(e.block.timestamp < clf => amt == 0, "Unpaid did not return amt equal to zero as expected");
-    assert(e.block.timestamp >= clf => amt == amtAccrued - rxd, "Unpaid did not return amt as expected");
+    assert(e.block.timestamp <  _clf => amt == 0, "Unpaid did not return amt equal to zero as expected");
+    assert(e.block.timestamp >= _clf => amt == amtAccrued - _rxd, "Unpaid did not return amt as expected");
 }
 
 // Verify revert rules on unpaid
 rule unpaid_revert(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
-    uint256 timeDelta = e.block.timestamp - bgn;
-    uint amtAccrued = accrued(e, _id);
+    address _usr = usr(_id);
+    uint256 _bgn = bgn(_id);
+    uint256 _clf = clf(_id);
+    uint256 _fin = fin(_id);
+    uint256 _tot = tot(_id);
+    uint256 _rxd = rxd(_id);
+    uint256 timeDelta = e.block.timestamp - _bgn;
+    uint256 amtAccrued = accrued(e, _id);
 
-    require(fin > bgn);
-
-    uint256 t = (e.block.timestamp - bgn) * WAD() / (fin - bgn);
+    require(_fin > _bgn);
 
     unpaid@withrevert(e, _id);
 
-    bool revert1 = usr == 0;
-    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
-    bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
-    bool revert5 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * t / t != tot;
-    bool revert6 = e.block.timestamp >= clf && amtAccrued - rxd > amtAccrued;
-    bool revert7 = e.msg.value > 0;
+    bool revert1 = _usr == 0;
+    bool revert2 = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && timeDelta > e.block.timestamp;
+    bool revert3 = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && (_tot * timeDelta) / timeDelta != _tot && timeDelta != 0;
+    bool revert4 = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && _fin - _bgn > _fin;
+    bool revert5 = e.block.timestamp >= _clf && amtAccrued - _rxd > amtAccrued;
+    bool revert6 = e.msg.value > 0;
 
     assert(revert1 => lastReverted, "Invalid award did not revert");
     assert(revert2 => lastReverted, "Subtraction underflow timeDelta did not revert");
     assert(revert3 => lastReverted, "Multiplication overflow did not revert");
     assert(revert4 => lastReverted, "Subtraction underflow fin did not revert");
-    assert(revert5 => lastReverted, "Multiplication overflow tot did not revert");
-    assert(revert6 => lastReverted, "Substraction underflow amtAccrued did not revert");
-    assert(revert7 => lastReverted, "Sending ETH did not revert");
+    assert(revert5 => lastReverted, "Substraction underflow amtAccrued did not revert");
+    assert(revert6 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted =>
             revert1 || revert2 || revert3 ||
-            revert4 || revert5 || revert6 ||
-            revert7, "Revert rules are not covering all the cases");
+            revert4 || revert5 || revert6, "Revert rules are not covering all the cases");
 }
 
 // Verify that restricted behaves correctly on restrict
