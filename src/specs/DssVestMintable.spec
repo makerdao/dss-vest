@@ -7,7 +7,7 @@ using MockAuthority as authority
 
 methods {
     wards(address) returns (uint256) envfree
-    awards(uint256) returns (address, uint48, uint48, uint48, uint128, uint128, address) envfree
+    awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     gem() returns (address) envfree
@@ -108,31 +108,32 @@ rule file_revert(bytes32 what, uint256 data) {
     assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on init
-rule init(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) {
+// Verify that awards behaves correctly on create
+rule create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     uint256 prevId = ids();
 
-    uint256 id = init(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
+    uint256 id = create(e, _usr, _tot, _bgn, _tau, _eta, _mgr);
 
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(id);
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(id);
 
     assert(ids() == prevId + 1, "Init did not increase the Ids as expected");
     assert(ids() == id, "Init did not return the Id as expected");
     assert(valid(id), "Init did not return a valid Id");
     assert(usr == _usr, "Init did not set usr as expected");
     assert(bgn == _bgn, "Init did not set bgn as expected");
-    assert(clf == _bgn + _clf, "Init did not set clf as expected");
+    assert(clf == _bgn + _eta, "Init did not set clf as expected");
     assert(fin == _bgn + _tau, "Init did not set fin as expected");
     assert(tot == _tot, "Init did not set tot as expected");
     assert(rxd == 0, "Init did not set rxd as expected");
     assert(mgr == _mgr, "Init did not set mgr as expected");
+    assert(res == 0, "Init did not set res as expected");
 }
 
-// Verify revert rules on init
-rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, address _mgr) {
+// Verify revert rules on create
+rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) {
     env e;
 
     uint256 ward = wards(e.msg.sender);
@@ -141,30 +142,28 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
     uint256 _ids = ids();
     uint256 locked = lockedGhost();
 
-    init@withrevert(e, _usr, _tot, _bgn, _tau, _clf, _mgr);
+    create@withrevert(e, _usr, _tot, _bgn, _tau, _eta, _mgr);
 
-    uint256 clf = _bgn + _clf;
+    uint256 clf = _bgn + _eta;
     uint256 fin = _bgn + _tau;
 
     bool revert1  = ward != 1;
     bool revert2  = locked != 0;
     bool revert3  = _usr == 0;
     bool revert4  = _tot == 0;
-    bool revert5  = e.block.timestamp + twenty_years > max_uint;
+    bool revert5  = e.block.timestamp + twenty_years > max_uint256;
     bool revert6  = _bgn >= e.block.timestamp + twenty_years;
     bool revert7  = e.block.timestamp < twenty_years;
     bool revert8  = _bgn <= e.block.timestamp - twenty_years;
     bool revert9  = _tau == 0;
     bool revert10 = _tot / _tau > _cap;
     bool revert11 = _tau > twenty_years;
-    bool revert12 = _clf > _tau;
-    bool revert13 = _ids >= max_uint;
+    bool revert12 = _eta > _tau;
+    bool revert13 = _ids >= max_uint256;
     bool revert14 = _bgn > max_uint48();
     bool revert15 = clf > max_uint48();
     bool revert16 = fin > max_uint48();
-    // Remove the - 1 from the next rule when the require(_tot < uint128(-1)) is removed from the code
-    // toUint128(tot) already protects from overflow
-    bool revert17 = _tot > max_uint128 - 1;
+    bool revert17 = _tot > max_uint128;
     bool revert18 = e.msg.value > 0;
 
     assert(revert1  => lastReverted, "Lack of auth did not revert");
@@ -194,7 +193,7 @@ rule init_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256
             revert13 || revert14 || revert15 ||
             revert16 || revert17 || revert18, "Revert rules are not covering all the cases");
 }
-
+/*
 // Verify that awards behaves correctly on vest
 rule vest(uint256 _id) {
     env e;
@@ -646,3 +645,4 @@ rule valid(uint256 _id) {
     assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
     assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
 }
+*/
