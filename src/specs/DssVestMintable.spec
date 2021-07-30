@@ -645,3 +645,4 @@ rule valid(uint256 _id) {
     assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
     assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
 }
+
