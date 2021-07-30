@@ -449,8 +449,8 @@ rule unrestrict_revert(uint256 _id) {
 rule yank(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
     require(fin > bgn);
     require(fin >= clf);
@@ -460,17 +460,21 @@ rule yank(uint256 _id) {
     uint256 amt = (
         e.block.timestamp >= fin
             ? tot
-            : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
+            : (tot * (e.block.timestamp - bgn)) / (fin - bgn)
     );
 
     yank(e, _id);
 
-    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
-    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(_id);
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
+    usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
-    assert(e.block.timestamp > fin => fin2 == fin, "Yank did not set fin as expected");
-    assert(e.block.timestamp < clf => tot2 == rxd, "Yank did not set tot as expected");
-    assert(e.block.timestamp >= clf => tot2 == amt, "Yank did not set tot as expected");
+    assert(e.block.timestamp <  fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
+    assert(e.block.timestamp <  fin && e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp <  fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp <  fin && e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp <  fin && e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
+    assert(e.block.timestamp <  fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp end is less than clf");
+    assert(e.block.timestamp <  fin && e.block.timestamp > bgn && e.block.timestamp > clf => tot2 == amt, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank
@@ -478,8 +482,8 @@ rule yank_revert(uint256 _id) {
     env e;
 
     uint256 ward = wards(e.msg.sender);
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
     uint256 timeDelta = e.block.timestamp - bgn;
     uint256 amt = unpaid(e, _id);
 
@@ -494,7 +498,7 @@ rule yank_revert(uint256 _id) {
     bool revert5  = e.block.timestamp >= clf && amt + rxd > max_uint128;
     bool revert6  = e.block.timestamp >= clf && amt + rxd < amt;
     bool revert7  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert8  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
+    bool revert8  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (tot * timeDelta) / timeDelta != tot && timeDelta != 0;
     bool revert9  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
     bool revert10 = e.msg.value > 0;
 
