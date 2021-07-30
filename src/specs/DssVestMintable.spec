@@ -636,10 +636,10 @@ rule move_revert(uint256 _id, address _dst) {
 
 // Verify that id behaves correctly on valid
 rule valid(uint256 _id) {
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+    uint256 _tot = tot(_id);
+    uint256 _rxd = rxd(_id);
 
-    bool validContract = rxd < tot;
+    bool validContract = _rxd < _tot;
 
     bool isValid = valid(_id);
 
