@@ -14,6 +14,7 @@ methods {
     fin(uint256) returns (uint256) envfree
     tot(uint256) returns (uint256) envfree
     rxd(uint256) returns (uint256) envfree
+    mgr(uint256) returns (address) envfree
     res(uint256) returns (uint256) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
@@ -36,6 +37,14 @@ hook Sstore locked uint256 n_locked STORAGE {
 hook Sload uint256 value locked STORAGE {
     require lockedGhost() == value;
 }
+
+invariant everything_not_set_if_usr_not_set(uint256 id) usr(id) == 0 => bgn(id) == 0 && clf(id) == 0 && fin(id) == 0 && tot(id) == 0 && rxd(id) == 0 && mgr(id) == 0
+invariant usr_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => usr(id) != 0
+invariant tot_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => tot(id) > 0 // TODO: exclude yank
+invariant rxdLessOrEqualTot(uint256 id) rxd(id) <= tot(id) // TODO: exclude yank but in this case it couldn''t actually happen in reality
+invariant clfGreaterOrEqualBgn(uint256 id) clf(id) >= bgn(id)
+invariant finGreaterOrEqualClf(uint256 id) fin(id) >= clf(id)
+invariant finGreaterBgn_if_init(uint256 id) id > 0 && id <= ids() => fin(id) > bgn(id) // TODO: exclude yank
 
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
