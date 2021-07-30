@@ -216,11 +216,10 @@ rule vest(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    require(usr != 0);
     require(tot > 0);
     require(fin > bgn);
-    require(fin >= clf);
-    require(clf >= bgn);
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
     require(rxd <= tot);
 
     uint256 amt = (
