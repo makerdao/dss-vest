@@ -34,7 +34,7 @@ After deployment, governance must set the `cap` value using the `file` function.
 
 ### Creating a vest
 
-#### `init(_usr, _tot, _bgn, _tau, _clf, _mgr) returns (id)`
+#### `init(_usr, _tot, _bgn, _tau, _eta, _mgr) returns (id)`
 
 Init a new vest to create a vesting plan.
 
@@ -43,7 +43,7 @@ Init a new vest to create a vesting plan.
   - ex. 100 MKR = `100 * 10**18`
 - `_bgn`: A unix-timestamp of the plan start date
 - `_tau`: The duration of the vesting plan (in seconds)
-- `_clf`: The cliff period, in which tokens are accrued but not payable. (in seconds)
+- `_eta`: The cliff period, a duration in seconds from the `_bgn` time, in which tokens are accrued but not payable. (in seconds)
 - `_mgr`: (Optional) The address of an authorized manager. This address has permission to remove the vesting plan when the contributor leaves the project.
   - Note: `auth` users on this contract _always_ have the ability to `yank` a vesting contract.
 
