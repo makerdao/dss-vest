@@ -8,6 +8,9 @@ using MockAuthority as authority
 methods {
     wards(address) returns (uint256) envfree
     awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
+    usr(uint256) returns (address) envfree
+    rxd(uint256) returns (uint256) envfree
+    res(uint256) returns (uint256) envfree
     ids() returns (uint256) envfree
     cap() returns (uint256) envfree
     gem() returns (address) envfree
@@ -18,7 +21,6 @@ methods {
     token.authority() returns (address) envfree
 }
 
-definition WAD() returns uint256 = 10^18;
 definition max_uint48() returns uint256 = 2^48 - 1;
 
 ghost lockedGhost() returns uint256;
@@ -198,8 +200,8 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 rule vest(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
     require(usr != 0);
     require(tot > 0);
@@ -211,7 +213,7 @@ rule vest(uint256 _id) {
     uint256 amt = (
         e.block.timestamp >= fin
             ? tot
-            : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
+            : (tot * (e.block.timestamp - bgn)) / (fin - bgn)
     ) - rxd;
 
     uint256 balanceBefore = token.balanceOf(usr);
@@ -219,8 +221,8 @@ rule vest(uint256 _id) {
 
     vest(e, _id);
 
-    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
-    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(_id);
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
+    usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
     uint256 balanceAfter = token.balanceOf(usr);
     uint256 supplyAfter = token.totalSupply();
@@ -236,7 +238,7 @@ rule vest(uint256 _id) {
     assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
     assert(e.block.timestamp < clf => supplyAfter == supplyBefore, "supply did not remain as expected");
     assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
-    assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
+    assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
     assert(e.block.timestamp >= clf => balanceAfter == balanceBefore + amt, "balance did not increase as expected");
     assert(e.block.timestamp >= clf => supplyAfter == supplyBefore + amt, "supply did not increase as expected");
@@ -249,13 +251,13 @@ rule vest_revert(uint256 _id) {
     require(token == gem());
     require(authority == token.authority());
 
-    uint256 _restricted = restricted(e, _id);
     address tokenOwner = token.owner(e);
     bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
     bool stop = token.stopped(e);
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
-    uint256 usrBalance = token.balanceOf(usr);
+    address _usr = usr(_id);
+    uint256 _rxd = rxd(_id);
+    uint256 _res = res(_id);
+    uint256 usrBalance = token.balanceOf(_usr);
     uint256 supply = token.totalSupply();
     uint256 amt = unpaid(e, _id);
     uint256 locked = lockedGhost();
@@ -263,9 +265,9 @@ rule vest_revert(uint256 _id) {
     vest@withrevert(e, _id);
 
     bool revert1 = locked != 0;
-    bool revert2 = _restricted != 0 && usr != e.msg.sender;
-    bool revert3 = rxd + amt < rxd;
-    bool revert4 = rxd + amt > max_uint128;
+    bool revert2 = _res != 0 && _usr != e.msg.sender;
+    bool revert3 = _rxd + amt < _rxd;
+    bool revert4 = _rxd + amt > max_uint128;
     bool revert5 = e.msg.value > 0;
     bool revert6 = currentContract != token && currentContract != tokenOwner && (authority == 0 || !canCall);
     bool revert7 = stop == true;
@@ -645,4 +647,3 @@ rule valid(uint256 _id) {
     assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
     assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
 }
-
