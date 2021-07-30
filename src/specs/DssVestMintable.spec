@@ -481,7 +481,7 @@ rule yank(uint256 _id) {
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
     assert(e.block.timestamp < fin && e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
-    assert(e.block.timestamp < fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp end is less than clf");
+    assert(e.block.timestamp < fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than clf");
     assert(e.block.timestamp < fin && e.block.timestamp > bgn && e.block.timestamp > clf => tot2 == amt, "Yank did not set tot as expected");
 }
 
@@ -531,8 +531,8 @@ rule yank_revert(uint256 _id) {
 rule yank_end(uint256 _id, uint256 _end) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr = awards(_id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
     require(fin > bgn);
     require(fin >= clf);
@@ -540,21 +540,24 @@ rule yank_end(uint256 _id, uint256 _end) {
     require(rxd <= tot);
 
     uint256 amt = (
-        e.block.timestamp >= fin
+        _end >= fin
             ? tot
-            : tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD()
+            : (tot * (_end - bgn)) / (fin - bgn)
     );
 
     yank(e, _id, _end);
 
-    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; uint128 tot2; uint128 rxd2; address mgr2;
-    usr2, bgn2, clf2, fin2, tot2, rxd2, mgr2 = awards(_id);
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
+    usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
-    assert(_end < e.block.timestamp => fin2 == e.block.timestamp, "Yank did not set fin equal block timestamp as expected");
-    assert(_end >= e.block.timestamp && _end > fin => fin2 == fin, "Yank did not set fin as expected");
-    assert(_end < e.block.timestamp && e.block.timestamp < clf => tot2 == rxd, "Yank did not set tot equal rxd as expected");
-    assert(_end < e.block.timestamp && e.block.timestamp >= clf => tot2 == amt, "Yank did not set tot equal amt as expected");
-    assert(_end > fin && fin >= clf => tot2 == tot, "Yank did not set tot as expected");
+    assert(_end <  e.block.timestamp && e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin equal end as expected");
+    assert(_end >= e.block.timestamp && _end < fin => fin2 == _end, "Yank did not set fin as expected");
+    assert(_end >= e.block.timestamp && _end < fin && _end < bgn => bgn2 == _end, "Yank did not set bgn as expected when end is less than bgn");
+    assert(_end >= e.block.timestamp && _end < fin && _end < bgn => clf2 == _end, "Yank did not set clf as expected when end is less than bgn");
+    assert(_end >= e.block.timestamp && _end < fin && _end < bgn => tot2 == 0, "Yank did not set tot as expected when end is less than bgn");
+    assert(_end >= e.block.timestamp && _end < fin && _end < clf => clf2 == _end, "Yank did not set clf as expected when end is less than clf");
+    assert(_end >= e.block.timestamp && _end < fin && _end < fin && _end < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
+    assert(_end >= e.block.timestamp && _end < fin && _end > bgn && _end > clf => tot2 == amt, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank_end
@@ -562,8 +565,8 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
     env e;
 
     uint256 ward = wards(e.msg.sender);
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
     uint256 timeDelta = e.block.timestamp - bgn;
     uint256 amt = unpaid(e, _id);
 
@@ -575,51 +578,32 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
     bool revert2  = usr == 0;
     bool revert3  = _end < fin && fin > max_uint48();
     bool revert4  = _end < e.block.timestamp && e.block.timestamp > max_uint48();
-    bool revert5  = e.block.timestamp < clf && rxd < 0;
-    bool revert6  = fin < clf && rxd < 0;
-    bool revert7  = e.block.timestamp < clf && rxd > max_uint128;
-    bool revert8  = fin < clf && rxd > max_uint128;
-    bool revert9  = e.block.timestamp >= clf && amt + rxd > max_uint128;
-    bool revert10 = fin >= clf && tot > max_uint128;
-    bool revert11 = e.block.timestamp >= clf && amt + rxd < amt;
-    bool revert12 = e.block.timestamp >= clf && e.block.timestamp < bgn && rxd > 0;
-    bool revert13 = fin >= clf && tot + rxd < tot;
-    bool revert14 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert15 = fin >= clf && tot - rxd > tot;
-    bool revert16 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
-    bool revert17 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
-    bool revert18 = _end >= clf && _end >= bgn && _end < fin && _end - bgn > _end;
-    bool revert19 = _end >= clf && _end >= bgn && _end < fin && fin - bgn > fin;
-    bool revert20 = e.msg.value > 0;
+    bool revert5  = _end >= clf && amt + rxd > max_uint128;
+    bool revert6  = _end >= clf && amt + rxd < amt;
+    bool revert7  = _end >= clf && _end <  bgn && rxd > 0;
+    bool revert8  = _end >= clf && _end >= bgn && _end < fin && timeDelta > e.block.timestamp;
+    bool revert9  = _end >= clf && _end >= bgn && _end < fin && (tot * timeDelta) / timeDelta != tot && timeDelta != 0;
+    bool revert10 = _end >= clf && _end >= bgn && _end < fin && fin - bgn > fin;
+    bool revert11 = _end >= clf && _end >= bgn && _end < fin && _end - bgn > _end;
+    bool revert12 = e.msg.value > 0;
 
     assert(revert1  => lastReverted, "Not authorized did not revert");
     assert(revert2  => lastReverted, "Invalid award did not revert");
     assert(revert3  => lastReverted, "Fin toUint48 cast did not revert");
     assert(revert4  => lastReverted, "Block timestamp toUint48 cast did not revert");
-    assert(revert5  => lastReverted, "Addition overflow rxd did not revert with end set as block timestamp");
-    assert(revert6  => lastReverted, "Addition overflow rxd did not revert with end set as fin");
-    assert(revert7  => lastReverted, "Rxd toUint128 cast did not revert with end set as block timestamp");
-    assert(revert8  => lastReverted, "Rxd toUint128 cast did not revert with end set as fin");
-    assert(revert9  => lastReverted, "Amt toUint128 cast did not revert with end set as block timestamp");
-    assert(revert10 => lastReverted, "Tot toUint128 cast did not revert with end set as fin");
-    assert(revert11 => lastReverted, "Addition overflow amt did not revert with end set as block timestamp");
-    assert(revert12 => lastReverted, "Substraction underflow rxd did not revert");
-    assert(revert13 => lastReverted, "Addition overflow amt did not revert with end set as fin");
-    assert(revert14 => lastReverted, "Subtraction underflow timeDelta did not revert");
-    assert(revert15 => lastReverted, "Substraciton underflow tot minus rxd did not revert");
-    assert(revert16 => lastReverted, "Multiplication overflow did not revert");
-    assert(revert17 => lastReverted, "Subtraction underflow fin did not revert");
-    assert(revert18 => lastReverted, "Subtraction underflow end did not revert");
-    assert(revert19 => lastReverted, "Substraction underlow fin minus bgn did not revert");
-    assert(revert20 => lastReverted, "Sending ETH did not revert");
+    assert(revert5  => lastReverted, "Amt plus rxd toUint128 cast did not revert");
+    assert(revert6  => lastReverted, "Addition overflow amt plus rxd did not revert");
+    assert(revert7  => lastReverted, "Substraction underflow rxd did not revert");
+    assert(revert8  => lastReverted, "Subtraction underflow timeDelta did not revert");
+    assert(revert9  => lastReverted, "Multiplication overflow did not revert");
+    assert(revert10 => lastReverted, "Subtraction underflow fin min bgn did not revert");
+    assert(revert11 => lastReverted, "Subtraction underflow end min bgn did not revert");
+    assert(revert12 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
             revert4  || revert5  || revert6  ||
             revert7  || revert8  || revert9  ||
-            revert10 || revert11 || revert12 ||
-            revert13 || revert14 || revert15 ||
-            revert16 || revert17 || revert18 ||
-            revert19 || revert20, "Revert rules are not covering all the cases");
+            revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
 
 }
 
