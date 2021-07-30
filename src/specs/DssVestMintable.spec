@@ -193,7 +193,7 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
             revert13 || revert14 || revert15 ||
             revert16 || revert17 || revert18, "Revert rules are not covering all the cases");
 }
-/*
+
 // Verify that awards behaves correctly on vest
 rule vest(uint256 _id) {
     env e;
@@ -645,4 +645,3 @@ rule valid(uint256 _id) {
     assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
     assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
 }
-*/
