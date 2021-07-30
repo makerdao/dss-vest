@@ -423,7 +423,7 @@ rule unrestrict(uint256 _id) {
 
     unrestrict(e, _id);
 
-    assert(restricted(e, _id) == 0, "Restrict did not set restricted as expected");
+    assert(res(_id) == 0, "Restrict did not set restricted as expected");
 }
 
 // Verify revert rules on unrestrict
@@ -431,17 +431,18 @@ rule unrestrict_revert(uint256 _id) {
     env e;
 
     uint256 ward = wards(e.msg.sender);
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+    address _usr = usr(_id);
 
     unrestrict@withrevert(e, _id);
 
-    bool revert1 = ward != 1 && usr != e.msg.sender;
-    bool revert2 = e.msg.value > 0;
+    bool revert1 = _usr == 0;
+    bool revert2 = ward != 1 && _usr != e.msg.sender;
+    bool revert3 = e.msg.value > 0;
 
-    assert(revert1 => lastReverted, "Only governance or owner can unrestrict did not revert");
-    assert(revert2 => lastReverted, "Sending ETH did not revert");
-    assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
+    assert(revert1 => lastReverted, "Invalid award did not revert");
+    assert(revert2 => lastReverted, "Only governance or owner can unrestrict did not revert");
+    assert(revert3 => lastReverted, "Sending ETH did not revert");
+    assert(lastReverted => revert1 || revert2 || revert3, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behaves correctly on yank
