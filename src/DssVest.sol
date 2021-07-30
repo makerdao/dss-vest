@@ -445,8 +445,6 @@ contract DssVestSuckable is DssVest {
  */
 contract DssVestTransferrable is DssVest {
 
-    uint256 internal constant RAY = 10**27;
-
     address   public immutable czar;
     TokenLike public immutable gem;
 
@@ -468,5 +466,4 @@ contract DssVestTransferrable is DssVest {
     function pay(address _guy, uint256 _amt) override internal {
         require(gem.transferFrom(czar, _guy, _amt));
     }
-
 }
