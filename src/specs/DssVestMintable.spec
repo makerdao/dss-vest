@@ -611,25 +611,20 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
 rule move(uint256 _id, address _dst) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-
     move(e, _id, _dst);
 
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
-
-    assert(usr == _dst, "Move did not set usr as expected");
+    assert(usr(_id) == _dst, "Move did not set usr as expected");
 }
 
 // Verify revert rules on move
 rule move_revert(uint256 _id, address _dst) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+    address _usr = usr(_id);
 
     move@withrevert(e, _id, _dst);
 
-    bool revert1 = usr != e.msg.sender;
+    bool revert1 = _usr != e.msg.sender;
     bool revert2 = _dst == 0;
     bool revert3 = e.msg.value > 0;
 
