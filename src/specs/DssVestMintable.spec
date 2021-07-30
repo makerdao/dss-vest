@@ -9,6 +9,9 @@ methods {
     wards(address) returns (uint256) envfree
     awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
     usr(uint256) returns (address) envfree
+    bgn(uint256) returns (uint256) envfree
+    fin(uint256) returns (uint256) envfree
+    tot(uint256) returns (uint256) envfree
     rxd(uint256) returns (uint256) envfree
     res(uint256) returns (uint256) envfree
     ids() returns (uint256) envfree
@@ -293,34 +296,37 @@ rule vest_revert(uint256 _id) {
 rule accrued(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
+    uint256 _bgn = bgn(_id);
+    uint256 _fin = fin(_id);
+    uint256 _tot = tot(_id);
 
-    require(fin > bgn);
+    require(_fin > _bgn);
 
-    uint256 gem = tot * ((e.block.timestamp - bgn) * WAD() / (fin - bgn)) / WAD();
+    uint256 gem = (_tot * (e.block.timestamp - _bgn)) / (_fin - _bgn);
 
     uint256 amt = accrued(e, _id);
 
-    assert(e.block.timestamp < bgn => amt == 0, "Accrued did not return amt equal to zero as expected");
-    assert(e.block.timestamp >= bgn && e.block.timestamp >= fin => amt == tot, "Accrued did not return amt equal to tot as expected");
-    assert(e.block.timestamp >= bgn && e.block.timestamp < fin => amt == gem, "Accrued did not return amt equal to gem as expected");
+    assert(e.block.timestamp <  _bgn => amt == 0, "Accrued did not return amt equal to zero as expected");
+    assert(e.block.timestamp >= _bgn && e.block.timestamp >= _fin => amt == _tot, "Accrued did not return amt equal to tot as expected");
+    assert(e.block.timestamp >= _bgn && e.block.timestamp < _fin => amt == gem, "Accrued did not return amt equal to gem as expected");
 }
 
 // Verify revert rules on accrued
 rule accrued_revert(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; uint128 tot; uint128 rxd; address mgr;
-    usr, bgn, clf, fin, tot, rxd, mgr  = awards(_id);
-    uint256 timeDelta = e.block.timestamp - bgn;
+    address _usr = usr(_id);
+    uint256 _bgn = bgn(_id);
+    uint256 _fin = fin(_id);
+    uint256 _tot = tot(_id);
+    uint256 timeDelta = e.block.timestamp - _bgn;
 
     accrued@withrevert(e, _id);
 
-    bool revert1 = usr == 0;
-    bool revert2 = e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert3 = e.block.timestamp >= bgn && e.block.timestamp < fin && (timeDelta * WAD()) / WAD() != timeDelta;
-    bool revert4 = e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
+    bool revert1 = _usr == 0;
+    bool revert2 = e.block.timestamp >= _bgn && e.block.timestamp < _fin && timeDelta > e.block.timestamp;
+    bool revert3 = e.block.timestamp >= _bgn && e.block.timestamp < _fin && (_tot * timeDelta) / timeDelta != _tot && timeDelta != 0;
+    bool revert4 = e.block.timestamp >= _bgn && e.block.timestamp < _fin && _fin - _bgn > _fin;
     bool revert5 = e.msg.value > 0;
 
     assert(revert1 => lastReverted, "Invalid award did not revert");
