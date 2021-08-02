@@ -241,7 +241,6 @@ rule vest(uint256 _id) {
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
     require(tot > 0);
-    require(fin > bgn);
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
     require(rxd <= tot);
@@ -249,7 +248,10 @@ rule vest(uint256 _id) {
     uint256 amt = (
         e.block.timestamp >= fin
             ? tot
-            : (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+            :
+                fin > bgn
+                    ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                    : 9999 // Whichever value as tx will revert in this case
     ) - rxd;
 
     uint256 balanceBefore = token.balanceOf(usr);
