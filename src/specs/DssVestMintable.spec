@@ -169,6 +169,7 @@ rule create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta
     assert(rxd == 0, "Init did not set rxd as expected");
     assert(mgr == _mgr, "Init did not set mgr as expected");
     assert(res == 0, "Init did not set res as expected");
+    assert(fin > bgn, "Init did not set fin and bgn as expected");
 }
 
 // Verify revert rules on create
