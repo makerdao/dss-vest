@@ -290,11 +290,15 @@ rule vest_revert(uint256 _id) {
     require(token == gem());
     require(authority == token.authority());
 
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
+
     address tokenOwner = token.owner(e);
     bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
     bool stop = token.stopped(e);
     address _usr = usr(_id);
     uint256 _bgn = bgn(_id);
+    uint256 _clf = clf(_id);
     uint256 _fin = fin(_id);
     uint256 _tot = tot(_id);
     uint256 _rxd = rxd(_id);
@@ -303,45 +307,49 @@ rule vest_revert(uint256 _id) {
     uint256 supply = token.totalSupply();
     uint256 locked = lockedGhost();
 
-    uint256 amt = (
+    uint256 accruedAmt =
         e.block.timestamp >= _fin
             ? _tot
             :
                 _fin > _bgn
                     ? (_tot * (e.block.timestamp - _bgn)) / (_fin - _bgn)
-                    : 9999 // Whichever value as tx will revert in this case
-    ) - _rxd;
+                    : 9999; // Whichever value as tx will revert in this case
+
+    uint256 unpaidAmt = e.block.timestamp < _clf ? 0 : accruedAmt - _rxd;
 
     vest@withrevert(e, _id);
 
     bool revert1  = locked != 0;
     bool revert2  = _usr == 0;
     bool revert3  = _res != 0 && _usr != e.msg.sender;
-    bool revert4  = amt > amt - _rxd;
-    bool revert5  = _rxd + amt < _rxd;
-    bool revert6  = _rxd + amt > max_uint128;
-    bool revert7  = e.msg.value > 0;
+    bool revert4  = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && _tot * (e.block.timestamp - _bgn) > max_uint256;
+    bool revert5  = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && _fin == _bgn;
+    bool revert6  = e.block.timestamp >= _clf && accruedAmt < _rxd;
+    bool revert7  = _rxd + unpaidAmt > max_uint128;
     bool revert8  = currentContract != token && currentContract != tokenOwner && (authority == 0 || !canCall);
     bool revert9  = stop == true;
-    bool revert10 = usrBalance + amt > max_uint256;
-    bool revert11 = supply + amt > max_uint256;
+    bool revert10 = usrBalance + unpaidAmt > max_uint256;
+    bool revert11 = supply + unpaidAmt > max_uint256;
+    bool revert12 = e.msg.value > 0;
 
     assert(revert1  => lastReverted, "Locked did not revert");
     assert(revert2  => lastReverted, "Invalid award did not revert");
     assert(revert3  => lastReverted, "Only user can claim did not revert");
-    assert(revert4  => lastReverted, "Subtraction underflow did not revert");
-    assert(revert5  => lastReverted, "Addition overflow did not revert");
-    assert(revert6  => lastReverted, "Rxd toUint128 cast overflow did not revert");
-    assert(revert7  => lastReverted, "Sending ETH did not revert");
+    assert(revert4  => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert5  => lastReverted, "Division by zero did not revert");
+    assert(revert6  => lastReverted, "Underflow accruedAmt - rxd or toUint128 cast did not revert");
+    assert(revert7  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
     assert(revert8  => lastReverted, "Lack of auth did not revert");
     assert(revert9  => lastReverted, "Stopped did not revert");
     assert(revert10 => lastReverted, "Usr balance overflow did not revert");
     assert(revert11 => lastReverted, "Total supply overflow did not revert");
+    assert(revert12 => lastReverted, "Sending ETH did not revert");
+
     assert(lastReverted =>
             revert1  || revert2 || revert3 ||
             revert4  || revert5 || revert6 ||
             revert7  || revert8 || revert9 ||
-            revert10 || revert11, "Revert rules are not covering all the cases");
+            revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
 }
 
 // Verify that amt behaves correctly on accrued
