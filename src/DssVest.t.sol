@@ -11,6 +11,10 @@ interface Hevm {
     function load(address,bytes32) external;
 }
 
+interface GemLike {
+    function approve(address, uint256) external returns (bool);
+}
+
 interface GovGuard {
     function wards(address) external returns (uint256);
 }
@@ -27,6 +31,10 @@ interface VatLikeTest {
 contract Manager {
     function yank(address dssvest, uint256 id) external {
         DssVest(dssvest).yank(id);
+    }
+
+    function gemApprove(address gem, address spender) external {
+        GemLike(gem).approve(spender, type(uint256).max);
     }
 }
 
@@ -704,5 +712,48 @@ contract DssVestTest is DSTest {
         assertEq(uint256(rxd), 30 * days_vest);
         assertEq(vest.unpaid(id), 20 * days_vest);
         assertEq(Token(address(vest.gem())).balanceOf(address(this)), 30 * days_vest);
+    }
+
+    function testTransferrableVest() public {
+        DssVestTransferrable tVest;
+        User usr = new User();
+        Manager boss = new Manager();
+        hevm.store(
+            address(DAI),
+            keccak256(abi.encode(address(boss), uint(2))),
+            bytes32(uint256(10000 * WAD))
+        );
+        assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD);
+
+        tVest = new DssVestTransferrable(address(boss), address(DAI));
+        tVest.file("cap", (2000 * WAD) / (4 * 365 days));
+        boss.gemApprove(address(DAI), address(tVest));
+
+        uint256 id = tVest.create(
+            address(usr),
+            100 * days_vest,
+            block.timestamp,
+            100 days,
+            0,
+            address(0)
+        );
+
+        assertTrue(tVest.valid(id));
+        hevm.warp(block.timestamp + 1 days);
+        tVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(usr)), 1 * days_vest);
+        assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD - 1 * days_vest);
+        hevm.warp(block.timestamp + 9 days);
+        tVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(usr)), 10 * days_vest);
+        assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD - 10 * days_vest);
+        hevm.warp(block.timestamp + 365 days);
+        tVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(usr)), 100 * days_vest);
+        assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD - 100 * days_vest);
+        hevm.warp(block.timestamp + 365 days);
+        tVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(usr)), 100 * days_vest);
+        assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD - 100 * days_vest);
     }
 }
