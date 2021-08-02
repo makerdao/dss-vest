@@ -238,49 +238,66 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 rule vest(uint256 _id) {
     env e;
 
-    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
-    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
+    address _usr = usr(_id);
+    uint256 _bgn = bgn(_id);
+    uint256 _clf = clf(_id);
+    uint256 _fin = fin(_id);
+    uint256 _mgr = mgr(_id);
+    uint256 _tot = tot(_id);
+    uint256 _rxd = rxd(_id);
+    uint256 _res = res(_id);
 
-    require(tot > 0);
+    require(_tot > 0);
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
-    require(rxd <= tot);
+    require(_rxd <= _tot);
 
-    uint256 amt = (
-        e.block.timestamp >= fin
-            ? tot
-            :
-                fin > bgn
-                    ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
-                    : 9999 // Whichever value as tx will revert in this case
-    ) - rxd;
+    uint256 accruedAmt =
+        e.block.timestamp < _bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= _fin
+            ? _tot
+            : _fin > _bgn
+                ? (_tot * (e.block.timestamp - _bgn)) / (_fin - _bgn)
+                : 9999; // Random value as tx will revert in this case
 
-    uint256 balanceBefore = token.balanceOf(usr);
+    uint256 unpaidAmt =
+        e.block.timestamp < _clf
+        ? 0
+        : accruedAmt - _rxd;
+
+    uint256 balanceBefore = token.balanceOf(_usr);
     uint256 supplyBefore = token.totalSupply();
 
     vest(e, _id);
 
-    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
-    usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
+    address _usr2 = usr(_id);
+    uint256 _bgn2 = bgn(_id);
+    uint256 _clf2 = clf(_id);
+    uint256 _fin2 = fin(_id);
+    uint256 _mgr2 = mgr(_id);
+    uint256 _tot2 = tot(_id);
+    uint256 _rxd2 = rxd(_id);
+    uint256 _res2 = res(_id);
 
-    uint256 balanceAfter = token.balanceOf(usr);
+    uint256 balanceAfter = token.balanceOf(_usr);
     uint256 supplyAfter = token.totalSupply();
 
-    assert(usr2 == usr, "usr changed");
-    assert(bgn2 == bgn, "bgn changed");
-    assert(clf2 == clf, "clf changed");
-    assert(fin2 == fin, "fin changed");
-    assert(tot2 == tot, "tot changed");
-    assert(mgr2 == mgr, "mgr changed");
-    // assert(rxd2 <= tot, "rxd got higher than total");
-    assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
-    assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
-    assert(e.block.timestamp < clf => supplyAfter == supplyBefore, "supply did not remain as expected");
-    assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
-    assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
-    // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
-    assert(e.block.timestamp >= clf => balanceAfter == balanceBefore + amt, "balance did not increase as expected");
-    assert(e.block.timestamp >= clf => supplyAfter == supplyBefore + amt, "supply did not increase as expected");
+    assert(_usr2 == _usr, "_usr changed");
+    assert(_bgn2 == _bgn, "_bgn changed");
+    assert(_clf2 == _clf, "_clf changed");
+    assert(_fin2 == _fin, "_fin changed");
+    assert(_tot2 == _tot, "_tot changed");
+    assert(_mgr2 == _mgr, "_mgr changed");
+    // assert(_rxd2 <= _tot, "_rxd got higher than total");
+    assert(e.block.timestamp < _clf => _rxd2 == _rxd, "_rxd did not remain as expected");
+    assert(e.block.timestamp < _clf => balanceAfter == balanceBefore, "balance did not remain as expected");
+    assert(e.block.timestamp < _clf => supplyAfter == supplyBefore, "supply did not remain as expected");
+    assert(e.block.timestamp >= _fin => _rxd2 == _tot, "Vest did not take the whole amount as expected");
+    assert(e.block.timestamp >= _clf => _rxd2 == _rxd + unpaidAmt, "Vest did not take the proportional amount as expected");
+    // assert(e.block.timestamp >= _clf && e.block.timestamp < _fin => _rxd2 < _tot, "_rxd should not complete tot before time");
+    assert(e.block.timestamp >= _clf => balanceAfter == balanceBefore + unpaidAmt, "balance did not increase as expected");
+    assert(e.block.timestamp >= _clf => supplyAfter == supplyBefore + unpaidAmt, "supply did not increase as expected");
 }
 
 // Verify revert rules on vest
@@ -308,14 +325,18 @@ rule vest_revert(uint256 _id) {
     uint256 locked = lockedGhost();
 
     uint256 accruedAmt =
-        e.block.timestamp >= _fin
+        e.block.timestamp < _bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= _fin
             ? _tot
-            :
-                _fin > _bgn
-                    ? (_tot * (e.block.timestamp - _bgn)) / (_fin - _bgn)
-                    : 9999; // Whichever value as tx will revert in this case
+            : _fin > _bgn
+                ? (_tot * (e.block.timestamp - _bgn)) / (_fin - _bgn)
+                : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt = e.block.timestamp < _clf ? 0 : accruedAmt - _rxd;
+    uint256 unpaidAmt =
+        e.block.timestamp < _clf
+        ? 0
+        : accruedAmt - _rxd;
 
     vest@withrevert(e, _id);
 
