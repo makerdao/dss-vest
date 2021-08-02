@@ -39,7 +39,6 @@ interface VatLike {
 abstract contract DssVest {
 
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
-    uint256 internal constant  WAD = 10**18;
 
     uint256 internal locked;
 
@@ -431,5 +430,4 @@ contract DssVestSuckable is DssVest {
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
     }
-
 }
