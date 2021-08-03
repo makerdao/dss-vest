@@ -699,39 +699,44 @@ rule yank_revert(uint256 _id) {
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
-    uint256 timeDelta = e.block.timestamp - bgn;
-    uint256 amt = unpaid(e, _id);
 
-    require(fin > bgn);
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : e.block.timestamp >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        e.block.timestamp < clf
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : accruedAmt - rxd;
 
     yank@withrevert(e, _id);
 
     bool revert1  = ward != 1 && mgr != e.msg.sender;
     bool revert2  = usr == 0;
-    bool revert3  = fin > max_uint48();
-    bool revert4  = e.block.timestamp < clf && rxd < 0;
-    bool revert5  = e.block.timestamp >= clf && amt + rxd > max_uint128;
-    bool revert6  = e.block.timestamp >= clf && amt + rxd < amt;
-    bool revert7  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert8  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (tot * timeDelta) / timeDelta != tot && timeDelta != 0;
-    bool revert9  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
-    bool revert10 = e.msg.value > 0;
+    bool revert3  = e.block.timestamp < fin && e.block.timestamp > max_uint48();
+    bool revert4  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert5  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && fin == bgn;
+    bool revert6  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && accruedAmt < rxd;
+    bool revert7  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && rxd + unpaidAmt > max_uint128;
+    bool revert8 = e.msg.value > 0;
 
-    assert(revert1  => lastReverted, "Not authorized did not revert");
-    assert(revert2  => lastReverted, "Invalid award did not revert");
-    assert(revert3  => lastReverted, "Fin toUint48 cast did not revert");
-    assert(revert4  => lastReverted, "Addition overflow rxd did not revert");
-    assert(revert5  => lastReverted, "Amt toUint128 cast did not revert");
-    assert(revert6  => lastReverted, "Addition overflow amt did not revert");
-    assert(revert7  => lastReverted, "Subtraction underflow timeDelta did not revert");
-    assert(revert8  => lastReverted, "Multiplication overflow did not revert");
-    assert(revert9  => lastReverted, "Subtraction underflow fin did not revert");
-    assert(revert10 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Not authorized did not revert");
+    assert(revert2 => lastReverted, "Invalid award did not revert");
+    assert(revert3 => lastReverted, "Fin toUint48 cast did not revert");
+    assert(revert4 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert5 => lastReverted, "Division by zero did not revert");
+    assert(revert6 => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert7 => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+    assert(revert8 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted =>
-            revert1  || revert2 || revert3 ||
-            revert4  || revert5 || revert6 ||
-            revert7  || revert8 || revert9 ||
-            revert10, "Revert rules are not covering all the cases");
+            revert1 || revert2 || revert3 ||
+            revert4 || revert5 || revert6 ||
+            revert7 || revert8, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behaves correctly on yank with arbitrary end
@@ -785,44 +790,45 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
     uint256 ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
-    uint256 timeDelta = e.block.timestamp - bgn;
-    uint256 amt = unpaid(e, _id);
 
-    require(fin > bgn);
+    uint256 _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
+    uint256 accruedAmt =
+        _end2 < bgn
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : _end2 >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (_end2 - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        _end2 < clf
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : accruedAmt - rxd;
 
     yank@withrevert(e, _id, _end);
 
     bool revert1  = ward != 1 && mgr != e.msg.sender;
     bool revert2  = usr == 0;
-    bool revert3  = _end < fin && fin > max_uint48();
-    bool revert4  = _end < e.block.timestamp && e.block.timestamp > max_uint48();
-    bool revert5  = _end >= clf && amt + rxd > max_uint128;
-    bool revert6  = _end >= clf && amt + rxd < amt;
-    bool revert7  = _end >= clf && _end <  bgn && rxd > 0;
-    bool revert8  = _end >= clf && _end >= bgn && _end < fin && timeDelta > e.block.timestamp;
-    bool revert9  = _end >= clf && _end >= bgn && _end < fin && (tot * timeDelta) / timeDelta != tot && timeDelta != 0;
-    bool revert10 = _end >= clf && _end >= bgn && _end < fin && fin - bgn > fin;
-    bool revert11 = _end >= clf && _end >= bgn && _end < fin && _end - bgn > _end;
-    bool revert12 = e.msg.value > 0;
+    bool revert3  = _end2 < fin && _end2 > max_uint48();
+    bool revert4  = _end2 < fin && _end2 >= bgn && _end2 >= clf && tot * (_end2 - bgn) > max_uint256;
+    bool revert5  = _end2 < fin && _end2 >= bgn && _end2 >= clf && fin == bgn;
+    bool revert6  = _end2 < fin && _end2 >= bgn && _end2 >= clf && accruedAmt < rxd;
+    bool revert7  = _end2 < fin && _end2 >= bgn && _end2 >= clf && rxd + unpaidAmt > max_uint128;
+    bool revert8 = e.msg.value > 0;
 
-    assert(revert1  => lastReverted, "Not authorized did not revert");
-    assert(revert2  => lastReverted, "Invalid award did not revert");
-    assert(revert3  => lastReverted, "Fin toUint48 cast did not revert");
-    assert(revert4  => lastReverted, "Block timestamp toUint48 cast did not revert");
-    assert(revert5  => lastReverted, "Amt plus rxd toUint128 cast did not revert");
-    assert(revert6  => lastReverted, "Addition overflow amt plus rxd did not revert");
-    assert(revert7  => lastReverted, "Substraction underflow rxd did not revert");
-    assert(revert8  => lastReverted, "Subtraction underflow timeDelta did not revert");
-    assert(revert9  => lastReverted, "Multiplication overflow did not revert");
-    assert(revert10 => lastReverted, "Subtraction underflow fin min bgn did not revert");
-    assert(revert11 => lastReverted, "Subtraction underflow end min bgn did not revert");
-    assert(revert12 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Not authorized did not revert");
+    assert(revert2 => lastReverted, "Invalid award did not revert");
+    assert(revert3 => lastReverted, "Fin toUint48 cast did not revert");
+    assert(revert4 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert5 => lastReverted, "Division by zero did not revert");
+    assert(revert6 => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert7 => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+    assert(revert8 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted =>
-            revert1  || revert2  || revert3  ||
-            revert4  || revert5  || revert6  ||
-            revert7  || revert8  || revert9  ||
-            revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
-
+            revert1 || revert2 || revert3 ||
+            revert4 || revert5 || revert6 ||
+            revert7 || revert8, "Revert rules are not covering all the cases");
 }
 
 // Verify that dst behaves correctly on move
