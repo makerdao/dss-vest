@@ -357,6 +357,62 @@ rule vest_revert(uint256 _id) {
             revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
 }
 
+// Verify that awards behaves correctly on vest with arbitrary max amt
+rule vest_amt(uint256 _id, uint256 _maxAmt) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
+
+    require(tot > 0);
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
+    require(rxd <= tot);
+
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        e.block.timestamp < clf
+        ? 0
+        : accruedAmt - rxd;
+
+    uint256 amt = _maxAmt > unpaidAmt ? unpaidAmt : _maxAmt;
+
+    uint256 balanceBefore = token.balanceOf(usr);
+    uint256 supplyBefore = token.totalSupply();
+
+    vest(e, _id, _maxAmt);
+
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
+    usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
+
+    uint256 balanceAfter = token.balanceOf(usr);
+    uint256 supplyAfter = token.totalSupply();
+
+    assert(usr2 == usr, "usr changed");
+    assert(bgn2 == bgn, "bgn changed");
+    assert(clf2 == clf, "clf changed");
+    assert(fin2 == fin, "fin changed");
+    assert(tot2 == tot, "tot changed");
+    assert(mgr2 == mgr, "mgr changed");
+    assert(res2 == res, "res changed");
+    // assert(rxd2 <= tot, "rxd got higher than total");
+    assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
+    assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
+    assert(e.block.timestamp < clf => supplyAfter == supplyBefore, "supply did not remain as expected");
+    assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
+    // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
+    assert(e.block.timestamp >= clf => balanceAfter == balanceBefore + amt, "balance did not increase as expected");
+    assert(e.block.timestamp >= clf => supplyAfter == supplyBefore + amt, "supply did not increase as expected");
+}
+
 // Verify that amt behaves correctly on accrued
 rule accrued(uint256 _id) {
     env e;
