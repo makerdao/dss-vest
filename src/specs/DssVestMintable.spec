@@ -277,6 +277,7 @@ rule vest(uint256 _id) {
     assert(fin2 == fin, "fin changed");
     assert(tot2 == tot, "tot changed");
     assert(mgr2 == mgr, "mgr changed");
+    assert(res2 == res, "res changed");
     // assert(rxd2 <= tot, "rxd got higher than total");
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
     assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
@@ -554,6 +555,7 @@ rule yank(uint256 _id) {
     assert(usr2 == usr, "usr changed");
     assert(rxd2 == rxd, "rxd changed");
     assert(mgr2 == mgr, "mgr changed");
+    assert(res2 == res, "res changed");
     assert(e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
@@ -639,6 +641,7 @@ rule yank_end(uint256 _id, uint256 _end) {
     assert(usr2 == usr, "usr changed");
     assert(rxd2 == rxd, "rxd changed");
     assert(mgr2 == mgr, "mgr changed");
+    assert(res2 == res, "res changed");
     assert(_end2 < fin => fin2 == _end2, "Yank did not set fin as expected");
     assert(_end2 < fin && _end2 < bgn => bgn2 == _end2, "Yank did not set bgn as expected when end is less than bgn");
     assert(_end2 < fin && _end2 < bgn => clf2 == _end2, "Yank did not set clf as expected when end is less than bgn");
