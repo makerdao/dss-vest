@@ -441,11 +441,6 @@ rule unpaid_revert(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
-        e.block.timestamp < clf
-        ? 0
-        : accruedAmt - rxd;
-
     unpaid@withrevert(e, _id);
 
     bool revert1 = usr == 0;
