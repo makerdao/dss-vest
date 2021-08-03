@@ -457,7 +457,7 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     bool revert4  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
     bool revert5  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
     bool revert6  = e.block.timestamp >= clf && accruedAmt < rxd;
-    bool revert7  = rxd + unpaidAmt > max_uint128;
+    bool revert7  = rxd + amt > max_uint128;
     bool revert8  = currentContract != token && currentContract != tokenOwner && (authority == 0 || !canCall);
     bool revert9  = stop == true;
     bool revert10 = usrBalance + amt > max_uint256;
@@ -470,7 +470,7 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     assert(revert4  => lastReverted, "Overflow tot * time passed did not revert");
     assert(revert5  => lastReverted, "Division by zero did not revert");
     assert(revert6  => lastReverted, "Underflow accruedAmt - rxd did not revert");
-    assert(revert7  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+    assert(revert7  => lastReverted, "Overflow rxd + amt or toUint128 cast did not revert");
     assert(revert8  => lastReverted, "Lack of auth did not revert");
     assert(revert9  => lastReverted, "Stopped did not revert");
     assert(revert10 => lastReverted, "Usr balance overflow did not revert");
