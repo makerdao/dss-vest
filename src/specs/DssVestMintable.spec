@@ -39,14 +39,14 @@ hook Sload uint256 value locked STORAGE {
     require lockedGhost() == value;
 }
 
-invariant everything_not_set_if_usr_not_set(uint256 id) usr(id) == 0 => bgn(id) == 0 && clf(id) == 0 && fin(id) == 0 && tot(id) == 0 && rxd(id) == 0 && mgr(id) == 0
-invariant usr_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => usr(id) != 0
-invariant tot_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => tot(id) > 0 { 
+invariant everything_not_set_if_usr_not_set(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0 && mgr(_id) == 0 && res(_id) == 0
+invariant usr_cant_be_zero_if_init(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
+invariant tot_cant_be_zero_if_init(uint256 _id) _id > 0 && _id <= ids() => tot(_id) > 0 {
     // TODO: restrict the conditions to the minimum possible
-    preserved yank(uint256 _id) with (env e) {
+    preserved yank(uint256 _id2) with (env e) {
         require(false);
     }
-    preserved yank(uint256 _id, uint256 _end) with (env e) {
+    preserved yank(uint256 _id2, uint256 _end) with (env e) {
         require(false);
     }
 }
@@ -59,8 +59,8 @@ invariant rxdLessOrEqualTot(uint256 id) rxd(id) <= tot(id) {
         require(false);
     }
 }
-invariant clfGreaterOrEqualBgn(uint256 id) clf(id) >= bgn(id)
-invariant finGreaterOrEqualClf(uint256 id) fin(id) >= clf(id)
+invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id)
+invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id)
 
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
@@ -259,7 +259,6 @@ rule vest(uint256 _id) {
 
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
-    require(tot > 0);
     require(rxd <= tot);
 
     uint256 accruedAmt =
@@ -382,7 +381,6 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
 
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
-    require(tot > 0);
     require(rxd <= tot);
 
     uint256 accruedAmt =
