@@ -407,38 +407,48 @@ rule accrued_revert(uint256 _id) {
 rule unpaid(uint256 _id) {
     env e;
 
-    uint256 _clf = clf(_id);
-    uint256 _rxd = rxd(_id);
-    uint256 amtAccrued = accrued(e, _id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
+
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
 
     uint256 amt = unpaid(e, _id);
 
-    assert(e.block.timestamp <  _clf => amt == 0, "Unpaid did not return amt equal to zero as expected");
-    assert(e.block.timestamp >= _clf => amt == amtAccrued - _rxd, "Unpaid did not return amt as expected");
+    assert(e.block.timestamp <  clf => amt == 0, "Unpaid did not return amt equal to zero as expected");
+    assert(e.block.timestamp >= clf => amt == accruedAmt - rxd, "Unpaid did not return amt as expected");
 }
 
 // Verify revert rules on unpaid
 rule unpaid_revert(uint256 _id) {
     env e;
 
-    address _usr = usr(_id);
-    uint256 _bgn = bgn(_id);
-    uint256 _clf = clf(_id);
-    uint256 _fin = fin(_id);
-    uint256 _tot = tot(_id);
-    uint256 _rxd = rxd(_id);
-    uint256 timeDelta = e.block.timestamp - _bgn;
-    uint256 amtAccrued = accrued(e, _id);
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
+    uint256 timeDelta = e.block.timestamp - bgn;
 
-    require(_fin > _bgn);
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
 
     unpaid@withrevert(e, _id);
 
-    bool revert1 = _usr == 0;
-    bool revert2 = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && timeDelta > e.block.timestamp;
-    bool revert3 = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && (_tot * timeDelta) / timeDelta != _tot && timeDelta != 0;
-    bool revert4 = e.block.timestamp >= _clf && e.block.timestamp >= _bgn && e.block.timestamp < _fin && _fin - _bgn > _fin;
-    bool revert5 = e.block.timestamp >= _clf && amtAccrued - _rxd > amtAccrued;
+    bool revert1 = usr == 0;
+    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
+    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (tot * timeDelta) / timeDelta != tot && timeDelta != 0;
+    bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
+    bool revert5 = e.block.timestamp >= clf && accruedAmt - rxd > accruedAmt;
     bool revert6 = e.msg.value > 0;
 
     assert(revert1 => lastReverted, "Invalid award did not revert");
