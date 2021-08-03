@@ -45,7 +45,6 @@ invariant tot_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => tot(id) 
 invariant rxdLessOrEqualTot(uint256 id) rxd(id) <= tot(id) // TODO: exclude yank but in this case it couldn''t actually happen in reality
 invariant clfGreaterOrEqualBgn(uint256 id) clf(id) >= bgn(id)
 invariant finGreaterOrEqualClf(uint256 id) fin(id) >= clf(id)
-invariant finGreaterBgn_if_init(uint256 id) id > 0 && id <= ids() => fin(id) > bgn(id) // TODO: exclude yank
 
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
@@ -242,9 +241,9 @@ rule vest(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    require(tot > 0);
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
+    require(tot > 0);
     require(rxd <= tot);
 
     uint256 accruedAmt =
@@ -365,9 +364,9 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    require(tot > 0);
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
+    require(tot > 0);
     require(rxd <= tot);
 
     uint256 accruedAmt =
