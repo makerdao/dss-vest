@@ -24,6 +24,7 @@ methods {
     token.balanceOf(address) returns (uint256) envfree
     token.totalSupply() returns (uint256) envfree
     token.authority() returns (address) envfree
+    token.stopped() returns (bool) envfree
 }
 
 definition max_uint48() returns uint256 = 2^48 - 1;
@@ -301,7 +302,7 @@ rule vest_revert(uint256 _id) {
 
     address tokenOwner = token.owner(e);
     bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
-    bool stop = token.stopped(e);
+    bool stop = token.stopped();
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
     uint256 usrBalance = token.balanceOf(usr);
@@ -425,7 +426,7 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
 
     address tokenOwner = token.owner(e);
     bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
-    bool stop = token.stopped(e);
+    bool stop = token.stopped();
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
     uint256 usrBalance = token.balanceOf(usr);
