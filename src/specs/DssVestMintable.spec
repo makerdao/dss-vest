@@ -39,28 +39,42 @@ hook Sload uint256 value locked STORAGE {
     require lockedGhost() == value;
 }
 
-invariant everything_not_set_if_usr_not_set(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0 && mgr(_id) == 0 && res(_id) == 0
-invariant usr_cant_be_zero_if_init(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
-invariant tot_cant_be_zero_if_init(uint256 _id) _id > 0 && _id <= ids() => tot(_id) > 0 {
-    // TODO: restrict the conditions to the minimum possible
-    preserved yank(uint256 _id2) with (env e) {
-        require(false);
-    }
-    preserved yank(uint256 _id2, uint256 _end) with (env e) {
-        require(false);
-    }
-}
-invariant rxdLessOrEqualTot(uint256 id) rxd(id) <= tot(id) {
-    // TODO: restrict the conditions to the minimum possible
-    preserved yank(uint256 _id) with (env e) {
-        require(false);
-    }
-    preserved yank(uint256 _id, uint256 _end) with (env e) {
-        require(false);
-    }
-}
+invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0 && mgr(_id) == 0 && res(_id) == 0
+
+invariant usrCantBeZeroIfInit(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
+
 invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id)
+
 invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id)
+
+// invariant rxdLessOrEqualTot(uint256 _id) rxd(_id) == rxdGhost(_id) => rxd(_id) <= tot(_id) {
+//     // TODO: restrict the conditions to the minimum possible
+//     preserved yank(uint256 _id2) with (env e) {
+//         require(_id == _id2);
+//         require(false);
+//     }
+//     preserved yank(uint256 _id2, uint256 _end) with (env e) {
+//         require(_id == _id2);
+//         require(false);
+//     }
+//     init_state axiom rxd(_id) == 0;
+// }
+
+rule rxdLessOrEqualTot(method f) {
+    env e;
+    uint256 _id;
+
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
+
+    require(e.block.timestamp < clf(_id) => rxd(_id) == 0);
+    require(rxd(_id) <= tot(_id));
+
+    calldataarg arg;
+    f(e, arg);
+
+    assert(rxd(_id) <= tot(_id));
+}
 
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
