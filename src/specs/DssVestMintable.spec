@@ -520,24 +520,35 @@ rule yank(uint256 _id) {
     require(clf >= bgn);
     require(rxd <= tot);
 
-    uint256 amt = (
-        e.block.timestamp >= fin
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : e.block.timestamp >= fin
             ? tot
-            : (tot * (e.block.timestamp - bgn)) / (fin - bgn)
-    );
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        e.block.timestamp < clf
+        ? 0
+        : accruedAmt - rxd;
 
     yank(e, _id);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
     usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
+    assert(usr2 == usr, "usr changed");
+    assert(rxd2 == rxd, "rxd changed");
+    assert(mgr2 == mgr, "mgr changed");
     assert(e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
     assert(e.block.timestamp < fin && e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
     assert(e.block.timestamp < fin && e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
     assert(e.block.timestamp < fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than clf");
-    assert(e.block.timestamp < fin && e.block.timestamp > bgn && e.block.timestamp > clf => tot2 == amt, "Yank did not set tot as expected");
+    assert(e.block.timestamp < fin && e.block.timestamp > bgn && e.block.timestamp > clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank
