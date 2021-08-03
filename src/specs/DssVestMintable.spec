@@ -46,7 +46,6 @@ invariant clfGreaterOrEqualBgn(uint256 id) clf(id) >= bgn(id)
 invariant finGreaterOrEqualClf(uint256 id) fin(id) >= clf(id)
 invariant finGreaterBgn_if_init(uint256 id) id > 0 && id <= ids() => fin(id) > bgn(id) // TODO: exclude yank
 
-
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
     env e;
