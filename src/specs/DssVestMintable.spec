@@ -412,7 +412,7 @@ rule unpaid(uint256 _id) {
 
     uint256 accruedAmt =
         e.block.timestamp < bgn
-        ? 0 // This case actually never enters via vest but it's here for completeness
+        ? 0
         : e.block.timestamp >= fin
             ? tot
             : fin > bgn
@@ -431,35 +431,37 @@ rule unpaid_revert(uint256 _id) {
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
-    uint256 timeDelta = e.block.timestamp - bgn;
 
     uint256 accruedAmt =
         e.block.timestamp < bgn
-        ? 0 // This case actually never enters via vest but it's here for completeness
+        ? 0
         : e.block.timestamp >= fin
             ? tot
             : fin > bgn
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
+    uint256 unpaidAmt =
+        e.block.timestamp < clf
+        ? 0
+        : accruedAmt - rxd;
+
     unpaid@withrevert(e, _id);
 
     bool revert1 = usr == 0;
-    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && timeDelta > e.block.timestamp;
-    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && (tot * timeDelta) / timeDelta != tot && timeDelta != 0;
-    bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin - bgn > fin;
-    bool revert5 = e.block.timestamp >= clf && accruedAmt - rxd > accruedAmt;
-    bool revert6 = e.msg.value > 0;
+    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
+    bool revert4 = e.block.timestamp >= clf && accruedAmt < rxd;
+    bool revert5 = e.msg.value > 0;
 
     assert(revert1 => lastReverted, "Invalid award did not revert");
-    assert(revert2 => lastReverted, "Subtraction underflow timeDelta did not revert");
-    assert(revert3 => lastReverted, "Multiplication overflow did not revert");
-    assert(revert4 => lastReverted, "Subtraction underflow fin did not revert");
-    assert(revert5 => lastReverted, "Substraction underflow amtAccrued did not revert");
-    assert(revert6 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert3 => lastReverted, "Division by zero did not revert");
+    assert(revert4 => lastReverted, "Underflow accruedAmt - rxd or toUint128 cast did not revert");
+    assert(revert5 => lastReverted, "Sending ETH did not revert");
     assert(lastReverted =>
             revert1 || revert2 || revert3 ||
-            revert4 || revert5 || revert6, "Revert rules are not covering all the cases");
+            revert4 || revert5, "Revert rules are not covering all the cases");
 }
 
 // Verify that restricted behaves correctly on restrict
