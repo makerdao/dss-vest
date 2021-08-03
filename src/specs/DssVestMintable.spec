@@ -525,9 +525,8 @@ rule yank(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    require(fin > bgn);
-    require(fin >= clf);
-    require(clf >= bgn);
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
     require(rxd <= tot);
 
     uint256 accruedAmt =
@@ -610,9 +609,8 @@ rule yank_end(uint256 _id, uint256 _end) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    require(fin > bgn);
-    require(fin >= clf);
-    require(clf >= bgn);
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
     require(rxd <= tot);
 
     uint256 _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
