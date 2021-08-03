@@ -259,7 +259,6 @@ rule vest(uint256 _id) {
 
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
-    require(rxd <= tot);
 
     uint256 accruedAmt =
         e.block.timestamp < bgn
@@ -381,7 +380,6 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
 
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
-    require(rxd <= tot);
 
     uint256 accruedAmt =
         e.block.timestamp < bgn
