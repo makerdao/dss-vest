@@ -541,7 +541,7 @@ rule yank(uint256 _id) {
 
     uint256 unpaidAmt =
         e.block.timestamp < clf
-        ? 0
+        ? 0 // This case actually never enters via yank but it's here for completeness
         : accruedAmt - rxd;
 
     yank(e, _id);
@@ -615,25 +615,36 @@ rule yank_end(uint256 _id, uint256 _end) {
     require(clf >= bgn);
     require(rxd <= tot);
 
-    uint256 amt = (
-        _end >= fin
+    uint256 _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
+    uint256 accruedAmt =
+        _end2 < bgn
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : _end2 >= fin
             ? tot
-            : (tot * (_end - bgn)) / (fin - bgn)
-    );
+            : fin > bgn
+                ? (tot * (_end2 - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        _end2 < clf
+        ? 0 // This case actually never enters via yank but it's here for completeness
+        : accruedAmt - rxd;
 
     yank(e, _id, _end);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
     usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
-    assert(_end <  e.block.timestamp && e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin equal end as expected");
-    assert(_end >= e.block.timestamp && _end < fin => fin2 == _end, "Yank did not set fin as expected");
-    assert(_end >= e.block.timestamp && _end < fin && _end < bgn => bgn2 == _end, "Yank did not set bgn as expected when end is less than bgn");
-    assert(_end >= e.block.timestamp && _end < fin && _end < bgn => clf2 == _end, "Yank did not set clf as expected when end is less than bgn");
-    assert(_end >= e.block.timestamp && _end < fin && _end < bgn => tot2 == 0, "Yank did not set tot as expected when end is less than bgn");
-    assert(_end >= e.block.timestamp && _end < fin && _end < clf => clf2 == _end, "Yank did not set clf as expected when end is less than clf");
-    assert(_end >= e.block.timestamp && _end < fin && _end < fin && _end < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
-    assert(_end >= e.block.timestamp && _end < fin && _end > bgn && _end > clf => tot2 == amt, "Yank did not set tot as expected");
+    assert(usr2 == usr, "usr changed");
+    assert(rxd2 == rxd, "rxd changed");
+    assert(mgr2 == mgr, "mgr changed");
+    assert(_end2 < fin => fin2 == _end2, "Yank did not set fin as expected");
+    assert(_end2 < fin && _end2 < bgn => bgn2 == _end2, "Yank did not set bgn as expected when end is less than bgn");
+    assert(_end2 < fin && _end2 < bgn => clf2 == _end2, "Yank did not set clf as expected when end is less than bgn");
+    assert(_end2 < fin && _end2 < bgn => tot2 == 0, "Yank did not set tot as expected when end is less than bgn");
+    assert(_end2 < fin && _end2 < clf => clf2 == _end2, "Yank did not set clf as expected when end is less than clf");
+    assert(_end2 < fin && _end2 < fin && _end2 < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
+    assert(_end2 < fin && _end2 >= bgn && _end2 >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank_end
