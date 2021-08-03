@@ -41,8 +41,24 @@ hook Sload uint256 value locked STORAGE {
 
 invariant everything_not_set_if_usr_not_set(uint256 id) usr(id) == 0 => bgn(id) == 0 && clf(id) == 0 && fin(id) == 0 && tot(id) == 0 && rxd(id) == 0 && mgr(id) == 0
 invariant usr_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => usr(id) != 0
-invariant tot_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => tot(id) > 0 // TODO: exclude yank
-invariant rxdLessOrEqualTot(uint256 id) rxd(id) <= tot(id) // TODO: exclude yank but in this case it couldn''t actually happen in reality
+invariant tot_cant_be_zero_if_init(uint256 id) id > 0 && id <= ids() => tot(id) > 0 { 
+    // TODO: restrict the conditions to the minimum possible
+    preserved yank(uint256 _id) with (env e) {
+        require(false);
+    }
+    preserved yank(uint256 _id, uint256 _end) with (env e) {
+        require(false);
+    }
+}
+invariant rxdLessOrEqualTot(uint256 id) rxd(id) <= tot(id) {
+    // TODO: restrict the conditions to the minimum possible
+    preserved yank(uint256 _id) with (env e) {
+        require(false);
+    }
+    preserved yank(uint256 _id, uint256 _end) with (env e) {
+        require(false);
+    }
+}
 invariant clfGreaterOrEqualBgn(uint256 id) clf(id) >= bgn(id)
 invariant finGreaterOrEqualClf(uint256 id) fin(id) >= clf(id)
 
