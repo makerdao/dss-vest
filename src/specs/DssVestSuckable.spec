@@ -1,6 +1,6 @@
 // DssVestSuckable.spec
 
-// certoraRun src/DssVest.sol:DssVestSuckable src/specs/ChainLog.sol src/specs/Vat.sol src/specs/DaiJoin.sol src/specs/DSToken.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=DSToken --verify DssVestSuckable:src/specs/DssVestSuckable.spec --optimistic_loop --rule_sanity
+// certoraRun src/DssVest.sol:DssVestSuckable src/specs/ChainLog.sol src/specs/Vat.sol src/specs/DaiJoin.sol src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=DSToken DSToken:authority=MockAuthority  --verify DssVestSuckable:src/specs/DssVestSuckable.spec --optimistic_loop --rule_sanity
 
 using DSToken as token
 
