@@ -1,6 +1,8 @@
 // DssVestSuckable.spec
 
-// certoraRun src/DssVest.sol:DssVestSuckable src/specs/Vat.sol src/specs/DaiJoin.sol --link DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin --verify DssVestSuckable:src/specs/DssVestSuckable.spec --optimistic_loop --rule_sanity
+// certoraRun src/DssVest.sol:DssVestSuckable src/specs/ChainLog.sol src/specs/Vat.sol src/specs/DaiJoin.sol src/specs/DSToken.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=DSToken --verify DssVestSuckable:src/specs/DssVestSuckable.spec --optimistic_loop --rule_sanity
+
+using DSToken as token
 
 methods {
     wards(address) returns (uint256) envfree
@@ -17,6 +19,8 @@ methods {
     cap() returns (uint256) envfree
     valid(uint256) returns (bool) envfree
     TWENTY_YEARS() returns (uint256) envfree
+    token.balanceOf(address) returns (uint256) envfree
+    token.totalSupply() returns (uint256) envfree
 }
 
 definition max_uint48() returns uint256 = 2^48 - 1;
@@ -257,7 +261,57 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 }
 
 // Verify that awards behaves correctly on vest
-// TODO rule vest(uint256 _id)
+rule vest(uint256 _id) {
+    env e;
+
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
+
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
+
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        e.block.timestamp < clf
+        ? 0
+        : accruedAmt - rxd;
+
+    uint256 balanceBefore = token.balanceOf(usr);
+    uint256 supplyBefore = token.totalSupply();
+
+    vest(e, _id);
+
+    address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
+    usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
+
+    uint256 balanceAfter = token.balanceOf(usr);
+    uint256 supplyAfter = token.totalSupply();
+
+    assert(usr2 == usr, "usr changed");
+    assert(bgn2 == bgn, "bgn changed");
+    assert(clf2 == clf, "clf changed");
+    assert(fin2 == fin, "fin changed");
+    assert(tot2 == tot, "tot changed");
+    assert(mgr2 == mgr, "mgr changed");
+    assert(res2 == res, "res changed");
+    // assert(rxd2 <= tot, "rxd got higher than total");
+    assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
+    assert(e.block.timestamp < clf => balanceAfter == balanceBefore, "balance did not remain as expected");
+    assert(e.block.timestamp < clf => supplyAfter == supplyBefore, "supply did not remain as expected");
+    assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
+    assert(e.block.timestamp >= clf => rxd2 == rxd + unpaidAmt, "Vest did not take the proportional amount as expected");
+    // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
+    assert(e.block.timestamp >= clf => balanceAfter == balanceBefore + unpaidAmt, "balance did not increase as expected");
+    assert(e.block.timestamp >= clf => supplyAfter == supplyBefore + unpaidAmt, "supply did not increase as expected");
+}
 
 // Verify revert rules on vest
 // TODO rule vest_revert(uint256 _id)
