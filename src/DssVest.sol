@@ -106,20 +106,20 @@ abstract contract DssVest {
         return awards[_id].fin;
     }
 
-    function tot(uint256 _id) public view returns (uint256) {
-        return awards[_id].tot;
-    }
-
-    function rxd(uint256 _id) public view returns (uint256) {
-        return awards[_id].rxd;
-    }
-
     function mgr(uint256 _id) public view returns (address) {
         return awards[_id].mgr;
     }
 
     function res(uint256 _id) public view returns (uint256) {
         return awards[_id].res;
+    }
+
+    function tot(uint256 _id) public view returns (uint256) {
+        return awards[_id].tot;
+    }
+
+    function rxd(uint256 _id) public view returns (uint256) {
+        return awards[_id].rxd;
     }
 
     /*
