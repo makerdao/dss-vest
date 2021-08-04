@@ -71,7 +71,7 @@ rule rxdLessOrEqualTot(method f) {
     require(rxd(_id) <= tot(_id));
 
     calldataarg arg;
-    f(e, arg);
+    f@withrevert(e, arg);
 
     assert(rxd(_id) <= tot(_id));
 }
