@@ -895,3 +895,17 @@ rule valid(uint256 _id) {
     assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
     assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
 }
+
+// Verify revert rules on valid
+rule valid_revert(uint256 _id) {
+    env e;
+
+    valid@withrevert(_id);
+
+    // The only revert path for this function is sending ETH.
+    // However as this function is defined as envfree, it is already being checked
+    // that is not payable by Certora prover, then not following that revertion
+    // path in this rule. That's why it's ignored.
+    // With the following assertion we prove there aren't any other revert paths.
+    assert(lastReverted => false, "Revert rules are not covering all the cases");
+}
