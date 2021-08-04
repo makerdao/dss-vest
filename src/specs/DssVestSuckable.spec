@@ -3,6 +3,7 @@
 // certoraRun src/DssVest.sol:DssVestSuckable src/specs/ChainLog.sol src/specs/Vat.sol src/specs/DaiJoin.sol src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=DSToken DSToken:authority=MockAuthority  --verify DssVestSuckable:src/specs/DssVestSuckable.spec --optimistic_loop --rule_sanity
 
 using DSToken as token
+using MockAuthority as authority
 
 methods {
     wards(address) returns (uint256) envfree
@@ -21,6 +22,8 @@ methods {
     TWENTY_YEARS() returns (uint256) envfree
     token.balanceOf(address) returns (uint256) envfree
     token.totalSupply() returns (uint256) envfree
+    token.authority() returns (address) envfree
+    token.stopped() returns (bool) envfree
 }
 
 definition max_uint48() returns uint256 = 2^48 - 1;
@@ -314,7 +317,71 @@ rule vest(uint256 _id) {
 }
 
 // Verify revert rules on vest
-// TODO rule vest_revert(uint256 _id)
+rule vest_revert(uint256 _id) {
+    env e;
+
+    require(authority == token.authority());
+
+    requireInvariant clfGreaterOrEqualBgn(_id);
+    requireInvariant finGreaterOrEqualClf(_id);
+
+    address tokenOwner = token.owner(e);
+    bool canCall = authority.canCall(e, currentContract, token, 0x40c10f1900000000000000000000000000000000000000000000000000000000);
+    bool stop = token.stopped();
+    address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
+    usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
+    uint256 usrBalance = token.balanceOf(usr);
+    uint256 supply = token.totalSupply();
+    uint256 locked = lockedGhost();
+
+    uint256 accruedAmt =
+        e.block.timestamp < bgn
+        ? 0 // This case actually never enters via vest but it's here for completeness
+        : e.block.timestamp >= fin
+            ? tot
+            : fin > bgn
+                ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
+                : 9999; // Random value as tx will revert in this case
+
+    uint256 unpaidAmt =
+        e.block.timestamp < clf
+        ? 0
+        : accruedAmt - rxd;
+
+    vest@withrevert(e, _id);
+
+    bool revert1  = locked != 0;
+    bool revert2  = usr == 0;
+    bool revert3  = res != 0 && usr != e.msg.sender;
+    bool revert4  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert5  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
+    bool revert6  = e.block.timestamp >= clf && accruedAmt < rxd;
+    bool revert7  = rxd + unpaidAmt > max_uint128;
+    bool revert8  = currentContract != token && currentContract != tokenOwner && (authority == 0 || !canCall);
+    bool revert9  = stop == true;
+    bool revert10 = usrBalance + unpaidAmt > max_uint256;
+    bool revert11 = supply + unpaidAmt > max_uint256;
+    bool revert12 = e.msg.value > 0;
+
+    assert(revert1  => lastReverted, "Locked did not revert");
+    assert(revert2  => lastReverted, "Invalid award did not revert");
+    assert(revert3  => lastReverted, "Only user can claim did not revert");
+    assert(revert4  => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert5  => lastReverted, "Division by zero did not revert");
+    assert(revert6  => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert7  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+    assert(revert8  => lastReverted, "Lack of auth did not revert");
+    assert(revert9  => lastReverted, "Stopped did not revert");
+    assert(revert10 => lastReverted, "Usr balance overflow did not revert");
+    assert(revert11 => lastReverted, "Total supply overflow did not revert");
+    assert(revert12 => lastReverted, "Sending ETH did not revert");
+
+    assert(lastReverted =>
+            revert1  || revert2  || revert3 ||
+            revert4  || revert5  || revert6 ||
+            revert7  || revert8  || revert9 ||
+            revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
+}
 
 // Verify that awards behaves correctly on vest with arbitrary max amt
 rule vest_amt(uint256 _id, uint256 _maxAmt) {
