@@ -90,35 +90,35 @@ abstract contract DssVest {
     uint256 public cap; // Maximum per-second issuance token rate
 
     // Getters to access only to the value desired
-    function usr(uint256 _id) public view returns (address) {
+    function usr(uint256 _id) external view returns (address) {
         return awards[_id].usr;
     }
 
-    function bgn(uint256 _id) public view returns (uint256) {
+    function bgn(uint256 _id) external view returns (uint256) {
         return awards[_id].bgn;
     }
 
-    function clf(uint256 _id) public view returns (uint256) {
+    function clf(uint256 _id) external view returns (uint256) {
         return awards[_id].clf;
     }
 
-    function fin(uint256 _id) public view returns (uint256) {
+    function fin(uint256 _id) external view returns (uint256) {
         return awards[_id].fin;
     }
 
-    function mgr(uint256 _id) public view returns (address) {
+    function mgr(uint256 _id) external view returns (address) {
         return awards[_id].mgr;
     }
 
-    function res(uint256 _id) public view returns (uint256) {
+    function res(uint256 _id) external view returns (uint256) {
         return awards[_id].res;
     }
 
-    function tot(uint256 _id) public view returns (uint256) {
+    function tot(uint256 _id) external view returns (uint256) {
         return awards[_id].tot;
     }
 
-    function rxd(uint256 _id) public view returns (uint256) {
+    function rxd(uint256 _id) external view returns (uint256) {
         return awards[_id].rxd;
     }
 
@@ -135,7 +135,7 @@ abstract contract DssVest {
         @param what  The tag of the value to change (ex. bytes32("cap"))
         @param data  The value to update (ex. cap of 1000 tokens/yr == 1000*WAD/365 days)
     */
-    function file(bytes32 what, uint256 data) external auth {
+    function file(bytes32 what, uint256 data) external auth lock {
         if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
         else revert("DssVest/file-unrecognized-param");
         emit File(what, data);
@@ -199,7 +199,7 @@ abstract contract DssVest {
         @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim all available rewards
         @param _id     The id of the vesting contract
     */
-    function vest(uint256 _id) external lock {
+    function vest(uint256 _id) external {
         _vest(_id, type(uint256).max);
     }
 
@@ -208,7 +208,7 @@ abstract contract DssVest {
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
-    function vest(uint256 _id, uint256 _maxAmt) external lock {
+    function vest(uint256 _id, uint256 _maxAmt) external {
         _vest(_id, _maxAmt);
     }
 
@@ -217,7 +217,7 @@ abstract contract DssVest {
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
     */
-    function _vest(uint256 _id, uint256 _maxAmt) internal {
+    function _vest(uint256 _id, uint256 _maxAmt) internal lock {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
         require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
@@ -282,7 +282,7 @@ abstract contract DssVest {
         @dev Allows governance or the owner to restrict vesting to the owner only
         @param _id The id of the vesting contract
     */
-    function restrict(uint256 _id) external {
+    function restrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
         require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
@@ -294,7 +294,7 @@ abstract contract DssVest {
         @dev Allows governance or the owner to enable permissionless vesting
         @param _id The id of the vesting contract
     */
-    function unrestrict(uint256 _id) external {
+    function unrestrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
         require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
@@ -324,7 +324,7 @@ abstract contract DssVest {
         @param _id  The id of the vesting contract
         @param _end A scheduled time to end the vest
     */
-    function _yank(uint256 _id, uint256 _end) internal {
+    function _yank(uint256 _id, uint256 _end) internal lock {
         require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "DssVest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
@@ -359,7 +359,7 @@ abstract contract DssVest {
         @param _id  The id of the vesting contract
         @param _dst The address to send ownership of the contract to
     */
-    function move(uint256 _id, address _dst) external {
+    function move(uint256 _id, address _dst) external lock {
         require(awards[_id].usr == msg.sender, "DssVest/only-user-can-move");
         require(_dst != address(0), "DssVest/zero-address-invalid");
         awards[_id].usr = _dst;
