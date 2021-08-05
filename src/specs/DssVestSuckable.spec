@@ -27,9 +27,12 @@ methods {
     chainlog.getAddress(bytes32) returns (address)
     daiJoin.live() returns (uint256) envfree
     vat.wards(address) returns (uint256) envfree
+    vat.can(address, address) returns (uint256) envfree
+    vat.dai(address) returns (uint256) envfree
 }
 
 definition max_uint48() returns uint256 = 2^48 - 1;
+definition RAY() returns uint256 = 10^27;
 
 ghost lockedGhost() returns uint256;
 
@@ -334,6 +337,9 @@ rule vest_revert(uint256 _id) {
     address vow = chainlog.getAddress(e, 0x4d43445f564f5700000000000000000000000000000000000000000000000000);
     uint256 _live = daiJoin.live();
     uint256 ward = vat.wards(currentContract);
+    uint256 can = vat.can(currentContract, daiJoin);
+    uint256 src = vat.dai(currentContract);
+    uint256 dst = vat.dai(daiJoin);
 
     uint256 accruedAmt =
         e.block.timestamp < bgn
@@ -362,8 +368,12 @@ rule vest_revert(uint256 _id) {
     bool revert9  = supply + unpaidAmt > max_uint256;
     bool revert10 = e.msg.value > 0;
     bool revert11 = vow == 0;
-    bool revert12 = _live == 0;
+    bool revert12 = _live != 1;
     bool revert13 = ward != 1;
+    bool revert14 = RAY() * unpaidAmt > max_uint256;
+    bool revert15 = currentContract != daiJoin && can != 1;
+    bool revert16 = src - RAY() * unpaidAmt > src;
+    bool revert17 = dst + RAY() * unpaidAmt < dst;
 
     assert(revert1  => lastReverted, "Locked did not revert");
     assert(revert2  => lastReverted, "Invalid award did not revert");
@@ -378,13 +388,18 @@ rule vest_revert(uint256 _id) {
     assert(revert11 => lastReverted, "Vow zero address did not revert");
     assert(revert12 => lastReverted, "DaiJoin not live did not revert");
     assert(revert13 => lastReverted, "Vat lack of auth did not revert");
+    assert(revert14 => lastReverted, "Overflow RAY * unpaidAmt did not revert");
+    assert(revert15 => lastReverted, "Wish did not revert");
+    assert(revert16 => lastReverted, "Underflow src - rad did not revert");
+    assert(revert17 => lastReverted, "Overflow dst + rad did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
             revert4  || revert5  || revert6  ||
             revert7  || revert8  || revert9  ||
             revert10 || revert11 || revert12 ||
-            revert13, "Revert rules are not covering all the cases");
+            revert13 || revert14 || revert15 ||
+            revert16 || revert17, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behaves correctly on vest with arbitrary max amt
