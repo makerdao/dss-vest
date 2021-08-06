@@ -104,11 +104,12 @@ rule rely_revert(address usr) {
 
     rely@withrevert(e, usr);
 
-    bool revert1 = ward != 1;
-    bool revert2 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = ward != 1;
 
-    assert(revert1 => lastReverted, "Lack of auth did not revert");
-    assert(revert2 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Lack of auth did not revert");
+
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
@@ -129,11 +130,12 @@ rule deny_revert(address usr) {
 
     deny@withrevert(e, usr);
 
-    bool revert1 = ward != 1;
-    bool revert2 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = ward != 1;
 
-    assert(revert1 => lastReverted, "Lack of auth did not revert");
-    assert(revert2 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Lack of auth did not revert");
+
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
@@ -179,15 +181,16 @@ rule file_revert(bytes32 what, uint256 data) {
 
     file@withrevert(e, what, data);
 
-    bool revert1 = ward != 1;
-    bool revert2 = locked != 0;
-    bool revert3 = what != 0x6361700000000000000000000000000000000000000000000000000000000000; // what != "cap"
-    bool revert4 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = ward != 1;
+    bool revert3 = locked != 0;
+    bool revert4 = what != 0x6361700000000000000000000000000000000000000000000000000000000000; // what != "cap"
 
-    assert(revert1 => lastReverted, "Lack of auth did not revert");
-    assert(revert2 => lastReverted, "Locked did not revert");
-    assert(revert3 => lastReverted, "File unrecognized param did not revert");
-    assert(revert4 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Lack of auth did not revert");
+    assert(revert3 => lastReverted, "Locked did not revert");
+    assert(revert4 => lastReverted, "File unrecognized param did not revert");
+
     assert(lastReverted => revert1 || revert2 || revert3 ||
                            revert4, "Revert rules are not covering all the cases");
 }
@@ -232,43 +235,43 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
     uint256 clf = _bgn + _eta;
     uint256 fin = _bgn + _tau;
 
-    bool revert1  = ward != 1;
-    bool revert2  = locked != 0;
-    bool revert3  = _usr == 0;
-    bool revert4  = _tot == 0;
-    bool revert5  = e.block.timestamp + twenty_years > max_uint256;
-    bool revert6  = _bgn >= e.block.timestamp + twenty_years;
-    bool revert7  = e.block.timestamp < twenty_years;
-    bool revert8  = _bgn <= e.block.timestamp - twenty_years;
-    bool revert9  = _tau == 0;
-    bool revert10 = _tot / _tau > _cap;
-    bool revert11 = _tau > twenty_years;
-    bool revert12 = _eta > _tau;
-    bool revert13 = _ids >= max_uint256;
-    bool revert14 = _bgn > max_uint48();
-    bool revert15 = clf > max_uint48();
-    bool revert16 = fin > max_uint48();
-    bool revert17 = _tot > max_uint128;
-    bool revert18 = e.msg.value > 0;
+    bool revert1  = e.msg.value > 0;
+    bool revert2  = ward != 1;
+    bool revert3  = locked != 0;
+    bool revert4  = _usr == 0;
+    bool revert5  = _tot == 0;
+    bool revert6  = e.block.timestamp + twenty_years > max_uint256;
+    bool revert7  = _bgn >= e.block.timestamp + twenty_years;
+    bool revert8  = e.block.timestamp < twenty_years;
+    bool revert9  = _bgn <= e.block.timestamp - twenty_years;
+    bool revert10 = _tau == 0;
+    bool revert11 = _tot / _tau > _cap;
+    bool revert12 = _tau > twenty_years;
+    bool revert13 = _eta > _tau;
+    bool revert14 = _ids >= max_uint256;
+    bool revert15 = _bgn > max_uint48();
+    bool revert16 = clf > max_uint48();
+    bool revert17 = fin > max_uint48();
+    bool revert18 = _tot > max_uint128;
 
-    assert(revert1  => lastReverted, "Lack of auth did not revert");
-    assert(revert2  => lastReverted, "Locked did not revert");
-    assert(revert3  => lastReverted, "Invalid user did not revert");
-    assert(revert4  => lastReverted, "No vest total ammount did not revert");
-    assert(revert5  => lastReverted, "Addition overflow did not revert 17");
-    assert(revert6  => lastReverted, "Starting timestamp too far did not revert");
-    assert(revert7  => lastReverted, "Subtraction underflow did not revert");
-    assert(revert8  => lastReverted, "Starting timestamp too long ago did not revert");
-    assert(revert9  => lastReverted, "Tau zero did not revert");
-    assert(revert10 => lastReverted, "Rate too high did not revert");
-    assert(revert11 => lastReverted, "Tau too long did not revert");
-    assert(revert12 => lastReverted, "Cliff too long did not revert");
-    assert(revert13 => lastReverted, "Ids overflow did not revert");
-    assert(revert14 => lastReverted, "Starting timestamp toUint48 cast did not revert");
-    assert(revert15 => lastReverted, "Cliff toUint48 cast overflow did not revert");
-    assert(revert16 => lastReverted, "Fin toUint48 cast overflow did not revert");
-    assert(revert17 => lastReverted, "Tot toUint128 cast overflow did not revert");
-    assert(revert18 => lastReverted, "Sending ETH did not revert");
+    assert(revert1  => lastReverted, "Sending ETH did not revert");
+    assert(revert2  => lastReverted, "Lack of auth did not revert");
+    assert(revert3  => lastReverted, "Locked did not revert");
+    assert(revert4  => lastReverted, "Invalid user did not revert");
+    assert(revert5  => lastReverted, "No vest total ammount did not revert");
+    assert(revert6  => lastReverted, "Addition overflow did not revert 17");
+    assert(revert7  => lastReverted, "Starting timestamp too far did not revert");
+    assert(revert8  => lastReverted, "Subtraction underflow did not revert");
+    assert(revert9  => lastReverted, "Starting timestamp too long ago did not revert");
+    assert(revert10 => lastReverted, "Tau zero did not revert");
+    assert(revert11 => lastReverted, "Rate too high did not revert");
+    assert(revert12 => lastReverted, "Tau too long did not revert");
+    assert(revert13 => lastReverted, "Cliff too long did not revert");
+    assert(revert14 => lastReverted, "Ids overflow did not revert");
+    assert(revert15 => lastReverted, "Starting timestamp toUint48 cast did not revert");
+    assert(revert16 => lastReverted, "Cliff toUint48 cast overflow did not revert");
+    assert(revert17 => lastReverted, "Fin toUint48 cast overflow did not revert");
+    assert(revert18 => lastReverted, "Tot toUint128 cast overflow did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -376,49 +379,49 @@ rule vest_revert(uint256 _id) {
 
     vest@withrevert(e, _id);
 
-    bool revert1  = locked != 0;
-    bool revert2  = usr == 0;
-    bool revert3  = res != 0 && usr != e.msg.sender;
-    bool revert4  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
-    bool revert5  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
-    bool revert6  = e.block.timestamp >= clf && accruedAmt < rxd;
-    bool revert7  = rxd + unpaidAmt > max_uint128;
-    bool revert8  = vow == 0;
-    bool revert9  = unpaidAmtRad > max_uint256;
-    bool revert10 = wardVat != 1;
-    bool revert11 = sinVow + unpaidAmtRad > max_uint256;
-    bool revert12 = vatDaiVest + unpaidAmtRad > max_uint256;
-    bool revert13 = vice + unpaidAmtRad > max_uint256;
-    bool revert14 = debt + unpaidAmtRad > max_uint256;
-    bool revert15 = daiJoinLive != 1;
-    bool revert16 = currentContract != daiJoin && canVestDaiJoin != 1;
-    bool revert17 = vatDaiDaiJoin + unpaidAmtRad > max_uint256;
-    bool revert18 = wardDai != 1;
-    bool revert19 = usrBalance + unpaidAmt > max_uint256;
-    bool revert20 = supply + unpaidAmt > max_uint256;
-    bool revert21 = e.msg.value > 0;
+    bool revert1  = e.msg.value > 0;
+    bool revert2  = locked != 0;
+    bool revert3  = usr == 0;
+    bool revert4  = res != 0 && usr != e.msg.sender;
+    bool revert5  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert6  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
+    bool revert7  = e.block.timestamp >= clf && accruedAmt < rxd;
+    bool revert8  = rxd + unpaidAmt > max_uint128;
+    bool revert9  = vow == 0;
+    bool revert10 = unpaidAmtRad > max_uint256;
+    bool revert11 = wardVat != 1;
+    bool revert12 = sinVow + unpaidAmtRad > max_uint256;
+    bool revert13 = vatDaiVest + unpaidAmtRad > max_uint256;
+    bool revert14 = vice + unpaidAmtRad > max_uint256;
+    bool revert15 = debt + unpaidAmtRad > max_uint256;
+    bool revert16 = daiJoinLive != 1;
+    bool revert17 = currentContract != daiJoin && canVestDaiJoin != 1;
+    bool revert18 = vatDaiDaiJoin + unpaidAmtRad > max_uint256;
+    bool revert19 = wardDai != 1;
+    bool revert20 = usrBalance + unpaidAmt > max_uint256;
+    bool revert21 = supply + unpaidAmt > max_uint256;
 
-    assert(revert1  => lastReverted, "Locked did not revert");
-    assert(revert2  => lastReverted, "Invalid award did not revert");
-    assert(revert3  => lastReverted, "Only user can claim did not revert");
-    assert(revert4  => lastReverted, "Overflow tot * time passed did not revert");
-    assert(revert5  => lastReverted, "Division by zero did not revert");
-    assert(revert6  => lastReverted, "Underflow accruedAmt - rxd did not revert");
-    assert(revert7  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
-    assert(revert8  => lastReverted, "Vow zero address did not revert");
-    assert(revert9  => lastReverted, "Overflow RAY * unpaidAmt did not revert");
-    assert(revert10 => lastReverted, "Vat lack of auth did not revert");
-    assert(revert11 => lastReverted, "Overflow sin + rad did not revert");
-    assert(revert12 => lastReverted, "Overflow dai + rad did not revert");
-    assert(revert13 => lastReverted, "Overflow vice + rad did not revert");
-    assert(revert14 => lastReverted, "Overflow debt + rad did not revert");
-    assert(revert15 => lastReverted, "DaiJoin not live did not revert");
-    assert(revert16 => lastReverted, "Wish did not revert");
-    assert(revert17 => lastReverted, "Overflow dst + rad did not revert");
-    assert(revert18 => lastReverted, "Dai lack of auth did not revert");
-    assert(revert19 => lastReverted, "Usr balance overflow did not revert");
-    assert(revert20 => lastReverted, "Total supply overflow did not revert");
-    assert(revert21 => lastReverted, "Sending ETH did not revert");
+    assert(revert1  => lastReverted, "Sending ETH did not revert");
+    assert(revert2  => lastReverted, "Locked did not revert");
+    assert(revert3  => lastReverted, "Invalid award did not revert");
+    assert(revert4  => lastReverted, "Only user can claim did not revert");
+    assert(revert5  => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert6  => lastReverted, "Division by zero did not revert");
+    assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert8  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+    assert(revert9  => lastReverted, "Vow zero address did not revert");
+    assert(revert10 => lastReverted, "Overflow RAY * unpaidAmt did not revert");
+    assert(revert11 => lastReverted, "Vat lack of auth did not revert");
+    assert(revert12 => lastReverted, "Overflow sin + rad did not revert");
+    assert(revert13 => lastReverted, "Overflow dai + rad did not revert");
+    assert(revert14 => lastReverted, "Overflow vice + rad did not revert");
+    assert(revert15 => lastReverted, "Overflow debt + rad did not revert");
+    assert(revert16 => lastReverted, "DaiJoin not live did not revert");
+    assert(revert17 => lastReverted, "Wish did not revert");
+    assert(revert18 => lastReverted, "Overflow dst + rad did not revert");
+    assert(revert19 => lastReverted, "Dai lack of auth did not revert");
+    assert(revert20 => lastReverted, "Usr balance overflow did not revert");
+    assert(revert21 => lastReverted, "Total supply overflow did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -530,49 +533,49 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
 
     vest@withrevert(e, _id, _maxAmt);
 
-    bool revert1  = locked != 0;
-    bool revert2  = usr == 0;
-    bool revert3  = res != 0 && usr != e.msg.sender;
-    bool revert4  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
-    bool revert5  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
-    bool revert6  = e.block.timestamp >= clf && accruedAmt < rxd;
-    bool revert7  = rxd + amt > max_uint128;
-    bool revert8  = vow == 0;
-    bool revert9  = amtRad > max_uint256;
-    bool revert10 = wardVat != 1;
-    bool revert11 = sinVow + amtRad > max_uint256;
-    bool revert12 = vatDaiVest + amtRad > max_uint256;
-    bool revert13 = vice + amtRad > max_uint256;
-    bool revert14 = debt + amtRad > max_uint256;
-    bool revert15 = daiJoinLive != 1;
-    bool revert16 = currentContract != daiJoin && canVestDaiJoin != 1;
-    bool revert17 = vatDaiDaiJoin + amtRad > max_uint256;
-    bool revert18 = wardDai != 1;
-    bool revert19 = usrBalance + amt > max_uint256;
-    bool revert20 = supply + amt > max_uint256;
-    bool revert21 = e.msg.value > 0;
+    bool revert1  = e.msg.value > 0;
+    bool revert2  = locked != 0;
+    bool revert3  = usr == 0;
+    bool revert4  = res != 0 && usr != e.msg.sender;
+    bool revert5  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert6  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
+    bool revert7  = e.block.timestamp >= clf && accruedAmt < rxd;
+    bool revert8  = rxd + amt > max_uint128;
+    bool revert9  = vow == 0;
+    bool revert10 = amtRad > max_uint256;
+    bool revert11 = wardVat != 1;
+    bool revert12 = sinVow + amtRad > max_uint256;
+    bool revert13 = vatDaiVest + amtRad > max_uint256;
+    bool revert14 = vice + amtRad > max_uint256;
+    bool revert15 = debt + amtRad > max_uint256;
+    bool revert16 = daiJoinLive != 1;
+    bool revert17 = currentContract != daiJoin && canVestDaiJoin != 1;
+    bool revert18 = vatDaiDaiJoin + amtRad > max_uint256;
+    bool revert19 = wardDai != 1;
+    bool revert20 = usrBalance + amt > max_uint256;
+    bool revert21 = supply + amt > max_uint256;
 
-    assert(revert1  => lastReverted, "Locked did not revert");
-    assert(revert2  => lastReverted, "Invalid award did not revert");
-    assert(revert3  => lastReverted, "Only user can claim did not revert");
-    assert(revert4  => lastReverted, "Overflow tot * time passed did not revert");
-    assert(revert5  => lastReverted, "Division by zero did not revert");
-    assert(revert6  => lastReverted, "Underflow accruedAmt - rxd did not revert");
-    assert(revert7  => lastReverted, "Overflow rxd + amt or toUint128 cast did not revert");
-    assert(revert8  => lastReverted, "Vow zero address did not revert");
-    assert(revert9  => lastReverted, "Overflow RAY * amt did not revert");
-    assert(revert10 => lastReverted, "Vat lack of auth did not revert");
-    assert(revert11 => lastReverted, "Overflow sin + rad did not revert");
-    assert(revert12 => lastReverted, "Overflow dai + rad did not revert");
-    assert(revert13 => lastReverted, "Overflow vice + rad did not revert");
-    assert(revert14 => lastReverted, "Overflow debt + rad did not revert");
-    assert(revert15 => lastReverted, "DaiJoin not live did not revert");
-    assert(revert16 => lastReverted, "Wish did not revert");
-    assert(revert17 => lastReverted, "Overflow dst + rad did not revert");
-    assert(revert18 => lastReverted, "Dai lack of auth did not revert");
-    assert(revert19 => lastReverted, "Usr balance overflow did not revert");
-    assert(revert20 => lastReverted, "Total supply overflow did not revert");
-    assert(revert21 => lastReverted, "Sending ETH did not revert");
+    assert(revert1  => lastReverted, "Sending ETH did not revert");
+    assert(revert2  => lastReverted, "Locked did not revert");
+    assert(revert3  => lastReverted, "Invalid award did not revert");
+    assert(revert4  => lastReverted, "Only user can claim did not revert");
+    assert(revert5  => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert6  => lastReverted, "Division by zero did not revert");
+    assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert8  => lastReverted, "Overflow rxd + amt or toUint128 cast did not revert");
+    assert(revert9  => lastReverted, "Vow zero address did not revert");
+    assert(revert10 => lastReverted, "Overflow RAY * amt did not revert");
+    assert(revert11 => lastReverted, "Vat lack of auth did not revert");
+    assert(revert12 => lastReverted, "Overflow sin + rad did not revert");
+    assert(revert13 => lastReverted, "Overflow dai + rad did not revert");
+    assert(revert14 => lastReverted, "Overflow vice + rad did not revert");
+    assert(revert15 => lastReverted, "Overflow debt + rad did not revert");
+    assert(revert16 => lastReverted, "DaiJoin not live did not revert");
+    assert(revert17 => lastReverted, "Wish did not revert");
+    assert(revert18 => lastReverted, "Overflow dst + rad did not revert");
+    assert(revert19 => lastReverted, "Dai lack of auth did not revert");
+    assert(revert20 => lastReverted, "Usr balance overflow did not revert");
+    assert(revert21 => lastReverted, "Total supply overflow did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -623,15 +626,16 @@ rule accrued_revert(uint256 _id) {
 
     accrued@withrevert(e, _id);
 
-    bool revert1 = usr == 0;
-    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
-    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
-    bool revert4 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = usr == 0;
+    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
 
-    assert(revert1 => lastReverted, "Invalid award did not revert");
-    assert(revert2 => lastReverted, "Overflow tot * time passed did not revert");
-    assert(revert3 => lastReverted, "Division by zero did not revert");
-    assert(revert4 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Invalid award did not revert");
+    assert(revert3 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert4 => lastReverted, "Division by zero did not revert");
+
     assert(lastReverted =>
             revert1 || revert2 || revert3 ||
             revert4, "Revert rules are not covering all the cases");
@@ -677,17 +681,18 @@ rule unpaid_revert(uint256 _id) {
 
     unpaid@withrevert(e, _id);
 
-    bool revert1 = usr == 0;
-    bool revert2 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
-    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
-    bool revert4 = e.block.timestamp >= clf && accruedAmt < rxd;
-    bool revert5 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = usr == 0;
+    bool revert3 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert4 = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
+    bool revert5 = e.block.timestamp >= clf && accruedAmt < rxd;
 
-    assert(revert1 => lastReverted, "Invalid award did not revert");
-    assert(revert2 => lastReverted, "Overflow tot * time passed did not revert");
-    assert(revert3 => lastReverted, "Division by zero did not revert");
-    assert(revert4 => lastReverted, "Underflow accruedAmt - rxd did not revert");
-    assert(revert5 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Invalid award did not revert");
+    assert(revert3 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert4 => lastReverted, "Division by zero did not revert");
+    assert(revert5 => lastReverted, "Underflow accruedAmt - rxd did not revert");
+
     assert(lastReverted =>
             revert1 || revert2 || revert3 ||
             revert4 || revert5, "Revert rules are not covering all the cases");
@@ -712,15 +717,16 @@ rule restrict_revert(uint256 _id) {
 
     restrict@withrevert(e, _id);
 
-    bool revert1 = locked != 0;
-    bool revert2 = _usr == 0;
-    bool revert3 = ward != 1 && _usr != e.msg.sender;
-    bool revert4 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = locked != 0;
+    bool revert3 = _usr == 0;
+    bool revert4 = ward != 1 && _usr != e.msg.sender;
 
-    assert(revert1 => lastReverted, "Locked did not revert");
-    assert(revert2 => lastReverted, "Invalid award did not revert");
-    assert(revert3 => lastReverted, "Only governance or owner can restrict did not revert");
-    assert(revert4 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert3 => lastReverted, "Invalid award did not revert");
+    assert(revert4 => lastReverted, "Only governance or owner can restrict did not revert");
+
     assert(lastReverted => revert1 || revert2 || revert3 ||
                            revert4, "Revert rules are not covering all the cases");
 }
@@ -744,15 +750,16 @@ rule unrestrict_revert(uint256 _id) {
 
     unrestrict@withrevert(e, _id);
 
-    bool revert1 = locked != 0;
-    bool revert2 = _usr == 0;
-    bool revert3 = ward != 1 && _usr != e.msg.sender;
-    bool revert4 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = locked != 0;
+    bool revert3 = _usr == 0;
+    bool revert4 = ward != 1 && _usr != e.msg.sender;
 
-    assert(revert1 => lastReverted, "Locked did not revert");
-    assert(revert2 => lastReverted, "Invalid award did not revert");
-    assert(revert3 => lastReverted, "Only governance or owner can unrestrict did not revert");
-    assert(revert4 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert3 => lastReverted, "Invalid award did not revert");
+    assert(revert4 => lastReverted, "Only governance or owner can unrestrict did not revert");
+
     assert(lastReverted => revert1 || revert2 || revert3 ||
                            revert4, "Revert rules are not covering all the cases");
 }
@@ -825,25 +832,26 @@ rule yank_revert(uint256 _id) {
 
     yank@withrevert(e, _id);
 
-    bool revert1  = locked != 0;
-    bool revert2  = ward != 1 && mgr != e.msg.sender;
-    bool revert3  = usr == 0;
-    bool revert4  = e.block.timestamp < fin && e.block.timestamp > max_uint48();
-    bool revert5  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && tot * (e.block.timestamp - bgn) > max_uint256;
-    bool revert6  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && fin == bgn;
-    bool revert7  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && accruedAmt < rxd;
-    bool revert8  = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && rxd + unpaidAmt > max_uint128;
-    bool revert9 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = locked != 0;
+    bool revert3 = ward != 1 && mgr != e.msg.sender;
+    bool revert4 = usr == 0;
+    bool revert5 = e.block.timestamp < fin && e.block.timestamp > max_uint48();
+    bool revert6 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && tot * (e.block.timestamp - bgn) > max_uint256;
+    bool revert7 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && fin == bgn;
+    bool revert8 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && accruedAmt < rxd;
+    bool revert9 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && rxd + unpaidAmt > max_uint128;
 
-    assert(revert1 => lastReverted, "Locked did not revert");
-    assert(revert2 => lastReverted, "Not authorized did not revert");
-    assert(revert3 => lastReverted, "Invalid award did not revert");
-    assert(revert4 => lastReverted, "Fin toUint48 cast did not revert");
-    assert(revert5 => lastReverted, "Overflow tot * time passed did not revert");
-    assert(revert6 => lastReverted, "Division by zero did not revert");
-    assert(revert7 => lastReverted, "Underflow accruedAmt - rxd did not revert");
-    assert(revert8 => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
-    assert(revert9 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert3 => lastReverted, "Not authorized did not revert");
+    assert(revert4 => lastReverted, "Invalid award did not revert");
+    assert(revert5 => lastReverted, "Fin toUint48 cast did not revert");
+    assert(revert6 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert7 => lastReverted, "Division by zero did not revert");
+    assert(revert8 => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert9 => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+
     assert(lastReverted =>
             revert1 || revert2 || revert3 ||
             revert4 || revert5 || revert6 ||
@@ -920,25 +928,26 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
 
     yank@withrevert(e, _id, _end);
 
-    bool revert1  = locked != 0;
-    bool revert2  = ward != 1 && mgr != e.msg.sender;
-    bool revert3  = usr == 0;
-    bool revert4  = _end2 < fin && _end2 > max_uint48();
-    bool revert5  = _end2 < fin && _end2 >= bgn && _end2 >= clf && tot * (_end2 - bgn) > max_uint256;
-    bool revert6  = _end2 < fin && _end2 >= bgn && _end2 >= clf && fin == bgn;
-    bool revert7  = _end2 < fin && _end2 >= bgn && _end2 >= clf && accruedAmt < rxd;
-    bool revert8  = _end2 < fin && _end2 >= bgn && _end2 >= clf && rxd + unpaidAmt > max_uint128;
-    bool revert9 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = locked != 0;
+    bool revert3 = ward != 1 && mgr != e.msg.sender;
+    bool revert4 = usr == 0;
+    bool revert5 = _end2 < fin && _end2 > max_uint48();
+    bool revert6 = _end2 < fin && _end2 >= bgn && _end2 >= clf && tot * (_end2 - bgn) > max_uint256;
+    bool revert7 = _end2 < fin && _end2 >= bgn && _end2 >= clf && fin == bgn;
+    bool revert8 = _end2 < fin && _end2 >= bgn && _end2 >= clf && accruedAmt < rxd;
+    bool revert9 = _end2 < fin && _end2 >= bgn && _end2 >= clf && rxd + unpaidAmt > max_uint128;
 
-    assert(revert1 => lastReverted, "Locked did not revert");
-    assert(revert2 => lastReverted, "Not authorized did not revert");
-    assert(revert3 => lastReverted, "Invalid award did not revert");
-    assert(revert4 => lastReverted, "Fin toUint48 cast did not revert");
-    assert(revert5 => lastReverted, "Overflow tot * time passed did not revert");
-    assert(revert6 => lastReverted, "Division by zero did not revert");
-    assert(revert7 => lastReverted, "Underflow accruedAmt - rxd did not revert");
-    assert(revert8 => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
-    assert(revert9 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert3 => lastReverted, "Not authorized did not revert");
+    assert(revert4 => lastReverted, "Invalid award did not revert");
+    assert(revert5 => lastReverted, "Fin toUint48 cast did not revert");
+    assert(revert6 => lastReverted, "Overflow tot * time passed did not revert");
+    assert(revert7 => lastReverted, "Division by zero did not revert");
+    assert(revert8 => lastReverted, "Underflow accruedAmt - rxd did not revert");
+    assert(revert9 => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
+
     assert(lastReverted =>
             revert1 || revert2 || revert3 ||
             revert4 || revert5 || revert6 ||
@@ -963,15 +972,16 @@ rule move_revert(uint256 _id, address _dst) {
 
     move@withrevert(e, _id, _dst);
 
-    bool revert1 = locked != 0;
-    bool revert2 = _usr != e.msg.sender;
-    bool revert3 = _dst == 0;
-    bool revert4 = e.msg.value > 0;
+    bool revert1 = e.msg.value > 0;
+    bool revert2 = locked != 0;
+    bool revert3 = _usr != e.msg.sender;
+    bool revert4 = _dst == 0;
 
-    assert(revert1 => lastReverted, "Locked did not revert");
-    assert(revert2 => lastReverted, "Only user can move did not revert");
-    assert(revert3 => lastReverted, "Zero address invalid did not revert");
-    assert(revert4 => lastReverted, "Sending ETH did not revert");
+    assert(revert1 => lastReverted, "Sending ETH did not revert");
+    assert(revert2 => lastReverted, "Locked did not revert");
+    assert(revert3 => lastReverted, "Only user can move did not revert");
+    assert(revert4 => lastReverted, "Zero address invalid did not revert");
+
     assert(lastReverted => revert1 || revert2 || revert3 ||
                            revert4, "Revert rules are not covering all the cases");
 }
