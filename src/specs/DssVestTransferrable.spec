@@ -371,8 +371,8 @@ rule vest_revert(uint256 _id) {
     bool revert9  = czarBalance < unpaidAmt;
     bool revert10 = _czar != currentContract && allowed != max_uint256 && allowed < unpaidAmt;
     bool revert11 = _czar != currentContract && allowed != max_uint256 && allowed - unpaidAmt > max_uint256;
-    bool revert12 = czarBalance - unpaidAmt > max_uint256;
-    bool revert13 = usrBalance + unpaidAmt > max_uint256;
+    bool revert12 = czarBalance < unpaidAmt;
+    bool revert13 = _czar != usr && usrBalance + unpaidAmt > max_uint256;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Locked did not revert");
@@ -500,8 +500,8 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     bool revert9  = czarBalance < amt;
     bool revert10 = _czar != currentContract && allowed != max_uint256 && allowed < amt;
     bool revert11 = _czar != currentContract && allowed != max_uint256 && allowed - amt > max_uint256;
-    bool revert12 = czarBalance - amt > max_uint256;
-    bool revert13 = usrBalance + amt > max_uint256;
+    bool revert12 = czarBalance < amt;
+    bool revert13 = _czar != usr && usrBalance + amt > max_uint256;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Locked did not revert");
