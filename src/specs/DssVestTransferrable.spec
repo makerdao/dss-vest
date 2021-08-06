@@ -322,8 +322,8 @@ rule vest(uint256 _id) {
     assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
     assert(e.block.timestamp >= clf => rxd2 == rxd + unpaidAmt, "Vest did not take the proportional amount as expected");
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
-    assert(e.block.timestamp >= clf => czarBalanceAfter == czarBalanceBefore - unpaidAmt, "Czar balance did not decrease as expected");
-    assert(e.block.timestamp >= clf => usrBalanceAfter == usrBalanceBefore + unpaidAmt, "Usr balance did not increase as expected");
+    assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - unpaidAmt, "Czar balance did not decrease as expected");
+    assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + unpaidAmt, "Usr balance did not increase as expected");
     assert(supplyAfter == supplyBefore, "supply did not remain as expected");
 }
 
@@ -449,8 +449,8 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
     assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "Usr balance did not remain as expected");
     assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
-    assert(e.block.timestamp >= clf => czarBalanceAfter == czarBalanceBefore - amt, "Czar balance did not decrease as expected");
-    assert(e.block.timestamp >= clf => usrBalanceAfter == usrBalanceBefore + amt, "Usr balance did not increase as expected");
+    assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - amt, "Czar balance did not decrease as expected");
+    assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + amt, "Usr balance did not increase as expected");
     assert(supplyAfter == supplyBefore, "supply did not remain as expected");
 }
 
