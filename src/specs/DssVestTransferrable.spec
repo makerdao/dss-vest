@@ -368,11 +368,10 @@ rule vest_revert(uint256 _id) {
     bool revert6  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
     bool revert7  = e.block.timestamp >= clf && accruedAmt < rxd;
     bool revert8  = rxd + unpaidAmt > max_uint128;
-    bool revert9  = czarBalance < unpaidAmt;
-    bool revert10 = _czar != currentContract && allowed != max_uint256 && allowed < unpaidAmt;
-    bool revert11 = _czar != currentContract && allowed != max_uint256 && allowed - unpaidAmt > max_uint256;
-    bool revert12 = czarBalance < unpaidAmt;
-    bool revert13 = _czar != usr && usrBalance + unpaidAmt > max_uint256;
+    bool revert9  = _czar != currentContract && allowed != max_uint256 && allowed < unpaidAmt;
+    bool revert10 = _czar != currentContract && allowed != max_uint256 && allowed - unpaidAmt > max_uint256;
+    bool revert11 = czarBalance < unpaidAmt;
+    bool revert12 = _czar != usr && usrBalance + unpaidAmt > max_uint256;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Locked did not revert");
@@ -382,18 +381,16 @@ rule vest_revert(uint256 _id) {
     assert(revert6  => lastReverted, "Division by zero did not revert");
     assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
     assert(revert8  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
-    assert(revert9  => lastReverted, "TransferFrom insufficient balance did not revert");
-    assert(revert10 => lastReverted, "TransferFrom insufficient allowance did not revert");
-    assert(revert11 => lastReverted, "TransferFrom underflow allowed - unpaidAmt did not revert");
-    assert(revert12 => lastReverted, "TransferFrom underflow czrBalance - unpaidAmt did not revert");
-    assert(revert13 => lastReverted, "TransferFrom overflow usrBalance + unpaidAmt did not revert");
+    assert(revert9  => lastReverted, "TransferFrom insufficient allowance did not revert");
+    assert(revert10 => lastReverted, "TransferFrom underflow allowed - unpaidAmt did not revert");
+    assert(revert11 => lastReverted, "TransferFrom underflow czrBalance - unpaidAmt did not revert");
+    assert(revert12 => lastReverted, "TransferFrom overflow usrBalance + unpaidAmt did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
             revert4  || revert5  || revert6  ||
             revert7  || revert8  || revert9  ||
-            revert10 || revert11 || revert12 ||
-            revert13, "Revert rules are not covering all the cases");
+            revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behaves correctly on vest with arbitrary max amt
@@ -497,11 +494,10 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     bool revert6  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
     bool revert7  = e.block.timestamp >= clf && accruedAmt < rxd;
     bool revert8  = rxd + amt > max_uint128;
-    bool revert9  = czarBalance < amt;
-    bool revert10 = _czar != currentContract && allowed != max_uint256 && allowed < amt;
-    bool revert11 = _czar != currentContract && allowed != max_uint256 && allowed - amt > max_uint256;
-    bool revert12 = czarBalance < amt;
-    bool revert13 = _czar != usr && usrBalance + amt > max_uint256;
+    bool revert9  = _czar != currentContract && allowed != max_uint256 && allowed < amt;
+    bool revert10 = _czar != currentContract && allowed != max_uint256 && allowed - amt > max_uint256;
+    bool revert11 = czarBalance < amt;
+    bool revert12 = _czar != usr && usrBalance + amt > max_uint256;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Locked did not revert");
@@ -511,18 +507,16 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     assert(revert6  => lastReverted, "Division by zero did not revert");
     assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
     assert(revert8  => lastReverted, "Overflow rxd + amt or toUint128 cast did not revert");
-    assert(revert9  => lastReverted, "TransferFrom insufficient balance did not revert");
-    assert(revert10 => lastReverted, "TransferFrom insufficient allowance did not revert");
-    assert(revert11 => lastReverted, "TransferFrom underflow allowed - amt did not revert");
-    assert(revert12 => lastReverted, "TransferFrom underflow czrBalance - amt did not revert");
-    assert(revert13 => lastReverted, "TransferFrom overflow usrBalance + amt did not revert");
+    assert(revert9  => lastReverted, "TransferFrom insufficient allowance did not revert");
+    assert(revert10 => lastReverted, "TransferFrom underflow allowed - amt did not revert");
+    assert(revert11 => lastReverted, "TransferFrom underflow czrBalance - amt did not revert");
+    assert(revert12 => lastReverted, "TransferFrom overflow usrBalance + amt did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
             revert4  || revert5  || revert6  ||
             revert7  || revert8  || revert9  ||
-            revert10 || revert11 || revert12 ||
-            revert13, "Revert rules are not covering all the cases");
+            revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
 }
 
 // Verify that amt behaves correctly on accrued
