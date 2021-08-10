@@ -1,6 +1,6 @@
 // DssVestMintable.spec
 
-// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestMintable:gem=DSToken DSToken:authority=MockAuthority --verify DssVestMintable:src/specs/DssVestMintable.spec --optimistic_loop --rule_sanity
+// certoraRun src/DssVest.sol:DssVestMintable src/specs/DSToken.sol src/specs/MockAuthority.sol --link DssVestMintable:gem=DSToken DSToken:authority=MockAuthority --verify DssVestMintable:src/specs/DssVestMintable.spec --rule_sanity
 
 using DSToken as token
 using MockAuthority as authority

@@ -1,6 +1,6 @@
 // DssVestSuckable.spec
 
-// certoraRun src/DssVest.sol:DssVestSuckable src/specs/ChainLog.sol src/specs/Vat.sol src/specs/DaiJoin.sol src/specs/Dai.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=Dai --verify DssVestSuckable:src/specs/DssVestSuckable.spec --optimistic_loop --rule_sanity
+// certoraRun src/DssVest.sol:DssVestSuckable src/specs/ChainLog.sol src/specs/Vat.sol src/specs/DaiJoin.sol src/specs/Dai.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=Dai --verify DssVestSuckable:src/specs/DssVestSuckable.spec --rule_sanity
 
 using Dai as dai
 using ChainLog as chainlog
