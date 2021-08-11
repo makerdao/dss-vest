@@ -60,7 +60,7 @@ invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id)
 //     init_state axiom rxd(_id) == 0;
 // }
 
-rule rxdLessOrEqualTot(method f) {
+rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
     env e;
     uint256 _id;
 
@@ -71,7 +71,7 @@ rule rxdLessOrEqualTot(method f) {
     require(rxd(_id) <= tot(_id));
 
     calldataarg arg;
-    f@withrevert(e, arg);
+    f(e, arg);
 
     assert(rxd(_id) <= tot(_id));
 }
