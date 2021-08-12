@@ -799,12 +799,12 @@ rule yank(uint256 _id) {
     assert(mgr2 == mgr, "mgr changed");
     assert(res2 == res, "res changed");
     assert(e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
-    assert(e.block.timestamp < fin && e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp < fin && e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp < fin && e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp < fin && e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
-    assert(e.block.timestamp < fin && e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than clf");
-    assert(e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
+    assert(e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
+    assert(e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than clf");
+    assert(e.block.timestamp < fin && e.block.timestamp >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank
@@ -894,12 +894,12 @@ rule yank_end(uint256 _id, uint256 _end) {
     assert(mgr2 == mgr, "mgr changed");
     assert(res2 == res, "res changed");
     assert(_end2 < fin => fin2 == _end2, "Yank did not set fin as expected");
-    assert(_end2 < fin && _end2 < bgn => bgn2 == _end2, "Yank did not set bgn as expected when end is less than bgn");
-    assert(_end2 < fin && _end2 < bgn => clf2 == _end2, "Yank did not set clf as expected when end is less than bgn");
-    assert(_end2 < fin && _end2 < bgn => tot2 == 0, "Yank did not set tot as expected when end is less than bgn");
-    assert(_end2 < fin && _end2 < clf => clf2 == _end2, "Yank did not set clf as expected when end is less than clf");
-    assert(_end2 < fin && _end2 < fin && _end2 < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
-    assert(_end2 < fin && _end2 >= bgn && _end2 >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
+    assert(_end2 < bgn => bgn2 == _end2, "Yank did not set bgn as expected when end is less than bgn");
+    assert(_end2 < bgn => clf2 == _end2, "Yank did not set clf as expected when end is less than bgn");
+    assert(_end2 < bgn => tot2 == 0, "Yank did not set tot as expected when end is less than bgn");
+    assert(_end2 < clf => clf2 == _end2, "Yank did not set clf as expected when end is less than clf");
+    assert(_end2 < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
+    assert(_end2 < fin && _end2 >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
 }
 
 // Verify revert rules on yank_end
