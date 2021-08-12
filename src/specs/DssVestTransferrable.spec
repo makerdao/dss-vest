@@ -737,6 +737,7 @@ rule yank(uint256 _id) {
     assert(e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
     assert(e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than clf");
     assert(e.block.timestamp < fin && e.block.timestamp >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
+    assert(e.block.timestamp >= fin => tot2 == tot && clf2 == clf && bgn2 == bgn, "Yank did not keep tot, clf and bgn the same as expected");
 }
 
 // Verify revert rules on yank
@@ -832,6 +833,7 @@ rule yank_end(uint256 _id, uint256 _end) {
     assert(_end2 < clf => clf2 == _end2, "Yank did not set clf as expected when end is less than clf");
     assert(_end2 < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
     assert(_end2 < fin && _end2 >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
+    assert(_end2 >= fin => tot2 == tot && clf2 == clf && bgn2 == bgn, "Yank did not keep tot, clf and bgn the same as expected");
 }
 
 // Verify revert rules on yank_end
