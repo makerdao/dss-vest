@@ -1,6 +1,6 @@
 // DssVestTransferrable.spec
 
-// certoraRun src/DssVest.sol:DssVestTransferrable src/specs/Dai.sol --link DssVestTransferrable:gem=Dai --verify DssVestTransferrable:src/specs/DssVestTransferrable.spec --rule_sanity
+// certoraRun src/DssVest.sol:DssVestTransferrable certora/Dai.sol --link DssVestTransferrable:gem=Dai --verify DssVestTransferrable:certora/DssVestTransferrable.spec --rule_sanity
 
 using Dai as dai
 
