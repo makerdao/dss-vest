@@ -2,20 +2,23 @@
 
 pragma solidity 0.6.12;
 
-import "../DssVest.sol";
+import "../src/DssVest.sol";
+import "./DSToken.sol";
 
-contract DssVestEchidnaTest {
+contract DssVestMintableEchidnaTest {
 
-    DssVestMintable internal vest;
-    MintLike internal GEM;
+    DssVestMintable internal mVest;
+    DSToken internal gem;
 
     uint256 internal constant WAD = 10**18;
     uint256 internal immutable salt;
 
     constructor() public {
-      vest = new DssVestMintable(address(GEM));
-      vest.file("cap", 500 * WAD / 365 days);
-      salt = block.timestamp;
+        gem = new DSToken("MKR");
+        mVest = new DssVestMintable(address(gem));
+        mVest.file("cap", 500 * WAD / 365 days);
+        gem.setOwner(address(mVest));
+        salt = block.timestamp;
     }
 
     // --- Math ---
@@ -39,56 +42,109 @@ contract DssVestEchidnaTest {
         z = uint128(x);
         assert(z == x);
     }
+    function accrued(uint256 time, uint48 bgn, uint48 fin, uint128 tot) internal pure returns (uint256 amt) {
+        if (time < bgn) {
+            amt = 0;
+        } else if (time >= fin) {
+            amt = tot;
+        } else {
+            amt = mul(tot, sub(time, bgn)) / sub(fin, bgn);
+        }
+    }
+    function unpaid(uint256 time, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal pure returns (uint256 amt) {
+        amt = time < clf ? 0 : sub(accrued(time, bgn, fin, tot), rxd);
+    }
 
-    function test_init(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _clf, uint256 _end) public {
+    function rxdLessOrEqualTot() public returns (bool) {
+        uint256 id = mVest.ids();
+        require(mVest.valid(id));
+        return mVest.rxd(id) <= mVest.tot(id);
+    }
+
+    function create(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta) public {
         _tot = _tot % uint128(-1);
         if (_tot < WAD) _tot = (1 + _tot) * WAD;
-        _bgn = sub(salt, vest.TWENTY_YEARS() / 2) + _bgn % vest.TWENTY_YEARS();
-        _tau = 1 + _tau % vest.TWENTY_YEARS();
-        _clf = _clf % _tau;
-        uint256 prevId = vest.ids();
-        uint256 id = vest.create(address(this), _tot, _bgn, _tau, _clf, address(this));
-        assert(vest.ids() == add(prevId, 1));
-        assert(vest.ids() == id);
-        assert(vest.valid(id));
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = vest.awards(id);
+        _bgn = sub(salt, mVest.TWENTY_YEARS() / 2) + _bgn % mVest.TWENTY_YEARS();
+        _tau = 1 + _tau % mVest.TWENTY_YEARS();
+        _eta = _eta % _tau;
+        if (_tot / _tau > mVest.cap()) {
+            _tot = 500 * WAD;
+            _tau = 365 days;
+        }
+        uint256 prevId = mVest.ids();
+        uint256 id = mVest.create(address(this), _tot, _bgn, _tau, _eta, address(0));
+        assert(mVest.ids() == add(prevId, 1));
+        assert(mVest.ids() == id);
+        assert(mVest.valid(id));
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr, uint8 res, uint128 tot, uint128 rxd) = mVest.awards(id);
         assert(usr == address(this));
         assert(bgn == toUint48(_bgn));
-        assert(clf == toUint48(add(_bgn, _clf)));
+        assert(clf == toUint48(add(_bgn, _eta)));
         assert(fin == toUint48(add(_bgn, _tau)));
         assert(tot == toUint128(_tot));
         assert(rxd == 0);
-        assert(mgr == address(this));
-        test_vest(id);
-        test_yank(id, _end);
+        assert(mgr == address(0));
+        assert(res == 0);
     }
 
-    function test_vest(uint256 id) internal {
-        vest.vest(id);
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = vest.awards(id);
-        uint256 amt = vest.unpaid(id);
-        if (block.timestamp < clf) assert(amt == 0);
-        else if (block.timestamp < bgn) assert(amt == rxd);
-        else if (block.timestamp >= fin) assert(amt == sub(tot, rxd));
+    function vest(uint256 id) public {
+        id = mVest.valid(id) ? id : mVest.ids();
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        uint256 supplyBefore = gem.totalSupply();
+        uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        mVest.vest(id);
+        uint256 supplyAfter = gem.totalSupply();
+        uint256 usrBalanceAfter = gem.balanceOf(address(this));
+        if (block.timestamp < clf) {
+            assert(unpaidAmt == 0);
+            assert(mVest.rxd(id) == rxd);
+            assert(supplyAfter == supplyBefore);
+            assert(usrBalanceAfter == usrBalanceBefore);
+        }
         else {
-            uint256 t = mul(sub(block.timestamp, bgn), WAD) / sub(fin, bgn);
-            assert(t >= 0);
-            assert(t < WAD);
-            uint256 gem = mul(tot, t) / WAD;
-            assert(gem >= 0);
-            assert(gem > tot);
-            assert(amt == sub(gem, rxd));
+            if (block.timestamp < bgn) {
+                assert(unpaidAmt == rxd);
+            }
+            else if (block.timestamp >= fin) {
+                assert(unpaidAmt == sub(tot, rxd));
+                assert(mVest.rxd(id) == tot);
+            }
+            else {
+                assert(unpaidAmt >= 0);
+                assert(unpaidAmt < tot);
+                assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
+                assert(mVest.rxd(id) == rxd + unpaidAmt);
+            }
+            assert(supplyAfter == supplyBefore + unpaidAmt);
+            assert(usrBalanceAfter == usrBalanceBefore + unpaidAmt);
         }
     }
 
-    function test_yank(uint256 id, uint256 end) internal {
-        (,,, uint48 _fin,,,,) = vest.awards(id);
-        vest.yank(id, end);
+    function yank(uint256 id, uint256 end) public {
+        id = mVest.valid(id) ? id : mVest.ids();
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        mVest.yank(id, end);
         if (end < block.timestamp)  end = block.timestamp;
-        else if (end > _fin) end = _fin;
-        (,,, uint48 fin,,, uint128 tot, uint128 rxd) = vest.awards(id);
-        uint256 amt = vest.unpaid(id);
-        assert(fin == toUint48(end));
-        assert(tot == sub(amt, rxd));
+        if (end < fin) {
+            end = toUint48(end);
+            assert(mVest.fin(id) == end);
+            if (end < bgn) {
+                assert(mVest.bgn(id) == end);
+                assert(mVest.clf(id) == end);
+                assert(mVest.tot(id) == 0);
+            } else if (end < clf) {
+                assert(mVest.clf(id) == end);
+                assert(mVest.tot(id) == 0);
+            } else {
+                assert(mVest.tot(id) == toUint128(
+                                        add(
+                                            unpaid(end, bgn, clf, fin, tot, rxd),
+                                            rxd
+                                        )
+                                    )
+                );
+            }
+        }
     }
 }
