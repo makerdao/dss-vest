@@ -13,10 +13,6 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        sourceName:
-          - DssVestMintableEchidnaTest.sol
-          - DssVestSuckableEchidnaTest.sol
-          - DssVestTransferrableEchidnaTest.sol
         testName:
           - DssVestMintableEchidnaTest
           - DssVestSuckableEchidnaTest
@@ -54,4 +50,4 @@ jobs:
           sudo tar -xf /tmp/echidna-test.tar.gz -C /usr/bin
           sudo chmod +x /usr/bin/echidna-test
       - name: Run ${{ matrix.testName }}
-        run: echidna-test echidna/${{ matrix.sourceName }} --contract ${{ matrix.testName }} --config echidna.config.ci.yml
+        run: echidna-test echidna/${{ matrix.testName }}.sol --contract ${{ matrix.testName }} --config echidna.config.ci.yml
