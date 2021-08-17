@@ -39,7 +39,7 @@ hook Sload uint256 value locked STORAGE {
     require lockedGhost() == value;
 }
 
-invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0 && mgr(_id) == 0 && res(_id) == 0
+invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && mgr(_id) == 0 && res(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0
 
 invariant usrCantBeZeroIfInit(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
 
