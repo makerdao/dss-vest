@@ -6,7 +6,6 @@ using DSToken as token
 using MockAuthority as authority
 
 methods {
-    gem() returns (address) envfree
     TWENTY_YEARS() returns (uint256) envfree
     wards(address) returns (uint256) envfree
     awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
@@ -21,6 +20,7 @@ methods {
     tot(uint256) returns (uint256) envfree
     rxd(uint256) returns (uint256) envfree
     valid(uint256) returns (bool) envfree
+    gem() returns (address) envfree
     token.authority() returns (address) envfree
     token.stopped() returns (bool) envfree
     token.totalSupply() returns (uint256) envfree
