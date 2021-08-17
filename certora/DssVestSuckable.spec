@@ -2,39 +2,39 @@
 
 // certoraRun src/DssVest.sol:DssVestSuckable certora/ChainLog.sol certora/Vat.sol certora/DaiJoin.sol certora/Dai.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=Dai --verify DssVestSuckable:certora/DssVestSuckable.spec --rule_sanity
 
-using Dai as dai
 using ChainLog as chainlog
 using DaiJoin as daiJoin
 using Vat as vat
+using Dai as dai
 
 methods {
+    TWENTY_YEARS() returns (uint256) envfree
     wards(address) returns (uint256) envfree
     awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
+    ids() returns (uint256) envfree
+    cap() returns (uint256) envfree
     usr(uint256) returns (address) envfree
     bgn(uint256) returns (uint256) envfree
     clf(uint256) returns (uint256) envfree
     fin(uint256) returns (uint256) envfree
-    tot(uint256) returns (uint256) envfree
-    rxd(uint256) returns (uint256) envfree
     mgr(uint256) returns (address) envfree
     res(uint256) returns (uint256) envfree
-    ids() returns (uint256) envfree
-    cap() returns (uint256) envfree
+    tot(uint256) returns (uint256) envfree
+    rxd(uint256) returns (uint256) envfree
     valid(uint256) returns (bool) envfree
-    TWENTY_YEARS() returns (uint256) envfree
-    dai.balanceOf(address) returns (uint256) envfree
-    dai.totalSupply() returns (uint256) envfree
-    dai.wards(address) returns (uint256) envfree
     chainlog.getAddress(bytes32) returns (address)
-    daiJoin.live() returns (uint256) envfree
     daiJoin.vat() returns (address) envfree
     daiJoin.dai() returns (address) envfree
+    daiJoin.live() returns (uint256) envfree
     vat.wards(address) returns (uint256) envfree
     vat.can(address, address) returns (uint256) envfree
     vat.dai(address) returns (uint256) envfree
     vat.sin(address) returns (uint256) envfree
-    vat.vice() returns (uint256) envfree
     vat.debt() returns (uint256) envfree
+    vat.vice() returns (uint256) envfree
+    dai.wards(address) returns (uint256) envfree
+    dai.totalSupply() returns (uint256) envfree
+    dai.balanceOf(address) returns (uint256) envfree
 }
 
 definition max_uint48() returns uint256 = 2^48 - 1;
