@@ -6,25 +6,25 @@ using DSToken as token
 using MockAuthority as authority
 
 methods {
+    gem() returns (address) envfree
+    TWENTY_YEARS() returns (uint256) envfree
     wards(address) returns (uint256) envfree
     awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
+    ids() returns (uint256) envfree
+    cap() returns (uint256) envfree
     usr(uint256) returns (address) envfree
     bgn(uint256) returns (uint256) envfree
     clf(uint256) returns (uint256) envfree
     fin(uint256) returns (uint256) envfree
-    tot(uint256) returns (uint256) envfree
-    rxd(uint256) returns (uint256) envfree
     mgr(uint256) returns (address) envfree
     res(uint256) returns (uint256) envfree
-    ids() returns (uint256) envfree
-    cap() returns (uint256) envfree
-    gem() returns (address) envfree
+    tot(uint256) returns (uint256) envfree
+    rxd(uint256) returns (uint256) envfree
     valid(uint256) returns (bool) envfree
-    TWENTY_YEARS() returns (uint256) envfree
-    token.balanceOf(address) returns (uint256) envfree
-    token.totalSupply() returns (uint256) envfree
     token.authority() returns (address) envfree
     token.stopped() returns (bool) envfree
+    token.totalSupply() returns (uint256) envfree
+    token.balanceOf(address) returns (uint256) envfree
 }
 
 definition max_uint48() returns uint256 = 2^48 - 1;
