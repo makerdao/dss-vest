@@ -105,9 +105,11 @@ contract DssVestTransferrableEchidnaTest {
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
         uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        uint256 supplyBefore = gem.totalSupply();
         tVest.vest(id);
         uint256 msigBalanceAfter = gem.balanceOf(address(multisig));
         uint256 usrBalanceAfter = gem.balanceOf(address(this));
+        uint256 supplyAfter = gem.totalSupply();
         if (block.timestamp < clf) {
             assert(unpaidAmt == 0);
             assert(tVest.rxd(id) == rxd);
@@ -126,11 +128,12 @@ contract DssVestTransferrableEchidnaTest {
                 assert(unpaidAmt >= 0);
                 assert(unpaidAmt < tot);
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
-                assert(tVest.rxd(id) == rxd + unpaidAmt);
+                assert(tVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
-            assert(msigBalanceAfter == msigBalanceBefore - unpaidAmt);
-            assert(usrBalanceAfter == usrBalanceBefore + unpaidAmt);
+            assert(msigBalanceAfter == sub(msigBalanceBefore, unpaidAmt));
+            assert(usrBalanceAfter == add(usrBalanceBefore, unpaidAmt));
         }
+        assert(supplyAfter == supplyBefore);
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {

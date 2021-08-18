@@ -114,10 +114,10 @@ contract DssVestMintableEchidnaTest {
                 assert(unpaidAmt >= 0);
                 assert(unpaidAmt < tot);
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
-                assert(mVest.rxd(id) == rxd + unpaidAmt);
+                assert(mVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
-            assert(supplyAfter == supplyBefore + unpaidAmt);
-            assert(usrBalanceAfter == usrBalanceBefore + unpaidAmt);
+            assert(supplyAfter == add(supplyBefore, unpaidAmt));
+            assert(usrBalanceAfter == add(usrBalanceBefore, unpaidAmt));
         }
     }
 

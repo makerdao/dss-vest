@@ -133,11 +133,11 @@ contract DssVestSuckableEchidnaTest {
                 assert(unpaidAmt >= 0);
                 assert(unpaidAmt < tot);
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
-                assert(sVest.rxd(id) == rxd + unpaidAmt);
+                assert(sVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
-            assert(sinAfter == sinBefore + mul(unpaidAmt, RAY));
-            assert(supplyAfter == supplyBefore + unpaidAmt);
-            assert(usrBalanceAfter == usrBalanceBefore + unpaidAmt);
+            assert(sinAfter == add(sinBefore, mul(unpaidAmt, RAY)));
+            assert(supplyAfter == add(supplyBefore, unpaidAmt));
+            assert(usrBalanceAfter == add(usrBalanceBefore, unpaidAmt));
         }
     }
 
