@@ -15,6 +15,7 @@ jobs:
       matrix:
         testName:
           - DssVestMintableEchidnaTest
+          - DssVestSuckableEchidnaTest
           - DssVestTransferrableEchidnaTest
 
     steps:
