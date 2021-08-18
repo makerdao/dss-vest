@@ -133,6 +133,28 @@ contract DssVestTransferrableEchidnaTest {
         }
     }
 
+    function vest_amt(uint256 id, uint256 maxAmt) public {
+        id = tVest.valid(id) ? id : tVest.ids();
+        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
+        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
+        uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
+        uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        uint256 supplyBefore = gem.totalSupply();
+        tVest.vest(id, maxAmt);
+        if (block.timestamp < clf) {
+            assert(tVest.rxd(id) == rxd);
+            assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
+            assert(gem.balanceOf(address(this)) == usrBalanceBefore);
+        }
+        else {
+            assert(tVest.rxd(id) == toUint128(add(rxd, amt)));
+            assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
+            assert(gem.balanceOf(address(this)) == add(usrBalanceBefore, amt));
+        }
+        assert(gem.totalSupply() == supplyBefore);
+    }
+
     function yank(uint256 id, uint256 end) public {
         id = tVest.valid(id) ? id : tVest.ids();
         (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
