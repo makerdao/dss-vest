@@ -16,7 +16,10 @@ contract DssVestSuckableEchidnaTest {
     Dai internal dai;
     DssVestSuckable internal sVest;
 
+    address internal vow = address(0xfffffff);
+
     uint256 internal constant WAD = 10**18;
+    uint256 internal constant RAY = 10**27;
     uint256 internal immutable salt;
 
     constructor() public {
@@ -26,7 +29,7 @@ contract DssVestSuckableEchidnaTest {
         chainlog = new ChainLog();
         chainlog.setAddress("MCD_VAT", address(vat));
         chainlog.setAddress("MCD_JOIN_DAI", address(daiJoin));
-        chainlog.setAddress("MCD_VOW", address(0xfffffff));
+        chainlog.setAddress("MCD_VOW", vow);
         sVest = new DssVestSuckable(address(chainlog));
         sVest.file("cap", 500 * WAD / 365 days);
         dai.rely(address(daiJoin));
@@ -104,14 +107,17 @@ contract DssVestSuckableEchidnaTest {
         id = sVest.valid(id) ? id : sVest.ids();
         (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        uint256 sinBefore = vat.sin(vow);
         uint256 supplyBefore = dai.totalSupply();
         uint256 usrBalanceBefore = dai.balanceOf(address(this));
         sVest.vest(id);
+        uint256 sinAfter = vat.sin(vow);
         uint256 supplyAfter = dai.totalSupply();
         uint256 usrBalanceAfter = dai.balanceOf(address(this));
         if (block.timestamp < clf) {
             assert(unpaidAmt == 0);
             assert(sVest.rxd(id) == rxd);
+            assert(sinAfter == sinBefore);
             assert(supplyAfter == supplyBefore);
             assert(usrBalanceAfter == usrBalanceBefore);
         }
@@ -129,6 +135,7 @@ contract DssVestSuckableEchidnaTest {
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
                 assert(sVest.rxd(id) == rxd + unpaidAmt);
             }
+            assert(sinAfter == sinBefore + mul(unpaidAmt, RAY));
             assert(supplyAfter == supplyBefore + unpaidAmt);
             assert(usrBalanceAfter == usrBalanceBefore + unpaidAmt);
         }
