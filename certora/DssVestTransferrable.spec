@@ -40,7 +40,7 @@ hook Sload uint256 value locked STORAGE {
 
 invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && mgr(_id) == 0 && res(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0
 
-invariant usrCantBeZeroIfInit(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
+invariant usrCantBeZeroIfCreate(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
 
 invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id)
 
@@ -81,7 +81,7 @@ rule rely(address usr) {
 
     rely(e, usr);
 
-    assert(wards(usr) == 1, "Rely did not set the wards as expected");
+    assert(wards(usr) == 1, "rely did not set the wards as expected");
 }
 
 // Verify revert rules on rely
@@ -107,7 +107,7 @@ rule deny(address usr) {
 
     deny(e, usr);
 
-    assert(wards(usr) == 0, "Deny did not set the wards as expected");
+    assert(wards(usr) == 0, "deny did not set the wards as expected");
 }
 
 // Verify revert rules on deny
@@ -141,14 +141,14 @@ rule award(uint256 _id) {
     uint256 tot_ = tot(_id);
     uint256 rxd_ = rxd(_id);
 
-    assert(_usr == usr_, "Usr did not return the award usr as expected");
-    assert(_bgn == bgn_, "Bgn did not return the award bgn as expected");
-    assert(_clf == clf_, "Clf did not return the award clf as expected");
-    assert(_fin == fin_, "Fin did not return the award fin as expected");
-    assert(_mgr == mgr_, "Mgr did not return the award mgr as expected");
-    assert(_res == res_, "Res did not return the award res as expected");
-    assert(_tot == tot_, "Tot did not return the award tot as expected");
-    assert(_rxd == rxd_, "Rxd did not return the award rxd as expected");
+    assert(_usr == usr_, "usr did not return the award usr as expected");
+    assert(_bgn == bgn_, "bgn did not return the award bgn as expected");
+    assert(_clf == clf_, "clf did not return the award clf as expected");
+    assert(_fin == fin_, "fin did not return the award fin as expected");
+    assert(_mgr == mgr_, "mgr did not return the award mgr as expected");
+    assert(_res == res_, "res did not return the award res as expected");
+    assert(_tot == tot_, "tot did not return the award tot as expected");
+    assert(_rxd == rxd_, "rxd did not return the award rxd as expected");
 }
 
 // Verify that cap behave correctly on file
@@ -157,7 +157,7 @@ rule file(bytes32 what, uint256 data) {
 
     file(e, what, data);
 
-    assert(cap() == data, "File did not set cap as expected");
+    assert(cap() == data, "file did not set cap as expected");
 }
 
 // Verify revert rules on file
@@ -194,18 +194,18 @@ rule create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta
 
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(id);
 
-    assert(ids() == prevId + 1, "Init did not increase the Ids as expected");
-    assert(ids() == id, "Init did not return the Id as expected");
-    assert(valid(id), "Init did not return a valid Id");
-    assert(usr == _usr, "Init did not set usr as expected");
-    assert(bgn == _bgn, "Init did not set bgn as expected");
-    assert(clf == _bgn + _eta, "Init did not set clf as expected");
-    assert(fin == _bgn + _tau, "Init did not set fin as expected");
-    assert(tot == _tot, "Init did not set tot as expected");
-    assert(rxd == 0, "Init did not set rxd as expected");
-    assert(mgr == _mgr, "Init did not set mgr as expected");
-    assert(res == 0, "Init did not set res as expected");
-    assert(fin > bgn, "Init did not set fin and bgn as expected");
+    assert(ids() == prevId + 1, "create did not increase the Ids as expected");
+    assert(ids() == id, "create did not return the Id as expected");
+    assert(valid(id), "create did not return a valid Id");
+    assert(usr == _usr, "create did not set usr as expected");
+    assert(bgn == _bgn, "create did not set bgn as expected");
+    assert(clf == _bgn + _eta, "create did not set clf as expected");
+    assert(fin == _bgn + _tau, "create did not set fin as expected");
+    assert(tot == _tot, "create did not set tot as expected");
+    assert(rxd == 0, "create did not set rxd as expected");
+    assert(mgr == _mgr, "create did not set mgr as expected");
+    assert(res == 0, "create did not set res as expected");
+    assert(fin > bgn, "create did not set fin and bgn as expected");
 }
 
 // Verify revert rules on create
@@ -319,8 +319,8 @@ rule vest(uint256 _id) {
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
     assert(e.block.timestamp < clf => czarBalanceAfter == czarBalanceBefore, "Czar balance did not remain as expected");
     assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "Usr balance did not remain as expected");
-    assert(e.block.timestamp >= fin => rxd2 == tot, "Vest did not take the whole amount as expected");
-    assert(e.block.timestamp >= clf => rxd2 == rxd + unpaidAmt, "Vest did not take the proportional amount as expected");
+    assert(e.block.timestamp >= fin => rxd2 == tot, "vest did not take the whole amount as expected");
+    assert(e.block.timestamp >= clf => rxd2 == rxd + unpaidAmt, "vest did not take the proportional amount as expected");
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
     assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - unpaidAmt, "Czar balance did not decrease as expected");
     assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + unpaidAmt, "Usr balance did not increase as expected");
@@ -381,10 +381,10 @@ rule vest_revert(uint256 _id) {
     assert(revert6  => lastReverted, "Division by zero did not revert");
     assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
     assert(revert8  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
-    assert(revert9  => lastReverted, "TransferFrom insufficient allowance did not revert");
-    assert(revert10 => lastReverted, "TransferFrom underflow allowed - unpaidAmt did not revert");
-    assert(revert11 => lastReverted, "TransferFrom underflow czrBalance - unpaidAmt did not revert");
-    assert(revert12 => lastReverted, "TransferFrom overflow usrBalance + unpaidAmt did not revert");
+    assert(revert9  => lastReverted, "transferFrom insufficient allowance did not revert");
+    assert(revert10 => lastReverted, "transferFrom underflow allowed - unpaidAmt did not revert");
+    assert(revert11 => lastReverted, "transferFrom underflow czrBalance - unpaidAmt did not revert");
+    assert(revert12 => lastReverted, "transferFrom overflow usrBalance + unpaidAmt did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -444,7 +444,7 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
     assert(e.block.timestamp < clf => czarBalanceAfter == czarBalanceBefore, "Czar balance did not remain as expected");
     assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "Usr balance did not remain as expected");
-    assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "Vest did not take the proportional amount as expected");
+    assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "vest did not take the proportional amount as expected");
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
     assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - amt, "Czar balance did not decrease as expected");
     assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + amt, "Usr balance did not increase as expected");
@@ -537,7 +537,7 @@ rule accrued(uint256 _id) {
 
     uint256 amt = accrued(e, _id);
 
-    assert(e.block.timestamp >= bgn && e.block.timestamp < fin => amt == accruedAmt, "Accrued did not return amt as expected");
+    assert(e.block.timestamp >= bgn && e.block.timestamp < fin => amt == accruedAmt, "accrued did not return amt as expected");
 }
 
 // Verify revert rules on accrued
@@ -591,8 +591,8 @@ rule unpaid(uint256 _id) {
 
     uint256 amt = unpaid(e, _id);
 
-    assert(e.block.timestamp <  clf => amt == 0, "Unpaid did not return amt equal to zero as expected");
-    assert(e.block.timestamp >= clf => amt == accruedAmt - rxd, "Unpaid did not return amt as expected");
+    assert(e.block.timestamp <  clf => amt == 0, "unpaid did not return amt equal to zero as expected");
+    assert(e.block.timestamp >= clf => amt == accruedAmt - rxd, "unpaid did not return amt as expected");
 }
 
 // Verify revert rules on unpaid
@@ -636,7 +636,7 @@ rule restrict(uint256 _id) {
 
     restrict(e, _id);
 
-    assert(res(_id) == 1, "Restrict did not set restricted as expected");
+    assert(res(_id) == 1, "restrict did not set restricted as expected");
 }
 
 // Verify revert rules on restrict
@@ -669,7 +669,7 @@ rule unrestrict(uint256 _id) {
 
     unrestrict(e, _id);
 
-    assert(res(_id) == 0, "Restrict did not set restricted as expected");
+    assert(res(_id) == 0, "restrict did not set restricted as expected");
 }
 
 // Verify revert rules on unrestrict
@@ -730,14 +730,14 @@ rule yank(uint256 _id) {
     assert(rxd2 == rxd, "rxd changed");
     assert(mgr2 == mgr, "mgr changed");
     assert(res2 == res, "res changed");
-    assert(e.block.timestamp < fin => fin2 == e.block.timestamp, "Yank did not set fin as expected");
-    assert(e.block.timestamp < bgn => bgn2 == e.block.timestamp, "Yank did not set bgn as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp < bgn => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp < bgn => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than bgn");
-    assert(e.block.timestamp < clf => clf2 == e.block.timestamp, "Yank did not set clf as expected when block timestamp is less than clf");
-    assert(e.block.timestamp < clf => tot2 == 0, "Yank did not set tot as expected when block timestamp is less than clf");
-    assert(e.block.timestamp < fin && e.block.timestamp >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
-    assert(e.block.timestamp >= fin => tot2 == tot && clf2 == clf && bgn2 == bgn, "Yank did not keep tot, clf and bgn the same as expected");
+    assert(e.block.timestamp < fin => fin2 == e.block.timestamp, "yank did not set fin as expected");
+    assert(e.block.timestamp < bgn => bgn2 == e.block.timestamp, "yank did not set bgn as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < bgn => clf2 == e.block.timestamp, "yank did not set clf as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < bgn => tot2 == 0, "yank did not set tot as expected when block timestamp is less than bgn");
+    assert(e.block.timestamp < clf => clf2 == e.block.timestamp, "yank did not set clf as expected when block timestamp is less than clf");
+    assert(e.block.timestamp < clf => tot2 == 0, "yank did not set tot as expected when block timestamp is less than clf");
+    assert(e.block.timestamp < fin && e.block.timestamp >= clf => tot2 == unpaidAmt + rxd, "yank did not set tot as expected");
+    assert(e.block.timestamp >= fin => tot2 == tot && clf2 == clf && bgn2 == bgn, "yank did not keep tot, clf and bgn the same as expected");
 }
 
 // Verify revert rules on yank
@@ -826,14 +826,14 @@ rule yank_end(uint256 _id, uint256 _end) {
     assert(rxd2 == rxd, "rxd changed");
     assert(mgr2 == mgr, "mgr changed");
     assert(res2 == res, "res changed");
-    assert(_end2 < fin => fin2 == _end2, "Yank did not set fin as expected");
-    assert(_end2 < bgn => bgn2 == _end2, "Yank did not set bgn as expected when end is less than bgn");
-    assert(_end2 < bgn => clf2 == _end2, "Yank did not set clf as expected when end is less than bgn");
-    assert(_end2 < bgn => tot2 == 0, "Yank did not set tot as expected when end is less than bgn");
-    assert(_end2 < clf => clf2 == _end2, "Yank did not set clf as expected when end is less than clf");
-    assert(_end2 < clf => tot2 == 0, "Yank did not set tot as expected when end is less than clf");
-    assert(_end2 < fin && _end2 >= clf => tot2 == unpaidAmt + rxd, "Yank did not set tot as expected");
-    assert(_end2 >= fin => tot2 == tot && clf2 == clf && bgn2 == bgn, "Yank did not keep tot, clf and bgn the same as expected");
+    assert(_end2 < fin => fin2 == _end2, "yank did not set fin as expected");
+    assert(_end2 < bgn => bgn2 == _end2, "yank did not set bgn as expected when end is less than bgn");
+    assert(_end2 < bgn => clf2 == _end2, "yank did not set clf as expected when end is less than bgn");
+    assert(_end2 < bgn => tot2 == 0, "yank did not set tot as expected when end is less than bgn");
+    assert(_end2 < clf => clf2 == _end2, "yank did not set clf as expected when end is less than clf");
+    assert(_end2 < clf => tot2 == 0, "yank did not set tot as expected when end is less than clf");
+    assert(_end2 < fin && _end2 >= clf => tot2 == unpaidAmt + rxd, "yank did not set tot as expected");
+    assert(_end2 >= fin => tot2 == tot && clf2 == clf && bgn2 == bgn, "yank did not keep tot, clf and bgn the same as expected");
 }
 
 // Verify revert rules on yank_end
@@ -894,7 +894,7 @@ rule move(uint256 _id, address _dst) {
 
     move(e, _id, _dst);
 
-    assert(usr(_id) == _dst, "Move did not set usr as expected");
+    assert(usr(_id) == _dst, "move did not set usr as expected");
 }
 
 // Verify revert rules on move
@@ -929,8 +929,8 @@ rule valid(uint256 _id) {
 
     bool isValid = valid(_id);
 
-    assert(validContract => isValid, "Valid did not set isValid as expected when contract is valid");
-    assert(!validContract => !isValid, "Valid did not set isValid as expected when contract is not valid");
+    assert(validContract => isValid, "valid did not set isValid as expected when contract is valid");
+    assert(!validContract => !isValid, "valid did not set isValid as expected when contract is not valid");
 }
 
 // Verify revert rules on valid
