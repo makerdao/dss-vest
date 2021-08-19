@@ -75,7 +75,7 @@ rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
     assert(rxd(_id) <= tot(_id));
 }
 
-// Verify that wards behaves correctly on rely
+// Verify that wards behave correctly on rely
 rule rely(address usr) {
     env e;
 
@@ -101,7 +101,7 @@ rule rely_revert(address usr) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
-// Verify that wards behaves correctly on deny
+// Verify that wards behave correctly on deny
 rule deny(address usr) {
     env e;
 
@@ -127,7 +127,7 @@ rule deny_revert(address usr) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
-// Verify that id behave correctly on award getters
+// Verify that ids behave correctly on award getters
 rule award(uint256 _id) {
     address _usr; uint48 _bgn; uint48 _clf; uint48 _fin; address _mgr; uint8 _res; uint128 _tot; uint128 _rxd;
     _usr, _bgn, _clf, _fin, _mgr, _res, _tot, _rxd = awards(_id);
@@ -151,7 +151,7 @@ rule award(uint256 _id) {
     assert(_rxd == rxd_, "rxd did not return the award rxd as expected");
 }
 
-// Verify that cap behave correctly on file
+// Verify that cap behaves correctly on file
 rule file(bytes32 what, uint256 data) {
     env e;
 
@@ -183,7 +183,7 @@ rule file_revert(bytes32 what, uint256 data) {
                            revert4, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on create
+// Verify that awards behave correctly on create
 rule create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) {
     env e;
 
@@ -270,7 +270,7 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
             revert16 || revert17 || revert18, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on vest
+// Verify that awards behave correctly on vest
 rule vest(uint256 _id) {
     env e;
 
@@ -393,7 +393,7 @@ rule vest_revert(uint256 _id) {
             revert10 || revert11 || revert12, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on vest with arbitrary max amt
+// Verify that awards behave correctly on vest with arbitrary max amt
 rule vest_amt(uint256 _id, uint256 _maxAmt) {
     env e;
 
@@ -696,7 +696,7 @@ rule unrestrict_revert(uint256 _id) {
                            revert4, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on yank
+// Verify that awards behave correctly on yank
 rule yank(uint256 _id) {
     env e;
 
@@ -791,7 +791,7 @@ rule yank_revert(uint256 _id) {
             revert7 || revert8 || revert9, "Revert rules are not covering all the cases");
 }
 
-// Verify that awards behaves correctly on yank with arbitrary end
+// Verify that awards behave correctly on yank with arbitrary end
 rule yank_end(uint256 _id, uint256 _end) {
     env e;
 
@@ -920,7 +920,7 @@ rule move_revert(uint256 _id, address _dst) {
                            revert4, "Revert rules are not covering all the cases");
 }
 
-// Verify that id behaves correctly on valid
+// Verify that ids behave correctly on valid
 rule valid(uint256 _id) {
     uint256 _tot = tot(_id);
     uint256 _rxd = rxd(_id);
