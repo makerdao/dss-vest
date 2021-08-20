@@ -89,18 +89,16 @@ contract DssVestMintableEchidnaTest {
 
     function vest(uint256 id) public {
         id = mVest.valid(id) ? id : mVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 supplyBefore = gem.totalSupply();
-        uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        uint256 usrBalanceBefore = gem.balanceOf(usr);
         mVest.vest(id);
-        uint256 supplyAfter = gem.totalSupply();
-        uint256 usrBalanceAfter = gem.balanceOf(address(this));
         if (block.timestamp < clf) {
             assert(unpaidAmt == 0);
             assert(mVest.rxd(id) == rxd);
-            assert(supplyAfter == supplyBefore);
-            assert(usrBalanceAfter == usrBalanceBefore);
+            assert(gem.totalSupply() == supplyBefore);
+            assert(gem.balanceOf(usr) == usrBalanceBefore);
         }
         else {
             if (block.timestamp < bgn) {
@@ -116,29 +114,41 @@ contract DssVestMintableEchidnaTest {
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
                 assert(mVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
-            assert(supplyAfter == add(supplyBefore, unpaidAmt));
-            assert(usrBalanceAfter == add(usrBalanceBefore, unpaidAmt));
+            assert(gem.totalSupply() == add(supplyBefore, unpaidAmt));
+            assert(gem.balanceOf(usr) == add(usrBalanceBefore, unpaidAmt));
         }
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = mVest.valid(id) ? id : mVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
         uint256 supplyBefore = gem.totalSupply();
-        uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        uint256 usrBalanceBefore = gem.balanceOf(usr);
         mVest.vest(id, maxAmt);
         if (block.timestamp < clf) {
             assert(mVest.rxd(id) == rxd);
             assert(gem.totalSupply() == supplyBefore);
-            assert(gem.balanceOf(address(this)) == usrBalanceBefore);
+            assert(gem.balanceOf(usr) == usrBalanceBefore);
         }
         else {
             assert(mVest.rxd(id) == toUint128(add(rxd, amt)));
             assert(gem.totalSupply() == add(supplyBefore, amt));
-            assert(gem.balanceOf(address(this)) == add(usrBalanceBefore, amt));
+            assert(gem.balanceOf(usr) == add(usrBalanceBefore, amt));
         }
+    }
+
+    function restrict(uint256 id) public {
+        id = mVest.valid(id) ? id : mVest.ids();
+        mVest.restrict(id);
+        assert(mVest.res(id) == 1);
+    }
+
+    function unrestrict(uint256 id) public {
+        id = mVest.valid(id) ? id : mVest.ids();
+        mVest.unrestrict(id);
+        assert(mVest.res(id) == 0);
     }
 
     function yank(uint256 id, uint256 end) public {
@@ -166,5 +176,12 @@ contract DssVestMintableEchidnaTest {
                 );
             }
         }
+    }
+
+    function move(uint id) public {
+        id = mVest.valid(id) ? id : mVest.ids();
+        address dst = mVest.usr(id) == address(this) ? msg.sender : address(0);
+        mVest.move(id, dst);
+        assert(mVest.usr(id) == dst);
     }
 }

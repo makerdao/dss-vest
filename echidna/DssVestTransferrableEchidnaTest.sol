@@ -101,20 +101,17 @@ contract DssVestTransferrableEchidnaTest {
 
     function vest(uint256 id) public {
         id = tVest.valid(id) ? id : tVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
-        uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        uint256 usrBalanceBefore = gem.balanceOf(usr);
         uint256 supplyBefore = gem.totalSupply();
         tVest.vest(id);
-        uint256 msigBalanceAfter = gem.balanceOf(address(multisig));
-        uint256 usrBalanceAfter = gem.balanceOf(address(this));
-        uint256 supplyAfter = gem.totalSupply();
         if (block.timestamp < clf) {
             assert(unpaidAmt == 0);
             assert(tVest.rxd(id) == rxd);
-            assert(msigBalanceAfter == msigBalanceBefore);
-            assert(usrBalanceAfter == usrBalanceBefore);
+            assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
+            assert(gem.balanceOf(usr) == usrBalanceBefore);
         }
         else {
             if (block.timestamp < bgn) {
@@ -130,32 +127,44 @@ contract DssVestTransferrableEchidnaTest {
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
                 assert(tVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
-            assert(msigBalanceAfter == sub(msigBalanceBefore, unpaidAmt));
-            assert(usrBalanceAfter == add(usrBalanceBefore, unpaidAmt));
+            assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
+            assert(gem.balanceOf(usr) == add(usrBalanceBefore, unpaidAmt));
         }
-        assert(supplyAfter == supplyBefore);
+        assert(gem.totalSupply() == supplyBefore);
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = tVest.valid(id) ? id : tVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
-        uint256 usrBalanceBefore = gem.balanceOf(address(this));
+        uint256 usrBalanceBefore = gem.balanceOf(usr);
         uint256 supplyBefore = gem.totalSupply();
         tVest.vest(id, maxAmt);
         if (block.timestamp < clf) {
             assert(tVest.rxd(id) == rxd);
             assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
-            assert(gem.balanceOf(address(this)) == usrBalanceBefore);
+            assert(gem.balanceOf(usr) == usrBalanceBefore);
         }
         else {
             assert(tVest.rxd(id) == toUint128(add(rxd, amt)));
             assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
-            assert(gem.balanceOf(address(this)) == add(usrBalanceBefore, amt));
+            assert(gem.balanceOf(usr) == add(usrBalanceBefore, amt));
         }
         assert(gem.totalSupply() == supplyBefore);
+    }
+
+    function restrict(uint256 id) public {
+        id = tVest.valid(id) ? id : tVest.ids();
+        tVest.restrict(id);
+        assert(tVest.res(id) == 1);
+    }
+
+    function unrestrict(uint256 id) public {
+        id = tVest.valid(id) ? id : tVest.ids();
+        tVest.unrestrict(id);
+        assert(tVest.res(id) == 0);
     }
 
     function yank(uint256 id, uint256 end) public {
@@ -183,5 +192,12 @@ contract DssVestTransferrableEchidnaTest {
                 );
             }
         }
-    }    
+    }
+
+    function move(uint id) public {
+        id = tVest.valid(id) ? id : tVest.ids();
+        address dst = tVest.usr(id) == address(this) ? msg.sender : address(0);
+        tVest.move(id, dst);
+        assert(tVest.usr(id) == dst);
+    }
 }

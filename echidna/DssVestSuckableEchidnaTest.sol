@@ -105,21 +105,18 @@ contract DssVestSuckableEchidnaTest {
 
     function vest(uint256 id) public {
         id = sVest.valid(id) ? id : sVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 sinBefore = vat.sin(vow);
         uint256 supplyBefore = dai.totalSupply();
-        uint256 usrBalanceBefore = dai.balanceOf(address(this));
+        uint256 usrBalanceBefore = dai.balanceOf(usr);
         sVest.vest(id);
-        uint256 sinAfter = vat.sin(vow);
-        uint256 supplyAfter = dai.totalSupply();
-        uint256 usrBalanceAfter = dai.balanceOf(address(this));
         if (block.timestamp < clf) {
             assert(unpaidAmt == 0);
             assert(sVest.rxd(id) == rxd);
-            assert(sinAfter == sinBefore);
-            assert(supplyAfter == supplyBefore);
-            assert(usrBalanceAfter == usrBalanceBefore);
+            assert(vat.sin(vow) == sinBefore);
+            assert(dai.totalSupply() == supplyBefore);
+            assert(dai.balanceOf(usr) == usrBalanceBefore);
         }
         else {
             if (block.timestamp < bgn) {
@@ -135,33 +132,45 @@ contract DssVestSuckableEchidnaTest {
                 assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
                 assert(sVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
-            assert(sinAfter == add(sinBefore, mul(unpaidAmt, RAY)));
-            assert(supplyAfter == add(supplyBefore, unpaidAmt));
-            assert(usrBalanceAfter == add(usrBalanceBefore, unpaidAmt));
+            assert(vat.sin(vow) == add(sinBefore, mul(unpaidAmt, RAY)));
+            assert(dai.totalSupply() == add(supplyBefore, unpaidAmt));
+            assert(dai.balanceOf(usr) == add(usrBalanceBefore, unpaidAmt));
         }
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = sVest.valid(id) ? id : sVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
         uint256 sinBefore = vat.sin(vow);
         uint256 supplyBefore = dai.totalSupply();
-        uint256 usrBalanceBefore = dai.balanceOf(address(this));
+        uint256 usrBalanceBefore = dai.balanceOf(usr);
         sVest.vest(id, maxAmt);
         if (block.timestamp < clf) {
             assert(sVest.rxd(id) == rxd);
             assert(vat.sin(vow) == sinBefore);
             assert(dai.totalSupply() == supplyBefore);
-            assert(dai.balanceOf(address(this)) == usrBalanceBefore);
+            assert(dai.balanceOf(usr) == usrBalanceBefore);
         }
         else {
             assert(sVest.rxd(id) == toUint128(add(rxd, amt)));
             assert(vat.sin(vow) == add(sinBefore, mul(amt, RAY)));
             assert(dai.totalSupply() == add(supplyBefore, amt));
-            assert(dai.balanceOf(address(this)) == add(usrBalanceBefore, amt));
+            assert(dai.balanceOf(usr) == add(usrBalanceBefore, amt));
         }
+    }
+
+    function restrict(uint256 id) public {
+        id = sVest.valid(id) ? id : sVest.ids();
+        sVest.restrict(id);
+        assert(sVest.res(id) == 1);
+    }
+
+    function unrestrict(uint256 id) public {
+        id = sVest.valid(id) ? id : sVest.ids();
+        sVest.unrestrict(id);
+        assert(sVest.res(id) == 0);
     }
 
     function yank(uint256 id, uint256 end) public {
@@ -189,5 +198,12 @@ contract DssVestSuckableEchidnaTest {
                 );
             }
         }
+    }
+
+    function move(uint id) public {
+        id = sVest.valid(id) ? id : sVest.ids();
+        address dst = sVest.usr(id) == address(this) ? msg.sender : address(0);
+        sVest.move(id, dst);
+        assert(sVest.usr(id) == dst);
     }
 }
