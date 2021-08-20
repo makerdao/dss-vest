@@ -152,6 +152,26 @@ rule award(uint256 _id) {
     assert(_rxd == rxd_, "rxd did not return the award rxd as expected");
 }
 
+// Verify revert rules on award getters
+rule award_revert(uint256 _id) {
+
+    usr@withrevert(_id);
+    bgn@withrevert(_id);
+    clf@withrevert(_id);
+    fin@withrevert(_id);
+    mgr@withrevert(_id);
+    res@withrevert(_id);
+    tot@withrevert(_id);
+    rxd@withrevert(_id);
+
+    // The only revert path for the award getters is sending ETH.
+    // However as these getters are defined as envfree, it is already being checked
+    // that are not payable by Certora prover, then not following that revertion
+    // path in this rule. That's why it's ignored.
+    // With the following assertion we prove there aren't any other revert paths.
+    assert(lastReverted => false, "Revert rules are not covering all the cases");
+}
+
 // Verify that cap behaves correctly on file
 rule file(bytes32 what, uint256 data) {
     env e;
@@ -627,13 +647,13 @@ rule unpaid_revert(uint256 _id) {
             revert4 || revert5, "Revert rules are not covering all the cases");
 }
 
-// Verify that restricted behaves correctly on restrict
+// Verify that res behaves correctly on restrict
 rule restrict(uint256 _id) {
     env e;
 
     restrict(e, _id);
 
-    assert(res(_id) == 1, "restrict did not set restricted as expected");
+    assert(res(_id) == 1, "restrict did not set res as expected");
 }
 
 // Verify revert rules on restrict
@@ -660,13 +680,13 @@ rule restrict_revert(uint256 _id) {
                            revert4, "Revert rules are not covering all the cases");
 }
 
-// Verify that restricted behaves correctly on unrestrict
+// Verify that res behaves correctly on unrestrict
 rule unrestrict(uint256 _id) {
     env e;
 
     unrestrict(e, _id);
 
-    assert(res(_id) == 0, "restrict did not set restricted as expected");
+    assert(res(_id) == 0, "restrict did not set res as expected");
 }
 
 // Verify revert rules on unrestrict
@@ -932,7 +952,6 @@ rule valid(uint256 _id) {
 
 // Verify revert rules on valid
 rule valid_revert(uint256 _id) {
-    env e;
 
     valid@withrevert(_id);
 
