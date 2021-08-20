@@ -61,30 +61,29 @@ contract DssVestMintableEchidnaTest {
         return mVest.rxd(id) <= mVest.tot(id);
     }
 
-    function create(uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta) public {
-        _tot = _tot % uint128(-1);
-        if (_tot < WAD) _tot = (1 + _tot) * WAD;
-        _bgn = sub(salt, mVest.TWENTY_YEARS() / 2) + _bgn % mVest.TWENTY_YEARS();
-        _tau = 1 + _tau % mVest.TWENTY_YEARS();
-        _eta = _eta % _tau;
-        if (_tot / _tau > mVest.cap()) {
-            _tot = 500 * WAD;
-            _tau = 365 days;
+    function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {
+        tot = tot % uint128(-1);
+        if (tot < WAD) tot = (1 + tot) * WAD;
+        bgn = sub(salt, mVest.TWENTY_YEARS() / 2) + bgn % mVest.TWENTY_YEARS();
+        tau = 1 + tau % mVest.TWENTY_YEARS();
+        eta = eta % tau;
+        if (tot / tau > mVest.cap()) {
+            tot = 500 * WAD;
+            tau = 365 days;
         }
         uint256 prevId = mVest.ids();
-        uint256 id = mVest.create(address(this), _tot, _bgn, _tau, _eta, address(0));
+        uint256 id = mVest.create(address(this), tot, bgn, tau, eta, address(0));
         assert(mVest.ids() == add(prevId, 1));
         assert(mVest.ids() == id);
         assert(mVest.valid(id));
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr, uint8 res, uint128 tot, uint128 rxd) = mVest.awards(id);
-        assert(usr == address(this));
-        assert(bgn == toUint48(_bgn));
-        assert(clf == toUint48(add(_bgn, _eta)));
-        assert(fin == toUint48(add(_bgn, _tau)));
-        assert(tot == toUint128(_tot));
-        assert(rxd == 0);
-        assert(mgr == address(0));
-        assert(res == 0);
+        assert(mVest.usr(id) == address(this));
+        assert(mVest.bgn(id) == toUint48(bgn));
+        assert(mVest.clf(id) == toUint48(add(bgn, eta)));
+        assert(mVest.fin(id) == toUint48(add(bgn, tau)));
+        assert(mVest.tot(id) == toUint128(tot));
+        assert(mVest.rxd(id) == 0);
+        assert(mVest.mgr(id) == address(0));
+        assert(mVest.res(id) == 0);
     }
 
     function vest(uint256 id) public {
