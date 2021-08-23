@@ -110,3 +110,42 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   ```
   $ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml
   ```
+
+## Certora
+
+### Install Certora
+
+- Install Java
+  ```
+  sudo apt install openjdk-14-jdk
+  ```
+- Install Certora Prover
+  ```
+  pip3 install certora-cli
+  ```
+- Set Certora Key
+  ```
+  export CERTORAKEY=<key>
+  ```
+
+### Local Dependencies
+
+- Install solc-select and install solc 0.6.12 artifacts:
+  ```
+  make certora-solc
+  ```
+
+### Run Certora Specs
+
+- Run DssVestMintable Specs:
+  ```
+  make certora-mintable
+  ```
+- Run DssVestSuckable Specs:
+  ```
+  make certora-suckable
+  ```
+- Run DssVestTransferrable Specs:
+  ```
+  make certora-transferrable
+  ```
