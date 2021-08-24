@@ -391,6 +391,7 @@ contract DssVestMintable is DssVest {
         @param _gem The contract address of the mintable token
     */
     constructor(address _gem) public DssVest() {
+        require(_gem  != address(0), "DssVest/Invalid-token-address");
         gem = MintLike(_gem);
     }
 
@@ -418,6 +419,7 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _chainlog) public DssVest() {
+        require(_chainlog  != address(0), "DssVest/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
         DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
