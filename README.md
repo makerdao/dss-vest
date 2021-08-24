@@ -15,9 +15,11 @@ A token vesting plan for contributors. Includes scheduling, cliff vesting, and t
 ```
 $ dapp update
 
-$ dapp deploy-mainnet-mintable
+$ make deploy-mainnet-mintable
 or
-$ dapp deploy-mainnet-suckable
+$ make deploy-mainnet-suckable
+or
+$ make deploy-transferrable owner=0xdead... gem=0xbeef...
 ```
 
 #### DssVestMintable
