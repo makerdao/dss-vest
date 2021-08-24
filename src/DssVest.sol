@@ -452,6 +452,8 @@ contract DssVestTransferrable is DssVest {
         @param _gem  The token to be distributed
     */
     constructor(address _czar, address _gem) public DssVest() {
+        require(_czar != address(0), "DssVest/Invalid-distributor-address");
+        require(_gem  != address(0), "DssVest/Invalid-token-address");
         czar = _czar;
         gem  = TokenLike(_gem);
     }
