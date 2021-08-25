@@ -257,7 +257,7 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
     bool revert11 = _tot / _tau > _cap;
     bool revert12 = _tau > twenty_years;
     bool revert13 = _eta > _tau;
-    bool revert14 = _ids >= max_uint256;
+    bool revert14 = _ids == max_uint256;
     bool revert15 = _bgn > max_uint48();
     bool revert16 = clf > max_uint48();
     bool revert17 = fin > max_uint48();
