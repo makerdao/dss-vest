@@ -306,6 +306,9 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 rule vest(uint256 _id) {
     env e;
 
+    require(vat == daiJoin.vat());
+    require(dai == daiJoin.dai());
+
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
@@ -456,6 +459,9 @@ rule vest_revert(uint256 _id) {
 // Verify that awards behave correctly on vest with arbitrary max amt
 rule vest_amt(uint256 _id, uint256 _maxAmt) {
     env e;
+
+    require(vat == daiJoin.vat());
+    require(dai == daiJoin.dai());
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
