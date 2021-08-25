@@ -175,20 +175,37 @@ rule award(uint256 _id) {
 rule award_revert(uint256 _id) {
 
     usr@withrevert(_id);
+    bool usrReverted = lastReverted;
+
     bgn@withrevert(_id);
+    bool bgnReverted = lastReverted;
+
     clf@withrevert(_id);
+    bool clfReverted = lastReverted;
+
     fin@withrevert(_id);
+    bool finReverted = lastReverted;
+
     mgr@withrevert(_id);
+    bool mgrReverted = lastReverted;
+
     res@withrevert(_id);
+    bool resReverted = lastReverted;
+
     tot@withrevert(_id);
+    bool totReverted = lastReverted;
+
     rxd@withrevert(_id);
+    bool rxdReverted = lastReverted;
 
     // The only revert path for the award getters is sending ETH.
     // However as these getters are defined as envfree, it is already being checked
     // that are not payable by Certora prover, then not following that revertion
     // path in this rule. That's why it's ignored.
     // With the following assertion we prove there aren't any other revert paths.
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => usrReverted || bgnReverted || clfReverted ||
+                           finReverted || mgrReverted || resReverted ||
+                           totReverted || rxdReverted, "Revert rules are not covering all the cases");
 }
 
 // Verify that cap behaves correctly on file
