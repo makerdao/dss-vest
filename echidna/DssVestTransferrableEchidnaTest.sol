@@ -67,10 +67,9 @@ contract DssVestTransferrableEchidnaTest {
 
     }    
 
-    function rxdLessOrEqualTot() public returns (bool) {
-        uint256 id = tVest.ids();
-        require(tVest.valid(id));
-        return tVest.rxd(id) <= tVest.tot(id);
+    function rxdLessOrEqualTot(uint256 id) public {
+        id = tVest.valid(id) ? id : tVest.ids();
+        assert(tVest.rxd(id) <= tVest.tot(id));
     }
 
     function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {

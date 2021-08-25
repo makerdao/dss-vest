@@ -71,10 +71,9 @@ contract DssVestSuckableEchidnaTest {
         amt = time < clf ? 0 : sub(accrued(time, bgn, fin, tot), rxd);
     }
 
-    function rxdLessOrEqualTot() public returns (bool) {
-        uint256 id = sVest.ids();
-        require(sVest.valid(id));
-        return sVest.rxd(id) <= sVest.tot(id);
+    function rxdLessOrEqualTot(uint256 id) public {
+        id = sVest.valid(id) ? id : sVest.ids();
+        assert(sVest.rxd(id) <= sVest.tot(id));
     }
 
     function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {

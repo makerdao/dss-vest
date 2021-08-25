@@ -55,10 +55,9 @@ contract DssVestMintableEchidnaTest {
         amt = time < clf ? 0 : sub(accrued(time, bgn, fin, tot), rxd);
     }
 
-    function rxdLessOrEqualTot() public returns (bool) {
-        uint256 id = mVest.ids();
-        require(mVest.valid(id));
-        return mVest.rxd(id) <= mVest.tot(id);
+    function rxdLessOrEqualTot(uint256 id) public {
+        id = mVest.valid(id) ? id : mVest.ids();
+        assert(mVest.rxd(id) <= mVest.tot(id));
     }
 
     function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {
