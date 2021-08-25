@@ -87,6 +87,25 @@ rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
     assert(rxd(_id) <= tot(_id));
 }
 
+// Verify that returned value is what expected in TWENTY_YEARS
+rule TWENTY_YEARS() {
+    uint256 twenty = TWENTY_YEARS();
+
+    assert(twenty == 60 * 60 * 24 * 365 * 20, "TWENTY_YEARS doesn't return what is expected");
+}
+
+// Verify revert rules on TWENTY_YEARS
+rule TWENTY_YEARS_revert(uint256 _id) {
+    TWENTY_YEARS@withrevert();
+
+    // The only revert path for the award getters is sending ETH.
+    // However as these getters are defined as envfree, it is already being checked
+    // that are not payable by Certora prover, then not following that revertion
+    // path in this rule. That's why it's ignored.
+    // With the following assertion we prove there aren't any other revert paths.
+    assert(lastReverted => false, "Revert rules are not covering all the cases");
+}
+
 // Verify that wards behaves correctly on rely
 rule rely(address usr) {
     env e;
@@ -137,25 +156,6 @@ rule deny_revert(address usr) {
     assert(revert2 => lastReverted, "Lack of auth did not revert");
 
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
-}
-
-// Verify that returned value is what expected in TWENTY_YEARS
-rule TWENTY_YEARS() {
-    uint256 twenty = TWENTY_YEARS();
-
-    assert(twenty == 60 * 60 * 24 * 365 * 20, "TWENTY_YEARS doesn't return what is expected");
-}
-
-// Verify revert rules on TWENTY_YEARS
-rule TWENTY_YEARS_revert(uint256 _id) {
-    TWENTY_YEARS@withrevert();
-
-    // The only revert path for the award getters is sending ETH.
-    // However as these getters are defined as envfree, it is already being checked
-    // that are not payable by Certora prover, then not following that revertion
-    // path in this rule. That's why it's ignored.
-    // With the following assertion we prove there aren't any other revert paths.
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
 }
 
 // Verify that ids behave correctly on award getters
