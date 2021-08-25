@@ -194,10 +194,8 @@ rule award_revert(uint256 _id) {
     usr@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
 
-
     bgn@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
-
 
     clf@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
@@ -205,18 +203,14 @@ rule award_revert(uint256 _id) {
     fin@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
 
-
     mgr@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
-
 
     res@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
 
-
     tot@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
-
 
     rxd@withrevert(_id);
     assert(lastReverted => false, "Revert rules are not covering all the cases");
