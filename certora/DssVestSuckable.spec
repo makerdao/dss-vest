@@ -87,7 +87,7 @@ rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
     assert(rxd(_id) <= tot(_id));
 }
 
-// Verify that wards behave correctly on rely
+// Verify that wards behaves correctly on rely
 rule rely(address usr) {
     env e;
 
@@ -113,7 +113,7 @@ rule rely_revert(address usr) {
     assert(lastReverted => revert1 || revert2, "Revert rules are not covering all the cases");
 }
 
-// Verify that wards behave correctly on deny
+// Verify that wards behaves correctly on deny
 rule deny(address usr) {
     env e;
 
