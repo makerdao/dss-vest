@@ -391,7 +391,7 @@ contract DssVestMintable is DssVest {
         @param _gem The contract address of the mintable token
     */
     constructor(address _gem) public DssVest() {
-        require(_gem  != address(0), "DssVest/Invalid-token-address");
+        require(_gem != address(0), "DssVest/Invalid-token-address");
         gem = MintLike(_gem);
     }
 
@@ -403,7 +403,6 @@ contract DssVestMintable is DssVest {
     function pay(address _guy, uint256 _amt) override internal {
         gem.mint(_guy, _amt);
     }
-
 }
 
 contract DssVestSuckable is DssVest {
