@@ -419,7 +419,7 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _chainlog) public DssVest() {
-        require(_chainlog  != address(0), "DssVest/Invalid-chainlog-address");
+        require(_chainlog != address(0), "DssVest/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
         DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
