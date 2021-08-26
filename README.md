@@ -34,6 +34,12 @@ Pass the MCD [chainlog](https://github.com/makerdao/dss-chain-log) address to th
 
 After deployment, governance must set the `cap` value using the `file` function.
 
+#### DssVestTransferrable
+
+Pass the authorized sender address and the address of the token contract to the constructor to set up the contract for streaming arbitrary ERC20 tokens. Note: this contract must be given ERC `approve()` authority to withdraw tokens from this contract.
+
+After deployment, the owner must also set the `cap` value using the `file` function.
+
 ### Creating a vest
 
 #### `create(_usr, _tot, _bgn, _tau, _eta, _mgr) returns (id)`
