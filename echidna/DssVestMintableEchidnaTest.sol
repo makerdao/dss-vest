@@ -56,8 +56,18 @@ contract DssVestMintableEchidnaTest {
     }
 
     function rxdLessOrEqualTot(uint256 id) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         assert(mVest.rxd(id) <= mVest.tot(id));
+    }
+
+    function clfGreaterOrEqualBgn(uint256 id) public {
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
+        assert(mVest.clf(id) >= mVest.bgn(id));
+    }
+
+    function finGreaterOrEqualClf(uint256 id) public {
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
+        assert(mVest.fin(id) >= mVest.clf(id));
     }
 
     function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {
@@ -86,7 +96,7 @@ contract DssVestMintableEchidnaTest {
     }
 
     function vest(uint256 id) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 supplyBefore = gem.totalSupply();
@@ -118,7 +128,7 @@ contract DssVestMintableEchidnaTest {
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
@@ -138,19 +148,19 @@ contract DssVestMintableEchidnaTest {
     }
 
     function restrict(uint256 id) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         mVest.restrict(id);
         assert(mVest.res(id) == 1);
     }
 
     function unrestrict(uint256 id) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         mVest.unrestrict(id);
         assert(mVest.res(id) == 0);
     }
 
     function yank(uint256 id, uint256 end) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
         mVest.yank(id, end);
         if (end < block.timestamp)  end = block.timestamp;
@@ -177,7 +187,7 @@ contract DssVestMintableEchidnaTest {
     }
 
     function move(uint id) public {
-        id = mVest.valid(id) ? id : mVest.ids();
+        id = mVest.usr(id) != address(0) ? id : mVest.ids();
         address dst = mVest.usr(id) == address(this) ? msg.sender : address(0);
         mVest.move(id, dst);
         assert(mVest.usr(id) == dst);
