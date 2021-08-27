@@ -15,9 +15,11 @@ A token vesting plan for contributors. Includes scheduling, cliff vesting, and t
 ```
 $ dapp update
 
-$ dapp deploy-mainnet-mintable
+$ make deploy-suckable
 or
-$ dapp deploy-mainnet-suckable
+$ make deploy-mintable gem=0xbeef...
+or
+$ make deploy-transferrable owner=0xdead... gem=0xbeef...
 ```
 
 #### DssVestMintable
@@ -31,6 +33,12 @@ After deployment, governance must set the `cap` value using the `file` function.
 Pass the MCD [chainlog](https://github.com/makerdao/dss-chain-log) address to the constructor to set up the contract for scheduled Dai `suck`s. Note: this contract must be given authority to `suck()` Dai from the `vat`'s surplus buffer.
 
 After deployment, governance must set the `cap` value using the `file` function.
+
+#### DssVestTransferrable
+
+Pass the authorized sender address and the address of the token contract to the constructor to set up the contract for streaming arbitrary ERC20 tokens. Note: this contract must be given ERC `approve()` authority to withdraw tokens from this contract.
+
+After deployment, the owner must also set the `cap` value using the `file` function.
 
 ### Creating a vest
 
