@@ -230,7 +230,7 @@ rule file_revert(bytes32 what, uint256 data) {
     assert(revert1 => lastReverted, "Sending ETH did not revert");
     assert(revert2 => lastReverted, "Lack of auth did not revert");
     assert(revert3 => lastReverted, "Locked did not revert");
-    assert(revert4 => lastReverted, "File unrecognized param did not revert");
+    assert(revert4 => lastReverted, "Unrecognized file param did not revert");
 
     assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
@@ -303,15 +303,15 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
     assert(revert7  => lastReverted, "Starting timestamp too far did not revert");
     assert(revert8  => lastReverted, "Subtraction underflow did not revert");
     assert(revert9  => lastReverted, "Starting timestamp too long ago did not revert");
-    assert(revert10 => lastReverted, "Tau zero did not revert");
+    assert(revert10 => lastReverted, "Zero tau did not revert");
     assert(revert11 => lastReverted, "Rate too high did not revert");
-    assert(revert12 => lastReverted, "Tau too long did not revert");
-    assert(revert13 => lastReverted, "Cliff too long did not revert");
-    assert(revert14 => lastReverted, "Ids overflow did not revert");
+    assert(revert12 => lastReverted, "Too long tau did not revert");
+    assert(revert13 => lastReverted, "Too long clf did not revert");
+    assert(revert14 => lastReverted, "Overflow ids did not revert");
     assert(revert15 => lastReverted, "Starting timestamp toUint48 cast did not revert");
-    assert(revert16 => lastReverted, "Cliff toUint48 cast overflow did not revert");
-    assert(revert17 => lastReverted, "Fin toUint48 cast overflow did not revert");
-    assert(revert18 => lastReverted, "Tot toUint128 cast overflow did not revert");
+    assert(revert16 => lastReverted, "Overflow toUint48 clf cast did not revert");
+    assert(revert17 => lastReverted, "Overflow toUint48 fin cast did not revert");
+    assert(revert18 => lastReverted, "Overflow toUint128 tot cast did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -371,13 +371,13 @@ rule vest(uint256 _id) {
     assert(res2 == res, "res changed");
     // assert(rxd2 <= tot, "rxd got higher than total");
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
-    assert(e.block.timestamp < clf => czarBalanceAfter == czarBalanceBefore, "Czar balance did not remain as expected");
-    assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "Usr balance did not remain as expected");
+    assert(e.block.timestamp < clf => czarBalanceAfter == czarBalanceBefore, "czar balance did not remain as expected");
+    assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "usr balance did not remain as expected");
     assert(e.block.timestamp >= fin => rxd2 == tot, "vest did not take the whole amount as expected");
     assert(e.block.timestamp >= clf => rxd2 == rxd + unpaidAmt, "vest did not take the proportional amount as expected");
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
-    assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - unpaidAmt, "Czar balance did not decrease as expected");
-    assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + unpaidAmt, "Usr balance did not increase as expected");
+    assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - unpaidAmt, "czar balance did not decrease as expected");
+    assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + unpaidAmt, "usr balance did not increase as expected");
     assert(supplyAfter == supplyBefore, "supply did not remain as expected");
 }
 
@@ -563,10 +563,10 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     assert(revert6  => lastReverted, "Division by zero did not revert");
     assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
     assert(revert8  => lastReverted, "Overflow rxd + amt or toUint128 cast did not revert");
-    assert(revert9  => lastReverted, "TransferFrom insufficient allowance did not revert");
-    assert(revert10 => lastReverted, "TransferFrom underflow allowed - amt did not revert");
-    assert(revert11 => lastReverted, "TransferFrom underflow czrBalance - amt did not revert");
-    assert(revert12 => lastReverted, "TransferFrom overflow usrBalance + amt did not revert");
+    assert(revert9  => lastReverted, "Insufficient transferFrom allowance did not revert");
+    assert(revert10 => lastReverted, "Underflow transferFrom allowed - amt did not revert");
+    assert(revert11 => lastReverted, "Underflow transferFrom czrBalance - amt did not revert");
+    assert(revert12 => lastReverted, "Overflow transferFrom usrBalance + amt did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -830,7 +830,7 @@ rule yank_revert(uint256 _id) {
     assert(revert2 => lastReverted, "Locked did not revert");
     assert(revert3 => lastReverted, "Not authorized did not revert");
     assert(revert4 => lastReverted, "Invalid award did not revert");
-    assert(revert5 => lastReverted, "Fin toUint48 cast did not revert");
+    assert(revert5 => lastReverted, "Overflow toUint48 fin cast did not revert");
     assert(revert6 => lastReverted, "Overflow tot * time passed did not revert");
     assert(revert7 => lastReverted, "Division by zero did not revert");
     assert(revert8 => lastReverted, "Underflow accruedAmt - rxd did not revert");
@@ -927,7 +927,7 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
     assert(revert2 => lastReverted, "Locked did not revert");
     assert(revert3 => lastReverted, "Not authorized did not revert");
     assert(revert4 => lastReverted, "Invalid award did not revert");
-    assert(revert5 => lastReverted, "Fin toUint48 cast did not revert");
+    assert(revert5 => lastReverted, "Overflow toUint48 fin cast did not revert");
     assert(revert6 => lastReverted, "Overflow tot * time passed did not revert");
     assert(revert7 => lastReverted, "Division by zero did not revert");
     assert(revert8 => lastReverted, "Underflow accruedAmt - rxd did not revert");
