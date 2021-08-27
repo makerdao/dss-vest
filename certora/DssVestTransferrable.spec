@@ -232,8 +232,7 @@ rule file_revert(bytes32 what, uint256 data) {
     assert(revert3 => lastReverted, "Locked did not revert");
     assert(revert4 => lastReverted, "File unrecognized param did not revert");
 
-    assert(lastReverted => revert1 || revert2 || revert3 ||
-                           revert4, "Revert rules are not covering all the cases");
+    assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behave correctly on create
@@ -626,8 +625,7 @@ rule accrued_revert(uint256 _id) {
     assert(revert4 => lastReverted, "Division by zero did not revert");
 
     assert(lastReverted =>
-            revert1 || revert2 || revert3 ||
-            revert4, "Revert rules are not covering all the cases");
+            revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
 // Verify that amt behaves correctly on unpaid
@@ -682,9 +680,7 @@ rule unpaid_revert(uint256 _id) {
     assert(revert4 => lastReverted, "Division by zero did not revert");
     assert(revert5 => lastReverted, "Underflow accruedAmt - rxd did not revert");
 
-    assert(lastReverted =>
-            revert1 || revert2 || revert3 ||
-            revert4 || revert5, "Revert rules are not covering all the cases");
+    assert(lastReverted => revert1 || revert2 || revert3 || revert4 || revert5, "Revert rules are not covering all the cases");
 }
 
 // Verify that res behaves correctly on restrict
@@ -716,8 +712,7 @@ rule restrict_revert(uint256 _id) {
     assert(revert3 => lastReverted, "Invalid award did not revert");
     assert(revert4 => lastReverted, "Only governance or owner can restrict did not revert");
 
-    assert(lastReverted => revert1 || revert2 || revert3 ||
-                           revert4, "Revert rules are not covering all the cases");
+    assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
 // Verify that res behaves correctly on unrestrict
@@ -749,8 +744,7 @@ rule unrestrict_revert(uint256 _id) {
     assert(revert3 => lastReverted, "Invalid award did not revert");
     assert(revert4 => lastReverted, "Only governance or owner can unrestrict did not revert");
 
-    assert(lastReverted => revert1 || revert2 || revert3 ||
-                           revert4, "Revert rules are not covering all the cases");
+    assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behave correctly on yank
@@ -973,8 +967,7 @@ rule move_revert(uint256 _id, address _dst) {
     assert(revert3 => lastReverted, "Only user can move did not revert");
     assert(revert4 => lastReverted, "Zero address invalid did not revert");
 
-    assert(lastReverted => revert1 || revert2 || revert3 ||
-                           revert4, "Revert rules are not covering all the cases");
+    assert(lastReverted => revert1 || revert2 || revert3 || revert4, "Revert rules are not covering all the cases");
 }
 
 // Verify that ids behave correctly on valid
