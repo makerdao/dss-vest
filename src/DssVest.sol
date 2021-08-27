@@ -391,6 +391,7 @@ contract DssVestMintable is DssVest {
         @param _gem The contract address of the mintable token
     */
     constructor(address _gem) public DssVest() {
+        require(_gem != address(0), "DssVest/Invalid-token-address");
         gem = MintLike(_gem);
     }
 
@@ -402,7 +403,6 @@ contract DssVestMintable is DssVest {
     function pay(address _guy, uint256 _amt) override internal {
         gem.mint(_guy, _amt);
     }
-
 }
 
 contract DssVestSuckable is DssVest {
@@ -418,6 +418,7 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _chainlog) public DssVest() {
+        require(_chainlog != address(0), "DssVest/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
         DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
@@ -452,6 +453,8 @@ contract DssVestTransferrable is DssVest {
         @param _gem  The token to be distributed
     */
     constructor(address _czar, address _gem) public DssVest() {
+        require(_czar != address(0), "DssVest/Invalid-distributor-address");
+        require(_gem  != address(0), "DssVest/Invalid-token-address");
         czar = _czar;
         gem  = TokenLike(_gem);
     }
