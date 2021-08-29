@@ -110,7 +110,7 @@ contract DssVestTransferrableEchidnaTest {
     function vest(uint256 id) public {
         id = tVest.usr(id) != address(0) ? id : tVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
-        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        uint256 unpaidAmt = tVest.unpaid(id);
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
         uint256 usrBalanceBefore = gem.balanceOf(usr);
         uint256 supplyBefore = gem.totalSupply();

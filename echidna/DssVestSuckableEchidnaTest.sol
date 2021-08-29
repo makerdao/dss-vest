@@ -114,7 +114,7 @@ contract DssVestSuckableEchidnaTest {
     function vest(uint256 id) public {
         id = sVest.usr(id) != address(0) ? id : sVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
-        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        uint256 unpaidAmt = sVest.unpaid(id);
         uint256 sinBefore = vat.sin(vow);
         uint256 supplyBefore = dai.totalSupply();
         uint256 usrBalanceBefore = dai.balanceOf(usr);
