@@ -98,7 +98,7 @@ contract DssVestMintableEchidnaTest {
     function vest(uint256 id) public {
         id = mVest.usr(id) != address(0) ? id : mVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
-        uint256 unpaidAmt = mVest.unpaid(id);
+        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 supplyBefore = gem.totalSupply();
         uint256 usrBalanceBefore = gem.balanceOf(usr);
         mVest.vest(id);
