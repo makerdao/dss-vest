@@ -137,7 +137,6 @@ contract DssVestSuckableEchidnaTest {
             else {
                 assert(unpaidAmt >= 0);
                 assert(unpaidAmt < tot);
-                assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
                 assert(sVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
             assert(vat.sin(vow) == add(sinBefore, mul(unpaidAmt, RAY)));

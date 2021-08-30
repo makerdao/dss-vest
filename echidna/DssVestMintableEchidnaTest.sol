@@ -119,7 +119,6 @@ contract DssVestMintableEchidnaTest {
             else {
                 assert(unpaidAmt >= 0);
                 assert(unpaidAmt < tot);
-                assert(unpaidAmt == unpaid(block.timestamp, bgn, clf, fin, tot, rxd));
                 assert(mVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
             assert(gem.totalSupply() == add(supplyBefore, unpaidAmt));
