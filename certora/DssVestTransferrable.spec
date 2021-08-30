@@ -46,6 +46,8 @@ invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id)
 
 invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id)
 
+// The following invariant is replaced with a rule as it was kind of difficult to be finished this way.
+// Leaving this commented for possible future option to be finished.
 // invariant rxdLessOrEqualTot(uint256 _id) rxd(_id) == rxdGhost(_id) => rxd(_id) <= tot(_id) {
 //     // TODO: restrict the conditions to the minimum possible
 //     preserved yank(uint256 _id2) with (env e) {
@@ -369,12 +371,14 @@ rule vest(uint256 _id) {
     assert(tot2 == tot, "tot changed");
     assert(mgr2 == mgr, "mgr changed");
     assert(res2 == res, "res changed");
+    // Assert that timeouts (some day should be figured it out why)
     // assert(rxd2 <= tot, "rxd got higher than total");
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
     assert(e.block.timestamp < clf => czarBalanceAfter == czarBalanceBefore, "czar balance did not remain as expected");
     assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "usr balance did not remain as expected");
     assert(e.block.timestamp >= fin => rxd2 == tot, "vest did not take the whole amount as expected");
     assert(e.block.timestamp >= clf => rxd2 == rxd + unpaidAmt, "vest did not take the proportional amount as expected");
+    // Assert that timeouts (some day should be figured it out why)
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
     assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - unpaidAmt, "czar balance did not decrease as expected");
     assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + unpaidAmt, "usr balance did not increase as expected");
@@ -496,11 +500,13 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
     assert(tot2 == tot, "tot changed");
     assert(mgr2 == mgr, "mgr changed");
     assert(res2 == res, "res changed");
+    // Assert that timeouts (some day should be figured it out why)
     // assert(rxd2 <= tot, "rxd got higher than total");
     assert(e.block.timestamp < clf => rxd2 == rxd, "rxd did not remain as expected");
     assert(e.block.timestamp < clf => czarBalanceAfter == czarBalanceBefore, "Czar balance did not remain as expected");
     assert(e.block.timestamp < clf => usrBalanceAfter == usrBalanceBefore, "Usr balance did not remain as expected");
     assert(e.block.timestamp >= clf => rxd2 == rxd + amt, "vest did not take the proportional amount as expected");
+    // Assert that timeouts (some day should be figured it out why)
     // assert(e.block.timestamp >= clf && e.block.timestamp < fin => rxd2 < tot, "rxd should not complete tot before time");
     assert(e.block.timestamp >= clf && _czar != usr => czarBalanceAfter == czarBalanceBefore - amt, "Czar balance did not decrease as expected");
     assert(e.block.timestamp >= clf && _czar != usr => usrBalanceAfter == usrBalanceBefore + amt, "Usr balance did not increase as expected");
