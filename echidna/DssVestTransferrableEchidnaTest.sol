@@ -68,17 +68,17 @@ contract DssVestTransferrableEchidnaTest {
     }    
 
     function rxdLessOrEqualTot(uint256 id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         assert(tVest.rxd(id) <= tVest.tot(id));
     }
 
     function clfGreaterOrEqualBgn(uint256 id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         assert(tVest.clf(id) >= tVest.bgn(id));
     }
 
     function finGreaterOrEqualClf(uint256 id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         assert(tVest.fin(id) >= tVest.clf(id));
     }
 
@@ -108,7 +108,7 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     function vest(uint256 id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
@@ -141,7 +141,7 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
@@ -163,19 +163,19 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     function restrict(uint256 id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         tVest.restrict(id);
         assert(tVest.res(id) == 1);
     }
 
     function unrestrict(uint256 id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         tVest.unrestrict(id);
         assert(tVest.res(id) == 0);
     }
 
     function yank(uint256 id, uint256 end) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
         tVest.yank(id, end);
         if (end < block.timestamp)  end = block.timestamp;
@@ -202,7 +202,7 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     function move(uint id) public {
-        id = tVest.usr(id) != address(0) ? id : tVest.ids();
+        id = tVest.ids() == 0 ? id : id % tVest.ids();
         address dst = tVest.usr(id) == address(this) ? msg.sender : address(0);
         tVest.move(id, dst);
         assert(tVest.usr(id) == dst);

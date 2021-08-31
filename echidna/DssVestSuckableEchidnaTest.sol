@@ -72,17 +72,17 @@ contract DssVestSuckableEchidnaTest {
     }
 
     function rxdLessOrEqualTot(uint256 id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         assert(sVest.rxd(id) <= sVest.tot(id));
     }
 
     function clfGreaterOrEqualBgn(uint256 id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         assert(sVest.clf(id) >= sVest.bgn(id));
     }
 
     function finGreaterOrEqualClf(uint256 id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         assert(sVest.fin(id) >= sVest.clf(id));
     }
 
@@ -112,7 +112,7 @@ contract DssVestSuckableEchidnaTest {
     }
 
     function vest(uint256 id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 sinBefore = vat.sin(vow);
@@ -146,7 +146,7 @@ contract DssVestSuckableEchidnaTest {
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
@@ -169,19 +169,19 @@ contract DssVestSuckableEchidnaTest {
     }
 
     function restrict(uint256 id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         sVest.restrict(id);
         assert(sVest.res(id) == 1);
     }
 
     function unrestrict(uint256 id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         sVest.unrestrict(id);
         assert(sVest.res(id) == 0);
     }
 
     function yank(uint256 id, uint256 end) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         sVest.yank(id, end);
         if (end < block.timestamp)  end = block.timestamp;
@@ -208,7 +208,7 @@ contract DssVestSuckableEchidnaTest {
     }
 
     function move(uint id) public {
-        id = sVest.usr(id) != address(0) ? id : sVest.ids();
+        id = sVest.ids() == 0 ? id : id % sVest.ids();
         address dst = sVest.usr(id) == address(this) ? msg.sender : address(0);
         sVest.move(id, dst);
         assert(sVest.usr(id) == dst);
