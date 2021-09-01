@@ -120,23 +120,16 @@ contract DssVestSuckableEchidnaTest {
         uint256 usrBalanceBefore = dai.balanceOf(usr);
         sVest.vest(id);
         if (block.timestamp < clf) {
-            assert(unpaidAmt == 0);
             assert(sVest.rxd(id) == rxd);
             assert(vat.sin(vow) == sinBefore);
             assert(dai.totalSupply() == supplyBefore);
             assert(dai.balanceOf(usr) == usrBalanceBefore);
         }
         else {
-            if (block.timestamp < bgn) {
-                assert(unpaidAmt == rxd);
-            }
-            else if (block.timestamp >= fin) {
-                assert(unpaidAmt == sub(tot, rxd));
+            if (block.timestamp >= fin) {
                 assert(sVest.rxd(id) == tot);
             }
             else {
-                assert(unpaidAmt >= 0);
-                assert(unpaidAmt < tot);
                 assert(sVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
             assert(vat.sin(vow) == add(sinBefore, mul(unpaidAmt, RAY)));

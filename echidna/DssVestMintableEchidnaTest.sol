@@ -103,22 +103,15 @@ contract DssVestMintableEchidnaTest {
         uint256 usrBalanceBefore = gem.balanceOf(usr);
         mVest.vest(id);
         if (block.timestamp < clf) {
-            assert(unpaidAmt == 0);
             assert(mVest.rxd(id) == rxd);
             assert(gem.totalSupply() == supplyBefore);
             assert(gem.balanceOf(usr) == usrBalanceBefore);
         }
         else {
-            if (block.timestamp < bgn) {
-                assert(unpaidAmt == rxd);
-            }
-            else if (block.timestamp >= fin) {
-                assert(unpaidAmt == sub(tot, rxd));
+            if (block.timestamp >= fin) {
                 assert(mVest.rxd(id) == tot);
             }
             else {
-                assert(unpaidAmt >= 0);
-                assert(unpaidAmt < tot);
                 assert(mVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
             assert(gem.totalSupply() == add(supplyBefore, unpaidAmt));

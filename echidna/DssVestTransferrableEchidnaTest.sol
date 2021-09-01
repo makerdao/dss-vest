@@ -116,22 +116,15 @@ contract DssVestTransferrableEchidnaTest {
         uint256 supplyBefore = gem.totalSupply();
         tVest.vest(id);
         if (block.timestamp < clf) {
-            assert(unpaidAmt == 0);
             assert(tVest.rxd(id) == rxd);
             assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
             assert(gem.balanceOf(usr) == usrBalanceBefore);
         }
         else {
-            if (block.timestamp < bgn) {
-                assert(unpaidAmt == rxd);
-            }
-            else if (block.timestamp >= fin) {
-                assert(unpaidAmt == sub(tot, rxd));
+            if (block.timestamp >= fin) {
                 assert(tVest.rxd(id) == tot);
-            } 
+            }
             else {
-                assert(unpaidAmt >= 0);
-                assert(unpaidAmt < tot);
                 assert(tVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
             }
             assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
