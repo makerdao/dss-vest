@@ -20,7 +20,7 @@ contract DssVestSuckableEchidnaTest {
 
     uint256 internal constant WAD = 10**18;
     uint256 internal constant RAY = 10**27;
-    uint256 internal immutable salt;
+    uint256 internal immutable salt; // initialTimestamp
 
     constructor() public {
         vat = new Vat();

@@ -20,7 +20,7 @@ contract DssVestTransferrableEchidnaTest {
     Multisig internal multisig;
 
     uint256 internal constant WAD = 10**18;
-    uint256 internal immutable salt;
+    uint256 internal immutable salt; // initialTimestamp
 
     constructor() public {
         gem = new Dai(1);
