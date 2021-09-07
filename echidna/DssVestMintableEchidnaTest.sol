@@ -107,10 +107,10 @@ contract DssVestMintableEchidnaTest {
                 bgn >= add(block.timestamp, mVest.TWENTY_YEARS()) && cmpStr(errmsg, "DssVest/bgn-too-far")          ||
                 bgn <= sub(block.timestamp, mVest.TWENTY_YEARS()) && cmpStr(errmsg, "DssVest/bgn-too-long-ago")     ||
                 tau == 0                                          && cmpStr(errmsg, "DssVest/tau-zero")             ||
-                tot /  tau > mVest.cap()                         && cmpStr(errmsg, "DssVest/rate-too-high")        ||
+                tot /  tau > mVest.cap()                          && cmpStr(errmsg, "DssVest/rate-too-high")        ||
                 tau >  mVest.TWENTY_YEARS()                       && cmpStr(errmsg, "DssVest/tau-too-long")         ||
-                eta >  tau                                       && cmpStr(errmsg, "DssVest/eta-too-long")         ||
-                mVest.ids() == type(uint256).max                   && cmpStr(errmsg, "DssVest/DssVest/ids-overflow")
+                eta >  tau                                        && cmpStr(errmsg, "DssVest/eta-too-long")         ||
+                mVest.ids() == type(uint256).max                  && cmpStr(errmsg, "DssVest/DssVest/ids-overflow")
             );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
