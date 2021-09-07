@@ -111,6 +111,28 @@ contract DssVestSuckableEchidnaTest {
         assert(sVest.res(id) == 0);
     }
 
+    function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
+        try sVest.create(address(0), tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // invalid-user
+        } catch {}
+        tot = tot / tau > sVest.cap() ? tot : 0;
+        try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // rate-too-high or no-vest-total-amount
+        } catch {}
+        bgn = bgn >= add(block.timestamp, sVest.TWENTY_YEARS()) || bgn <= sub(block.timestamp, sVest.TWENTY_YEARS()) ? bgn : 0;
+        try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // bgn-too-far or bgn-too-long-ago
+        } catch {}
+        tau = tot / tau > sVest.cap() ? tau : 0;
+        try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // rate-too-high or tau-zero
+        } catch {}
+        eta = eta > tau ? eta : ++tau;
+        try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // eta-too-long
+        } catch {}
+    }
+
     function vest(uint256 id) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);

@@ -107,6 +107,28 @@ contract DssVestTransferrableEchidnaTest {
         assert(tVest.res(id) == 0);
     }
 
+    function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
+        try tVest.create(address(0), tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // invalid-user
+        } catch {}
+        tot = tot / tau > tVest.cap() ? tot : 0;
+        try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // rate-too-high or no-vest-total-amount
+        } catch {}
+        bgn = bgn >= add(block.timestamp, tVest.TWENTY_YEARS()) || bgn <= sub(block.timestamp, tVest.TWENTY_YEARS()) ? bgn : 0;
+        try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // bgn-too-far or bgn-too-long-ago
+        } catch {}
+        tau = tot / tau > tVest.cap() ? tau : 0;
+        try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // rate-too-high or tau-zero
+        } catch {}
+        eta = eta > tau ? eta : ++tau;
+        try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // eta-too-long
+        } catch {}
+    }
+
     function vest(uint256 id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);

@@ -95,6 +95,28 @@ contract DssVestMintableEchidnaTest {
         assert(mVest.res(id) == 0);
     }
 
+    function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
+        try mVest.create(address(0), tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // invalid-user
+        } catch {}
+        tot = tot / tau > mVest.cap() ? tot : 0;
+        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // rate-too-high or no-vest-total-amount
+        } catch {}
+        bgn = bgn >= add(block.timestamp, mVest.TWENTY_YEARS()) || bgn <= sub(block.timestamp, mVest.TWENTY_YEARS()) ? bgn : 0;
+        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // bgn-too-far or bgn-too-long-ago
+        } catch {}
+        tau = tot / tau > mVest.cap() ? tau : 0;
+        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // rate-too-high or tau-zero
+        } catch {}
+        eta = eta > tau ? eta : ++tau;
+        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(false); // eta-too-long
+        } catch {}
+    }
+
     function vest(uint256 id) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
