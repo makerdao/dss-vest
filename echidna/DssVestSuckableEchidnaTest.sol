@@ -115,6 +115,7 @@ contract DssVestSuckableEchidnaTest {
         try sVest.create(address(0), tot, bgn, tau, eta, mgr) returns (uint256 id) {
             assert(false); // invalid-user
         } catch {}
+        usr = usr == address(0) ? address(this) : usr;
         tot = tot / tau > sVest.cap() ? tot : 0;
         try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
             assert(false); // rate-too-high or no-vest-total-amount

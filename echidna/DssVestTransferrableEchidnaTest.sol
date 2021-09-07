@@ -111,6 +111,7 @@ contract DssVestTransferrableEchidnaTest {
         try tVest.create(address(0), tot, bgn, tau, eta, mgr) returns (uint256 id) {
             assert(false); // invalid-user
         } catch {}
+        usr = usr == address(0) ? address(this) : usr;
         tot = tot / tau > tVest.cap() ? tot : 0;
         try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
             assert(false); // rate-too-high or no-vest-total-amount
