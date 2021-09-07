@@ -54,6 +54,9 @@ contract DssVestMintableEchidnaTest {
     function unpaid(uint256 time, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal pure returns (uint256 amt) {
         amt = time < clf ? 0 : sub(accrued(time, bgn, fin, tot), rxd);
     }
+    function cmpStr(string memory a, string memory b) internal view returns (bool) {
+        return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
+    }
 
     function rxdLessOrEqualTot(uint256 id) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
@@ -96,26 +99,22 @@ contract DssVestMintableEchidnaTest {
     }
 
     function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
-        try mVest.create(address(0), tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(false); // invalid-user
-        } catch {}
-        usr = usr == address(0) ? address(this) : usr;
-        tot = tot / tau > mVest.cap() ? tot : 0;
         try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(false); // rate-too-high or no-vest-total-amount
-        } catch {}
-        bgn = bgn >= add(block.timestamp, mVest.TWENTY_YEARS()) || bgn <= sub(block.timestamp, mVest.TWENTY_YEARS()) ? bgn : 0;
-        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(false); // bgn-too-far or bgn-too-long-ago
-        } catch {}
-        tau = tot / tau > mVest.cap() ? tau : 0;
-        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(false); // rate-too-high or tau-zero
-        } catch {}
-        eta = eta > tau ? eta : ++tau;
-        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(false); // eta-too-long
-        } catch {}
+        } catch Error(string memory errmsg) {
+            assert(
+                usr == address(0)                                 && cmpStr(errmsg, "DssVest/invalid-user")         ||
+                tot == 0                                          && cmpStr(errmsg, "DssVest/no-vest-total-amount") ||
+                bgn >= add(block.timestamp, mVest.TWENTY_YEARS()) && cmpStr(errmsg, "DssVest/bgn-too-far")          ||
+                bgn <= sub(block.timestamp, mVest.TWENTY_YEARS()) && cmpStr(errmsg, "DssVest/bgn-too-long-ago")     ||
+                tau == 0                                          && cmpStr(errmsg, "DssVest/tau-zero")             ||
+                tot /  tau > mVest.cap()                         && cmpStr(errmsg, "DssVest/rate-too-high")        ||
+                tau >  mVest.TWENTY_YEARS()                       && cmpStr(errmsg, "DssVest/tau-too-long")         ||
+                eta >  tau                                       && cmpStr(errmsg, "DssVest/eta-too-long")         ||
+                mVest.ids() == type(uint256).max                   && cmpStr(errmsg, "DssVest/DssVest/ids-overflow")
+            );
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
+        }
     }
 
     function vest(uint256 id) public {
