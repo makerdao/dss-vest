@@ -111,7 +111,7 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
-        try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+        try tVest.create(usr, tot, bgn, tau, eta, mgr) {
         } catch Error(string memory errmsg) {
             assert(
                 usr == address(0)                                 && cmpStr(errmsg, "DssVest/invalid-user")         ||
