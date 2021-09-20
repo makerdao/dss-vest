@@ -86,7 +86,7 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {
-        tot = tot % uint128(-1);
+        tot = tot % type(uint128).max;
         if (tot < WAD) tot = (1 + tot) * WAD;
         bgn = sub(salt, tVest.TWENTY_YEARS() / 2) + bgn % tVest.TWENTY_YEARS();
         tau = 1 + tau % tVest.TWENTY_YEARS();
