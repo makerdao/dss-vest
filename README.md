@@ -1,4 +1,4 @@
-[![Fuzz](https://github.com/makerdao/dss-vest/actions/workflows/fuzz.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/fuzz.yml)
+[![Echidna](https://github.com/makerdao/dss-vest/actions/workflows/fuzz.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/fuzz.yml)
 
 # dss-vest
 
