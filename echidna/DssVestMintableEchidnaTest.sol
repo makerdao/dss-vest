@@ -5,6 +5,10 @@ pragma solidity 0.6.12;
 import "../src/DssVest.sol";
 import "./DSToken.sol";
 
+interface Hevm {
+    function store(address, bytes32, bytes32) external;
+}
+
 contract DssVestMintableEchidnaTest {
 
     DssVestMintable internal mVest;
@@ -13,12 +17,19 @@ contract DssVestMintableEchidnaTest {
     uint256 internal constant WAD = 10**18;
     uint256 internal immutable salt; // initialTimestamp
 
+    // Hevm
+    Hevm hevm;
+
+    // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
+    bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
+
     constructor() public {
         gem = new DSToken("MKR");
         mVest = new DssVestMintable(address(gem));
         mVest.file("cap", 500 * WAD / 365 days);
         gem.setOwner(address(mVest));
         salt = block.timestamp;
+        hevm = Hevm(address(CHEAT_CODE));
     }
 
     // --- Math ---
@@ -57,6 +68,11 @@ contract DssVestMintableEchidnaTest {
     function cmpStr(string memory a, string memory b) internal view returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
+    function bytesToBytes32(bytes memory source) internal pure returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 
     function rxdLessOrEqualTot(uint256 id) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
@@ -73,33 +89,23 @@ contract DssVestMintableEchidnaTest {
         assert(mVest.fin(id) >= mVest.clf(id));
     }
 
-    function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {
-        tot = tot % type(uint128).max;
-        if (tot < WAD) tot = (1 + tot) * WAD;
-        bgn = sub(salt, mVest.TWENTY_YEARS() / 2) + bgn % mVest.TWENTY_YEARS();
-        tau = 1 + tau % mVest.TWENTY_YEARS();
-        eta = eta % tau;
-        if (tot / tau > mVest.cap()) {
-            tot = 500 * WAD;
-            tau = 365 days;
-        }
+    function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = mVest.ids();
-        uint256 id = mVest.create(address(this), tot, bgn, tau, eta, address(0));
-        assert(mVest.ids() == add(prevId, 1));
-        assert(mVest.ids() == id);
-        assert(mVest.valid(id));
-        assert(mVest.usr(id) == address(this));
-        assert(mVest.bgn(id) == toUint48(bgn));
-        assert(mVest.clf(id) == toUint48(add(bgn, eta)));
-        assert(mVest.fin(id) == toUint48(add(bgn, tau)));
-        assert(mVest.tot(id) == toUint128(tot));
-        assert(mVest.rxd(id) == 0);
-        assert(mVest.mgr(id) == address(0));
-        assert(mVest.res(id) == 0);
-    }
-
-    function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
-        try mVest.create(usr, tot, bgn, tau, eta, mgr) {
+        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(mVest.ids() == add(prevId, 1));
+            assert(mVest.ids() == id);
+            assert(mVest.valid(id));
+            assert(mVest.usr(id) == usr);
+            assert(mVest.bgn(id) == toUint48(bgn));
+            assert(mVest.clf(id) == toUint48(add(bgn, eta)));
+            assert(mVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(mVest.tot(id) == toUint128(tot));
+            assert(mVest.rxd(id) == 0);
+            assert(mVest.mgr(id) == mgr);
+            assert(mVest.res(id) == 0);
+            // Set DssVestMintable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
+            hevm.store(address(mVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(mVest.clf(id)), uint48(mVest.bgn(id)), address(this))));
+            assert(mVest.usr(id) == address(this));
         } catch Error(string memory errmsg) {
             assert(
                 usr == address(0)                                 && cmpStr(errmsg, "DssVest/invalid-user")         ||
@@ -110,7 +116,7 @@ contract DssVestMintableEchidnaTest {
                 tot /  tau > mVest.cap()                          && cmpStr(errmsg, "DssVest/rate-too-high")        ||
                 tau >  mVest.TWENTY_YEARS()                       && cmpStr(errmsg, "DssVest/tau-too-long")         ||
                 eta >  tau                                        && cmpStr(errmsg, "DssVest/eta-too-long")         ||
-                mVest.ids() == type(uint256).max                  && cmpStr(errmsg, "DssVest/DssVest/ids-overflow")
+                mVest.ids() == type(uint256).max                  && cmpStr(errmsg, "DssVest/ids-overflow")
             );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught

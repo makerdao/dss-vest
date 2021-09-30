@@ -8,6 +8,10 @@ import "./Vat.sol";
 import "./DaiJoin.sol";
 import "./Dai.sol";
 
+interface Hevm {
+    function store(address, bytes32, bytes32) external;
+}
+
 contract DssVestSuckableEchidnaTest {
 
     ChainLog internal chainlog;
@@ -22,6 +26,12 @@ contract DssVestSuckableEchidnaTest {
     uint256 internal constant RAY = 10**27;
     uint256 internal immutable salt; // initialTimestamp
 
+    // Hevm
+    Hevm hevm;
+
+    // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
+    bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
+
     constructor() public {
         vat = new Vat();
         dai = new Dai(1);
@@ -35,6 +45,7 @@ contract DssVestSuckableEchidnaTest {
         dai.rely(address(daiJoin));
         vat.rely(address(sVest));
         salt = block.timestamp;
+        hevm = Hevm(address(CHEAT_CODE));
     }
 
     // --- Math ---
@@ -73,6 +84,11 @@ contract DssVestSuckableEchidnaTest {
     function cmpStr(string memory a, string memory b) internal view returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
+    function bytesToBytes32(bytes memory source) internal pure returns (bytes32 result) {
+        assembly {
+            result := mload(add(source, 32))
+        }
+    }
 
     function rxdLessOrEqualTot(uint256 id) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
@@ -89,33 +105,23 @@ contract DssVestSuckableEchidnaTest {
         assert(sVest.fin(id) >= sVest.clf(id));
     }
 
-    function create(uint256 tot, uint256 bgn, uint256 tau, uint256 eta) public {
-        tot = tot % type(uint128).max;
-        if (tot < WAD) tot = (1 + tot) * WAD;
-        bgn = sub(salt, sVest.TWENTY_YEARS() / 2) + bgn % sVest.TWENTY_YEARS();
-        tau = 1 + tau % sVest.TWENTY_YEARS();
-        eta = eta % tau;
-        if (tot / tau > sVest.cap()) {
-            tot = 500 * WAD;
-            tau = 365 days;
-        }
+    function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = sVest.ids();
-        uint256 id = sVest.create(address(this), tot, bgn, tau, eta, address(0));
-        assert(sVest.ids() == add(prevId, 1));
-        assert(sVest.ids() == id);
-        assert(sVest.valid(id));
-        assert(sVest.usr(id) == address(this));
-        assert(sVest.bgn(id) == toUint48(bgn));
-        assert(sVest.clf(id) == toUint48(add(bgn, eta)));
-        assert(sVest.fin(id) == toUint48(add(bgn, tau)));
-        assert(sVest.tot(id) == toUint128(tot));
-        assert(sVest.rxd(id) == 0);
-        assert(sVest.mgr(id) == address(0));
-        assert(sVest.res(id) == 0);
-    }
-
-     function create_revert(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
-        try sVest.create(usr, tot, bgn, tau, eta, mgr) {
+        try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+            assert(sVest.ids() == add(prevId, 1));
+            assert(sVest.ids() == id);
+            assert(sVest.valid(id));
+            assert(sVest.usr(id) == usr);
+            assert(sVest.bgn(id) == toUint48(bgn));
+            assert(sVest.clf(id) == toUint48(add(bgn, eta)));
+            assert(sVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(sVest.tot(id) == toUint128(tot));
+            assert(sVest.rxd(id) == 0);
+            assert(sVest.mgr(id) == mgr);
+            assert(sVest.res(id) == 0);
+            // Set DssVestSuckable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
+            hevm.store(address(sVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(sVest.clf(id)), uint48(sVest.bgn(id)), address(this))));
+            assert(sVest.usr(id) == address(this));
         } catch Error(string memory errmsg) {
             assert(
                 usr == address(0)                                 && cmpStr(errmsg, "DssVest/invalid-user")         ||
@@ -126,7 +132,7 @@ contract DssVestSuckableEchidnaTest {
                 tot /  tau > sVest.cap()                          && cmpStr(errmsg, "DssVest/rate-too-high")        ||
                 tau >  sVest.TWENTY_YEARS()                       && cmpStr(errmsg, "DssVest/tau-too-long")         ||
                 eta >  tau                                        && cmpStr(errmsg, "DssVest/eta-too-long")         ||
-                sVest.ids() == type(uint256).max                  && cmpStr(errmsg, "DssVest/DssVest/ids-overflow")
+                sVest.ids() == type(uint256).max                  && cmpStr(errmsg, "DssVest/ids-overflow")
             );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
