@@ -104,14 +104,14 @@ contract DssVestTransferrableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = tVest.ids();
         try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(tVest.ids() == prevId + 1);
+            assert(tVest.ids() == add(prevId, 1));
             assert(tVest.ids() == id);
             assert(tVest.valid(id));
             assert(tVest.usr(id) == usr);
-            assert(tVest.bgn(id) == uint48(bgn));
-            assert(tVest.clf(id) == uint48(bgn + eta));
-            assert(tVest.fin(id) == uint48(bgn + tau));
-            assert(tVest.tot(id) == uint128(tot));
+            assert(tVest.bgn(id) == toUint48(bgn));
+            assert(tVest.clf(id) == toUint48(add(bgn, eta)));
+            assert(tVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(tVest.tot(id) == toUint128(tot));
             assert(tVest.rxd(id) == 0);
             assert(tVest.mgr(id) == mgr);
             assert(tVest.res(id) == 0);

@@ -108,14 +108,14 @@ contract DssVestSuckableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = sVest.ids();
         try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(sVest.ids() == prevId + 1);
+            assert(sVest.ids() == add(prevId, 1));
             assert(sVest.ids() == id);
             assert(sVest.valid(id));
             assert(sVest.usr(id) == usr);
-            assert(sVest.bgn(id) == uint48(bgn));
-            assert(sVest.clf(id) == uint48(bgn + eta));
-            assert(sVest.fin(id) == uint48(bgn + tau));
-            assert(sVest.tot(id) == uint128(tot));
+            assert(sVest.bgn(id) == toUint48(bgn));
+            assert(sVest.clf(id) == toUint48(add(bgn, eta)));
+            assert(sVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(sVest.tot(id) == toUint128(tot));
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
             assert(sVest.res(id) == 0);

@@ -92,14 +92,14 @@ contract DssVestMintableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = mVest.ids();
         try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(mVest.ids() == prevId + 1);
+            assert(mVest.ids() == add(prevId, 1));
             assert(mVest.ids() == id);
             assert(mVest.valid(id));
             assert(mVest.usr(id) == usr);
-            assert(mVest.bgn(id) == uint48(bgn));
-            assert(mVest.clf(id) == uint48(bgn + eta));
-            assert(mVest.fin(id) == uint48(bgn + tau));
-            assert(mVest.tot(id) == uint128(tot));
+            assert(mVest.bgn(id) == toUint48(bgn));
+            assert(mVest.clf(id) == toUint48(add(bgn, eta)));
+            assert(mVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(mVest.tot(id) == toUint128(tot));
             assert(mVest.rxd(id) == 0);
             assert(mVest.mgr(id) == mgr);
             assert(mVest.res(id) == 0);
