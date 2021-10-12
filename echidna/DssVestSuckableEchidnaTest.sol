@@ -108,14 +108,14 @@ contract DssVestSuckableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = sVest.ids();
         try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(sVest.ids() == add(prevId, 1));
+            assert(sVest.ids() == prevId + 1);
             assert(sVest.ids() == id);
             assert(sVest.valid(id));
             assert(sVest.usr(id) == usr);
-            assert(sVest.bgn(id) == toUint48(bgn));
-            assert(sVest.clf(id) == toUint48(add(bgn, eta)));
-            assert(sVest.fin(id) == toUint48(add(bgn, tau)));
-            assert(sVest.tot(id) == toUint128(tot));
+            assert(sVest.bgn(id) == uint48(bgn));
+            assert(sVest.clf(id) == uint48(bgn + eta));
+            assert(sVest.fin(id) == uint48(bgn + tau));
+            assert(sVest.tot(id) == uint128(tot));
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
             assert(sVest.res(id) == 0);
@@ -124,15 +124,23 @@ contract DssVestSuckableEchidnaTest {
             assert(sVest.usr(id) == address(this));
         } catch Error(string memory errmsg) {
             assert(
-                usr == address(0)                                 && cmpStr(errmsg, "DssVest/invalid-user")         ||
-                tot == 0                                          && cmpStr(errmsg, "DssVest/no-vest-total-amount") ||
-                bgn >= add(block.timestamp, sVest.TWENTY_YEARS()) && cmpStr(errmsg, "DssVest/bgn-too-far")          ||
-                bgn <= sub(block.timestamp, sVest.TWENTY_YEARS()) && cmpStr(errmsg, "DssVest/bgn-too-long-ago")     ||
-                tau == 0                                          && cmpStr(errmsg, "DssVest/tau-zero")             ||
-                tot /  tau > sVest.cap()                          && cmpStr(errmsg, "DssVest/rate-too-high")        ||
-                tau >  sVest.TWENTY_YEARS()                       && cmpStr(errmsg, "DssVest/tau-too-long")         ||
-                eta >  tau                                        && cmpStr(errmsg, "DssVest/eta-too-long")         ||
-                sVest.ids() == type(uint256).max                  && cmpStr(errmsg, "DssVest/ids-overflow")
+                usr == address(0)                                        && cmpStr(errmsg, "DssVest/invalid-user")         ||
+                tot == 0                                                 && cmpStr(errmsg, "DssVest/no-vest-total-amount") ||
+                bgn >= block.timestamp + sVest.TWENTY_YEARS()            && cmpStr(errmsg, "DssVest/bgn-too-far")          ||
+                block.timestamp + sVest.TWENTY_YEARS() < block.timestamp && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                bgn <= block.timestamp - sVest.TWENTY_YEARS()            && cmpStr(errmsg, "DssVest/bgn-too-long-ago")     ||
+                block.timestamp - sVest.TWENTY_YEARS() > block.timestamp && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                tau == 0                                                 && cmpStr(errmsg, "DssVest/tau-zero")             ||
+                tot /  tau > sVest.cap()                                 && cmpStr(errmsg, "DssVest/rate-too-high")        ||
+                tau >  sVest.TWENTY_YEARS()                              && cmpStr(errmsg, "DssVest/tau-too-long")         ||
+                eta >  tau                                               && cmpStr(errmsg, "DssVest/eta-too-long")         ||
+                sVest.ids() == type(uint256).max                         && cmpStr(errmsg, "DssVest/ids-overflow")         ||
+                uint48(bgn) != bgn                                       && cmpStr(errmsg, "DssVest/uint48-overflow")      ||
+                uint48(bgn + eta) != bgn + eta                           && cmpStr(errmsg, "DssVest/uint48-overflow")      ||
+                bgn + eta < bgn                                          && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                uint48(bgn + tau) != bgn + tau                           && cmpStr(errmsg, "DssVest/uint48-overflow")      ||
+                bgn + tau < bgn                                          && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                uint128(tot) != tot                                      && cmpStr(errmsg, "DssVest/uint128-overflow")
             );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
