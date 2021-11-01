@@ -9,6 +9,17 @@ interface Hevm {
     function store(address, bytes32, bytes32) external;
 }
 
+struct Award {
+    address usr;   // Vesting recipient
+    uint48  bgn;   // Start of vesting period  [timestamp]
+    uint48  clf;   // The cliff date           [timestamp]
+    uint48  fin;   // End of vesting period    [timestamp]
+    address mgr;   // A manager address that can yank
+    uint8   res;   // Restricted
+    uint128 tot;   // Total reward amount
+    uint128 rxd;   // Amount of vest claimed
+}
+
 /// @dev A contract that will receive Dai, and allows for it to be retrieved.
 contract Multisig {
 
@@ -55,6 +66,10 @@ contract DssVestTransferrableEchidnaTest {
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         assert(y == 0 || z / y == x);
+    }
+    function toUint8(uint256 x) internal pure returns (uint8 z) {
+        z = uint8(x);
+        assert(z == x);
     }
     function toUint48(uint256 x) internal pure returns (uint48 z) {
         z = uint48(x);
@@ -145,95 +160,149 @@ contract DssVestTransferrableEchidnaTest {
 
     function vest(uint256 id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
-        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        Award memory award = Award({
+            usr: tVest.usr(id),
+            bgn: toUint48(tVest.bgn(id)),
+            clf: toUint48(tVest.clf(id)),
+            fin: toUint48(tVest.fin(id)),
+            mgr: tVest.mgr(id),
+            res: toUint8(tVest.res(id)),
+            tot: toUint128(tVest.tot(id)),
+            rxd: toUint128(tVest.rxd(id))
+        });
+        uint256 unpaidAmt = unpaid(block.timestamp, award.bgn, award.clf, award.fin, award.tot, award.rxd);
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
-        uint256 usrBalanceBefore = gem.balanceOf(usr);
+        uint256 usrBalanceBefore = gem.balanceOf(award.usr);
         uint256 supplyBefore = gem.totalSupply();
-        tVest.vest(id);
-        if (block.timestamp < clf) {
-            assert(tVest.rxd(id) == rxd);
-            assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
-            assert(gem.balanceOf(usr) == usrBalanceBefore);
-        }
-        else {
-            if (block.timestamp >= fin) {
-                assert(tVest.rxd(id) == tot);
+        try tVest.vest(id) {
+            if (block.timestamp < award.clf) {
+                assert(tVest.rxd(id) == award.rxd);
+                assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
+                assert(gem.balanceOf(award.usr) == usrBalanceBefore);
             }
             else {
-                assert(tVest.rxd(id) == toUint128(add(rxd, unpaidAmt)));
+                if (block.timestamp >= award.fin) {
+                    assert(tVest.rxd(id) == award.tot);
+                }
+                else {
+                    assert(tVest.rxd(id) == toUint128(add(award.rxd, unpaidAmt)));
+                }
+                assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
+                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, unpaidAmt));
             }
-            assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
-            assert(gem.balanceOf(usr) == add(usrBalanceBefore, unpaidAmt));
+            assert(gem.totalSupply() == supplyBefore);
+        } catch Error(string memory errmsg) {
+            assert(
+                award.usr == address(0)                   && cmpStr(errmsg, "DssVest/invalid-award")       ||
+                award.res == 1 && award.usr != msg.sender && cmpStr(errmsg, "DssVest/only-user-can-claim")
+            );
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
         }
-        assert(gem.totalSupply() == supplyBefore);
     }
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
-        uint256 unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
+        Award memory award = Award({
+            usr: tVest.usr(id),
+            bgn: toUint48(tVest.bgn(id)),
+            clf: toUint48(tVest.clf(id)),
+            fin: toUint48(tVest.fin(id)),
+            mgr: tVest.mgr(id),
+            res: toUint8(tVest.res(id)),
+            tot: toUint128(tVest.tot(id)),
+            rxd: toUint128(tVest.rxd(id))
+        });
+        uint256 unpaidAmt = unpaid(block.timestamp, award.bgn, award.clf, award.fin, award.tot, award.rxd);
         uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
         uint256 msigBalanceBefore = gem.balanceOf(address(multisig));
-        uint256 usrBalanceBefore = gem.balanceOf(usr);
+        uint256 usrBalanceBefore = gem.balanceOf(award.usr);
         uint256 supplyBefore = gem.totalSupply();
-        tVest.vest(id, maxAmt);
-        if (block.timestamp < clf) {
-            assert(tVest.rxd(id) == rxd);
-            assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
-            assert(gem.balanceOf(usr) == usrBalanceBefore);
+        try tVest.vest(id, maxAmt) {
+            if (block.timestamp < award.clf) {
+                assert(tVest.rxd(id) == award.rxd);
+                assert(gem.balanceOf(address(multisig)) == msigBalanceBefore);
+                assert(gem.balanceOf(award.usr) == usrBalanceBefore);
+            }
+            else {
+                assert(tVest.rxd(id) == toUint128(add(award.rxd, amt)));
+                assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
+                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, amt));
+            }
+            assert(gem.totalSupply() == supplyBefore);
+        } catch Error(string memory errmsg) {
+            assert(
+                award.usr == address(0)                   && cmpStr(errmsg, "DssVest/invalid-award")       ||
+                award.res == 1 && award.usr != msg.sender && cmpStr(errmsg, "DssVest/only-user-can-claim")
+            );
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
         }
-        else {
-            assert(tVest.rxd(id) == toUint128(add(rxd, amt)));
-            assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
-            assert(gem.balanceOf(usr) == add(usrBalanceBefore, amt));
-        }
-        assert(gem.totalSupply() == supplyBefore);
     }
 
     function restrict(uint256 id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        tVest.restrict(id);
-        assert(tVest.res(id) == 1);
+        try tVest.restrict(id) {
+            assert(tVest.res(id) == 1);
+        } catch Error(string memory errmsg) {
+            assert(tVest.usr(id) == address(0) && cmpStr(errmsg, "DssVest/invalid-award"));
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
+        }
     }
 
     function unrestrict(uint256 id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        tVest.unrestrict(id);
-        assert(tVest.res(id) == 0);
+        try tVest.unrestrict(id) {
+            assert(tVest.res(id) == 0);
+        } catch Error(string memory errmsg) {
+            assert(tVest.usr(id) == address(0) && cmpStr(errmsg, "DssVest/invalid-award"));
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
+        }
     }
 
     function yank(uint256 id, uint256 end) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        (, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
-        tVest.yank(id, end);
-        if (end < block.timestamp)  end = block.timestamp;
-        if (end < fin) {
-            end = toUint48(end);
-            assert(tVest.fin(id) == end);
-            if (end < bgn) {
-                assert(tVest.bgn(id) == end);
-                assert(tVest.clf(id) == end);
-                assert(tVest.tot(id) == 0);
-            } else if (end < clf) {
-                assert(tVest.clf(id) == end);
-                assert(tVest.tot(id) == 0);
-            } else {
-                assert(tVest.tot(id) == toUint128(
-                                        add(
-                                            unpaid(end, bgn, clf, fin, tot, rxd),
-                                            rxd
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = tVest.awards(id);
+        try tVest.yank(id, end) {
+            if (end < block.timestamp)  end = block.timestamp;
+            if (end < fin) {
+                end = toUint48(end);
+                assert(tVest.fin(id) == end);
+                if (end < bgn) {
+                    assert(tVest.bgn(id) == end);
+                    assert(tVest.clf(id) == end);
+                    assert(tVest.tot(id) == 0);
+                } else if (end < clf) {
+                    assert(tVest.clf(id) == end);
+                    assert(tVest.tot(id) == 0);
+                } else {
+                    assert(tVest.tot(id) == toUint128(
+                                            add(
+                                                unpaid(end, bgn, clf, fin, tot, rxd),
+                                                rxd
+                                            )
                                         )
-                                    )
-                );
+                    );
+                }
             }
+        } catch Error(string memory errmsg) {
+            assert(usr == address(0) && cmpStr(errmsg, "DssVest/invalid-award"));
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
         }
     }
 
     function move(uint id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
         address dst = tVest.usr(id) == address(this) ? msg.sender : address(0);
-        tVest.move(id, dst);
-        assert(tVest.usr(id) == dst);
+        try tVest.move(id, dst) {
+            assert(tVest.usr(id) == dst);
+        } catch Error(string memory errmsg) {
+            assert(tVest.usr(id) != address(this) && cmpStr(errmsg, "DssVest/only-user-can-move"));
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
+        }
     }
 }
