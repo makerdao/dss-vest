@@ -122,7 +122,7 @@ abstract contract DssVest {
         return awards[_id].rxd;
     }
 
-    /*
+    /**
         @dev Base vesting logic contract constructor
     */
     constructor() public {
@@ -130,7 +130,7 @@ abstract contract DssVest {
         emit Rely(msg.sender);
     }
 
-    /*
+    /**
         @dev (Required) Set the per-second token issuance rate.
         @param what  The tag of the value to change (ex. bytes32("cap"))
         @param data  The value to update (ex. cap of 1000 tokens/yr == 1000*WAD/365 days)
@@ -160,7 +160,7 @@ abstract contract DssVest {
         require((z = uint128(x)) == x, "DssVest/uint128-overflow");
     }
 
-    /*
+    /**
         @dev Govanance adds a vesting contract
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
@@ -195,7 +195,7 @@ abstract contract DssVest {
         emit Init(id, _usr);
     }
 
-    /*
+    /**
         @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim all available rewards
         @param _id     The id of the vesting contract
     */
@@ -203,7 +203,7 @@ abstract contract DssVest {
         _vest(_id, type(uint256).max);
     }
 
-    /*
+    /**
         @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
@@ -212,7 +212,7 @@ abstract contract DssVest {
         _vest(_id, _maxAmt);
     }
 
-    /*
+    /**
         @dev Anyone (or only owner of a vesting contract if restricted) calls this to claim rewards
         @param _id     The id of the vesting contract
         @param _maxAmt The maximum amount to vest
@@ -228,9 +228,10 @@ abstract contract DssVest {
         emit Vest(_id, amt);
     }
 
-    /*
+    /**
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param _id The id of the vesting contract
+        @param _id  The id of the vesting contract
+        @return amt The accrued amount
     */
     function accrued(uint256 _id) external view returns (uint256 amt) {
         Award memory _award = awards[_id];
@@ -238,12 +239,13 @@ abstract contract DssVest {
         amt = accrued(block.timestamp, _award.bgn, _award.fin, _award.tot);
     }
 
-    /*
+    /**
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param _time the timestamp to perform the calculation
-        @param _bgn  the start time of the contract
-        @param _end  the end time of the contract
-        @param _amt  the total amount of the contract
+        @param _time The timestamp to perform the calculation
+        @param _bgn  The start time of the contract
+        @param _fin  The end time of the contract
+        @param _tot  The total amount of the contract
+        @return amt  The accrued amount
     */
     function accrued(uint256 _time, uint48 _bgn, uint48 _fin, uint128 _tot) internal pure returns (uint256 amt) {
         if (_time < _bgn) {
@@ -255,9 +257,10 @@ abstract contract DssVest {
         }
     }
 
-    /*
+    /**
         @dev return the amount of vested, claimable GEM for a given ID
-        @param _id The id of the vesting contract
+        @param _id  The id of the vesting contract
+        @return amt The claimable amount
     */
     function unpaid(uint256 _id) external view returns (uint256 amt) {
         Award memory _award = awards[_id];
@@ -265,20 +268,21 @@ abstract contract DssVest {
         amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
     }
 
-    /*
+    /**
         @dev amount of tokens accrued, not accounting for tokens paid
-        @param _time the timestamp to perform the calculation
-        @param _bgn  the start time of the contract
-        @param _clf  the timestamp of the cliff
-        @param _end  the end time of the contract
-        @param _tot  the total amount of the contract
-        @param _rxd  the number of gems received
+        @param _time The timestamp to perform the calculation
+        @param _bgn  The start time of the contract
+        @param _clf  The timestamp of the cliff
+        @param _fin  The end time of the contract
+        @param _tot  The total amount of the contract
+        @param _rxd  The number of gems received
+        @return amt  The claimable amount
     */
     function unpaid(uint256 _time, uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal pure returns (uint256 amt) {
         amt = _time < _clf ? 0 : sub(accrued(_time, _bgn, _fin, _tot), _rxd);
     }
 
-    /*
+    /**
         @dev Allows governance or the owner to restrict vesting to the owner only
         @param _id The id of the vesting contract
     */
@@ -290,7 +294,7 @@ abstract contract DssVest {
         emit Restrict(_id);
     }
 
-    /*
+    /**
         @dev Allows governance or the owner to enable permissionless vesting
         @param _id The id of the vesting contract
     */
@@ -302,7 +306,7 @@ abstract contract DssVest {
         emit Unrestrict(_id);
     }
 
-    /*
+    /**
         @dev Allows governance or the manager to remove a vesting contract immediately
         @param _id The id of the vesting contract
     */
@@ -310,7 +314,7 @@ abstract contract DssVest {
         _yank(_id, block.timestamp);
     }
 
-    /*
+    /**
         @dev Allows governance or the manager to remove a vesting contract at a future time
         @param _id  The id of the vesting contract
         @param _end A scheduled time to end the vest
@@ -319,7 +323,7 @@ abstract contract DssVest {
         _yank(_id, _end);
     }
 
-    /*
+    /**
         @dev Allows governance or the manager to end pre-maturely a vesting contract
         @param _id  The id of the vesting contract
         @param _end A scheduled time to end the vest
@@ -354,7 +358,7 @@ abstract contract DssVest {
         emit Yank(_id, _end);
     }
 
-    /*
+    /**
         @dev Allows owner to move a contract to a different address
         @param _id  The id of the vesting contract
         @param _dst The address to send ownership of the contract to
@@ -366,15 +370,16 @@ abstract contract DssVest {
         emit Move(_id, _dst);
     }
 
-    /*
+    /**
         @dev Return true if a contract is valid
         @param _id The id of the vesting contract
+        @return isValid True for valid contract
     */
     function valid(uint256 _id) external view returns (bool isValid) {
         isValid = awards[_id].rxd < awards[_id].tot;
     }
 
-    /*
+    /**
         @dev Override this to implement payment logic.
         @param _guy The payment target.
         @param _amt The payment amount. [units are implementation-specific]
@@ -386,7 +391,7 @@ contract DssVestMintable is DssVest {
 
     MintLike public immutable gem;
 
-    /*
+    /**
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
     */
@@ -395,7 +400,7 @@ contract DssVestMintable is DssVest {
         gem = MintLike(_gem);
     }
 
-    /*
+    /**
         @dev Override pay to handle mint logic
         @param _guy The recipient of the minted token
         @param _amt The amount of token units to send to the _guy
@@ -413,7 +418,7 @@ contract DssVestSuckable is DssVest {
     VatLike      public immutable vat;
     DaiJoinLike  public immutable daiJoin;
 
-    /*
+    /**
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
@@ -426,7 +431,7 @@ contract DssVestSuckable is DssVest {
         vat_.hope(address(daiJoin_));
     }
 
-    /*
+    /**
         @dev Override pay to handle suck logic
         @param _guy The recipient of the ERC-20 Dai
         @param _amt The amount of Dai to send to the _guy [WAD]
@@ -437,17 +442,17 @@ contract DssVestSuckable is DssVest {
     }
 }
 
-/**
+/*
     Transferrable token DssVest. Can be used to enable streaming payments of
      any arbitrary token from an address (i.e. CU multisig) to individual
      contributors.
- */
+*/
 contract DssVestTransferrable is DssVest {
 
     address   public immutable czar;
     TokenLike public immutable gem;
 
-    /*
+    /**
         @dev This contract must be approved for transfer of the gem on the czar
         @param _czar The owner of the tokens to be distributed
         @param _gem  The token to be distributed
@@ -459,7 +464,7 @@ contract DssVestTransferrable is DssVest {
         gem  = TokenLike(_gem);
     }
 
-    /*
+    /**
         @dev Override pay to handle transfer logic
         @param _guy The recipient of the ERC-20 Dai
         @param _amt The amount of gem to send to the _guy (in native token units)
