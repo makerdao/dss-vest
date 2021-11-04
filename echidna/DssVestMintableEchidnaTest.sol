@@ -74,11 +74,11 @@ contract DssVestMintableEchidnaTest {
         } else if (time >= fin) {
             amt = tot;
         } else {
-            amt = mul(tot, sub(time, bgn)) / sub(fin, bgn);
+            amt = tot * (time - bgn) / (fin - bgn);
         }
     }
     function unpaid(uint256 time, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal pure returns (uint256 amt) {
-        amt = time < clf ? 0 : sub(accrued(time, bgn, fin, tot), rxd);
+        amt = time < clf ? 0 : (accrued(time, bgn, fin, tot) - rxd);
     }
     function cmpStr(string memory a, string memory b) internal view returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
@@ -158,8 +158,10 @@ contract DssVestMintableEchidnaTest {
             tot: toUint128(mVest.tot(id)),
             rxd: toUint128(mVest.rxd(id))
         });
-        uint256 unpaidAmt = unpaid(block.timestamp, award.bgn, award.clf, award.fin, award.tot, award.rxd);
-        uint256 supplyBefore = gem.totalSupply();
+        uint256        timeDelta = block.timestamp - award.bgn;
+        uint256       accruedAmt = accrued(block.timestamp, award.bgn, award.fin, award.tot);
+        uint256        unpaidAmt = unpaid(block.timestamp, award.bgn, award.clf, award.fin, award.tot, award.rxd);
+        uint256     supplyBefore = gem.totalSupply();
         uint256 usrBalanceBefore = gem.balanceOf(award.usr);
         try mVest.vest(id) {
             if (block.timestamp < award.clf) {
@@ -179,8 +181,16 @@ contract DssVestMintableEchidnaTest {
             }
         } catch Error(string memory errmsg) {
             assert(
-                award.usr == address(0)                   && cmpStr(errmsg, "DssVest/invalid-award")       ||
-                award.res == 1 && award.usr != msg.sender && cmpStr(errmsg, "DssVest/only-user-can-claim")
+                award.usr == address(0)                                            && cmpStr(errmsg, "DssVest/invalid-award")       ||
+                award.res != 0 && award.usr != address(this)                       && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
+                accruedAmt - award.rxd > accruedAmt                                && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                award.fin - award.bgn > award.fin                                  && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot && cmpStr(errmsg, "DssVest/mul-overflow")        ||
+                award.rxd + unpaidAmt < award.rxd                                  && cmpStr(errmsg, "DssVest/add-overflow")        ||
+                uint128(award.rxd + unpaidAmt) != (award.rxd + unpaidAmt)          && cmpStr(errmsg, "DssVest/uint128-overflow")    ||
+                gem.balanceOf(award.usr) + unpaidAmt < gem.balanceOf(award.usr)    && cmpStr(errmsg, "ds-math-add-overflow")        ||
+                gem.totalSupply() + unpaidAmt < gem.totalSupply()                  && cmpStr(errmsg, "ds-math-add-overflow")
             );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
@@ -199,9 +209,11 @@ contract DssVestMintableEchidnaTest {
             tot: toUint128(mVest.tot(id)),
             rxd: toUint128(mVest.rxd(id))
         });
-        uint256 unpaidAmt = unpaid(block.timestamp, award.bgn, award.clf, award.fin, award.tot, award.rxd);
-        uint256 amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
-        uint256 supplyBefore = gem.totalSupply();
+        uint256        timeDelta = block.timestamp - award.bgn;
+        uint256       accruedAmt = accrued(block.timestamp, award.bgn, award.fin, award.tot);
+        uint256        unpaidAmt = unpaid(block.timestamp, award.bgn, award.clf, award.fin, award.tot, award.rxd);
+        uint256              amt = maxAmt > unpaidAmt ? unpaidAmt : maxAmt;
+        uint256     supplyBefore = gem.totalSupply();
         uint256 usrBalanceBefore = gem.balanceOf(award.usr);
         try mVest.vest(id, maxAmt) {
             if (block.timestamp < award.clf) {
@@ -216,8 +228,16 @@ contract DssVestMintableEchidnaTest {
             }
         } catch Error(string memory errmsg) {
             assert(
-                award.usr == address(0)                   && cmpStr(errmsg, "DssVest/invalid-award")       ||
-                award.res == 1 && award.usr != msg.sender && cmpStr(errmsg, "DssVest/only-user-can-claim")
+                award.usr == address(0)                                            && cmpStr(errmsg, "DssVest/invalid-award")       ||
+                award.res != 0 && award.usr != address(this)                       && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
+                accruedAmt - award.rxd > accruedAmt                                && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                award.fin - award.bgn > award.fin                                  && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot && cmpStr(errmsg, "DssVest/mul-overflow")        ||
+                award.rxd + amt < award.rxd                                        && cmpStr(errmsg, "DssVest/add-overflow")        ||
+                uint128(award.rxd + amt) != (award.rxd + amt)                      && cmpStr(errmsg, "DssVest/uint128-overflow")    ||
+                gem.balanceOf(award.usr) + amt < gem.balanceOf(award.usr)          && cmpStr(errmsg, "ds-math-add-overflow")        ||
+                gem.totalSupply() + amt < gem.totalSupply()                        && cmpStr(errmsg, "ds-math-add-overflow")
             );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
@@ -249,6 +269,9 @@ contract DssVestMintableEchidnaTest {
     function yank(uint256 id, uint256 end) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
         (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        uint256  timeDelta = block.timestamp - bgn;
+        uint256 accruedAmt = accrued(block.timestamp, bgn, fin, tot);
+        uint256  unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
         try mVest.yank(id, end) {
             if (end < block.timestamp)  end = block.timestamp;
             if (end < fin) {
@@ -262,31 +285,39 @@ contract DssVestMintableEchidnaTest {
                     assert(mVest.clf(id) == end);
                     assert(mVest.tot(id) == 0);
                 } else {
-                    assert(mVest.tot(id) == toUint128(
-                                            add(
-                                                unpaid(end, bgn, clf, fin, tot, rxd),
-                                                rxd
-                                            )
-                                        )
-                    );
+                    assert(mVest.tot(id) == toUint128(add(unpaidAmt, rxd)));
                 }
             }
         } catch Error(string memory errmsg) {
-            assert(usr == address(0) && cmpStr(errmsg, "DssVest/invalid-award"));
+            assert(
+                usr == address(0)                                                  && cmpStr(errmsg, "DssVest/invalid-award")    ||
+                uint128(end) != end                                                && cmpStr(errmsg, "DssVest/uint128-overflow") ||
+                uint128(unpaidAmt + rxd) != (unpaidAmt + rxd)                      && cmpStr(errmsg, "DssVest/uint128-overflow") ||
+                unpaidAmt + rxd < unpaidAmt                                        && cmpStr(errmsg, "DssVest/add-overflow")     ||
+                accruedAmt - rxd > accruedAmt                                      && cmpStr(errmsg, "DssVest/sub-underflow")    ||
+                fin - bgn > fin                                                    && cmpStr(errmsg, "DssVest/sub-underflow")    ||
+                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")    ||
+                timeDelta != 0 && (tot * timeDelta) / timeDelta != tot             && cmpStr(errmsg, "DssVest/mul-overflow")
+            );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
         }
     }
 
-    function move(uint id) public {
+    function move(uint256 id, address dst) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
-        address dst = mVest.usr(id) == address(this) ? msg.sender : address(0);
-        try mVest.move(id, dst) {
+        try mVest.move(id, dst){
             assert(mVest.usr(id) == dst);
         } catch Error(string memory errmsg) {
-            assert(mVest.usr(id) != address(this) && cmpStr(errmsg, "DssVest/only-user-can-move"));
+            assert(
+                mVest.usr(id) != address(this) && cmpStr(errmsg, "DssVest/only-user-can-move")  ||
+                dst == address(0)              && cmpStr(errmsg, "DssVest/zero-address-invalid")
+            );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
         }
+        // Set DssVestMintable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
+        hevm.store(address(mVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(mVest.clf(id)), uint48(mVest.bgn(id)), address(this))));
+        assert(mVest.usr(id) == address(this));
     }
 }
