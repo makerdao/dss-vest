@@ -2,11 +2,11 @@
 
 pragma solidity 0.6.12;
 
-import "../src/DssVest.sol";
-import "./ChainLog.sol";
-import "./Vat.sol";
-import "./DaiJoin.sol";
-import "./Dai.sol";
+import {DssVestSuckable} from "../src/DssVest.sol";
+import        {ChainLog} from "./ChainLog.sol";
+import             {Vat} from "./Vat.sol";
+import         {DaiJoin} from "./DaiJoin.sol";
+import             {Dai} from "./Dai.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;

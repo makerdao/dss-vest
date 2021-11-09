@@ -2,8 +2,8 @@
 
 pragma solidity 0.6.12;
 
-import "../src/DssVest.sol";
-import "./DSToken.sol";
+import {DssVestMintable} from "../src/DssVest.sol";
+import         {DSToken} from "./DSToken.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;
