@@ -80,7 +80,7 @@ contract DssVestMintableEchidnaTest {
     function unpaid(uint256 time, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal pure returns (uint256 amt) {
         amt = time < clf ? 0 : (accrued(time, bgn, fin, tot) - rxd);
     }
-    function cmpStr(string memory a, string memory b) internal view returns (bool) {
+    function cmpStr(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
     function bytesToBytes32(bytes memory source) internal pure returns (bytes32 result) {
@@ -89,17 +89,17 @@ contract DssVestMintableEchidnaTest {
         }
     }
 
-    function rxdLessOrEqualTot(uint256 id) public {
+    function rxdLessOrEqualTot(uint256 id) public view {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
         assert(mVest.rxd(id) <= mVest.tot(id));
     }
 
-    function clfGreaterOrEqualBgn(uint256 id) public {
+    function clfGreaterOrEqualBgn(uint256 id) public view {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
         assert(mVest.clf(id) >= mVest.bgn(id));
     }
 
-    function finGreaterOrEqualClf(uint256 id) public {
+    function finGreaterOrEqualClf(uint256 id) public view {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
         assert(mVest.fin(id) >= mVest.clf(id));
     }

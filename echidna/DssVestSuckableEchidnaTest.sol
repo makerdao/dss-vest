@@ -97,7 +97,7 @@ contract DssVestSuckableEchidnaTest {
     function unpaid(uint256 time, uint48 bgn, uint48 clf, uint48 fin, uint128 tot, uint128 rxd) internal pure returns (uint256 amt) {
         amt = time < clf ? 0 : (accrued(time, bgn, fin, tot) - rxd);
     }
-    function cmpStr(string memory a, string memory b) internal view returns (bool) {
+    function cmpStr(string memory a, string memory b) internal pure returns (bool) {
         return (keccak256(abi.encodePacked((a))) == keccak256(abi.encodePacked((b))));
     }
     function bytesToBytes32(bytes memory source) internal pure returns (bytes32 result) {
@@ -106,17 +106,17 @@ contract DssVestSuckableEchidnaTest {
         }
     }
 
-    function rxdLessOrEqualTot(uint256 id) public {
+    function rxdLessOrEqualTot(uint256 id) public view {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
         assert(sVest.rxd(id) <= sVest.tot(id));
     }
 
-    function clfGreaterOrEqualBgn(uint256 id) public {
+    function clfGreaterOrEqualBgn(uint256 id) public view {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
         assert(sVest.clf(id) >= sVest.bgn(id));
     }
 
-    function finGreaterOrEqualClf(uint256 id) public {
+    function finGreaterOrEqualClf(uint256 id) public view {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
         assert(sVest.fin(id) >= sVest.clf(id));
     }
@@ -311,7 +311,7 @@ contract DssVestSuckableEchidnaTest {
 
     function yank(uint256 id, uint256 end) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
-        (address usr, uint48 bgn, uint48 clf, uint48 fin,, uint256 res, uint128 tot, uint128 rxd) = sVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256  timeDelta = block.timestamp - bgn;
         uint256 accruedAmt = accrued(block.timestamp, bgn, fin, tot);
         uint256  unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
