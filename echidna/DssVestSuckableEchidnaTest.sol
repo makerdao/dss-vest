@@ -33,10 +33,23 @@ contract DssVestSuckableEchidnaTest {
 
     address internal vow = address(0xfffffff);
 
-    uint256 internal constant WAD = 10**18;
-    uint256 internal constant RAY = 10**27;
-    uint256 internal constant ONE = RAY;
-    uint256 internal immutable salt; // initialTimestamp
+    uint256 internal constant  WAD      = 10**18;
+    uint256 internal constant  RAY      = 10**27;
+    uint256 internal constant  ONE      = RAY;
+    uint256 internal constant  THOUSAND = 10 * 3;
+    uint256 internal constant  MILLION  = 10 * 6;
+    uint256 internal constant  TIME     = 30 days;
+    uint256 internal constant  MIN      = THOUSAND; // Initial cap amount
+    uint256 internal constant  MAX      = MILLION;  // Max cap amount
+    uint256 internal immutable salt;                // initialTimestamp
+
+    // Clock
+    uint256 internal last;
+    modifier clock(uint256 time) {
+        if (last <= block.timestamp - time)
+        _;
+        last = block.timestamp;
+    }
 
     // Hevm
     Hevm hevm;
@@ -53,7 +66,7 @@ contract DssVestSuckableEchidnaTest {
         chainlog.setAddress("MCD_JOIN_DAI", address(daiJoin));
         chainlog.setAddress("MCD_VOW", vow);
         sVest = new DssVestSuckable(address(chainlog));
-        sVest.file("cap", 500 * WAD / 365 days);
+        sVest.file("cap", MIN * WAD / TIME);
         dai.rely(address(daiJoin));
         vat.rely(address(sVest));
         salt = block.timestamp;
@@ -135,11 +148,10 @@ contract DssVestSuckableEchidnaTest {
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
             assert(sVest.res(id) == 0);
-            // Set DssVestSuckable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
-            hevm.store(address(sVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(sVest.clf(id)), uint48(sVest.bgn(id)), address(this))));
-            assert(sVest.usr(id) == address(this));
+            _mutusr(id);
         } catch Error(string memory errmsg) {
             assert(
+                sVest.wards(address(this)) == 0                          && cmpStr(errmsg, "DssVest/not-authorized")       ||
                 usr == address(0)                                        && cmpStr(errmsg, "DssVest/invalid-user")         ||
                 tot == 0                                                 && cmpStr(errmsg, "DssVest/no-vest-total-amount") ||
                 bgn >= block.timestamp + sVest.TWENTY_YEARS()            && cmpStr(errmsg, "DssVest/bgn-too-far")          ||
@@ -292,7 +304,11 @@ contract DssVestSuckableEchidnaTest {
         try sVest.restrict(id) {
             assert(sVest.res(id) == 1);
         } catch Error(string memory errmsg) {
-            assert(sVest.usr(id) == address(0) && cmpStr(errmsg, "DssVest/invalid-award"));
+            assert(
+                sVest.usr(id) == address(0)     && cmpStr(errmsg, "DssVest/invalid-award") ||
+                sVest.wards(address(this)) == 0 &&
+                sVest.usr(id) != address(this)  && cmpStr(errmsg, "DssVest/not-authorized")
+            );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
         }
@@ -303,7 +319,11 @@ contract DssVestSuckableEchidnaTest {
         try sVest.unrestrict(id) {
             assert(sVest.res(id) == 0);
         } catch Error(string memory errmsg) {
-            assert(sVest.usr(id) == address(0) && cmpStr(errmsg, "DssVest/invalid-award"));
+            assert(
+               sVest.usr(id) == address(0)     && cmpStr(errmsg, "DssVest/invalid-award") ||
+               sVest.wards(address(this)) == 0 &&
+               sVest.usr(id) != address(this)  && cmpStr(errmsg, "DssVest/not-authorized")
+            );
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
         }
@@ -311,7 +331,7 @@ contract DssVestSuckableEchidnaTest {
 
     function yank(uint256 id, uint256 end) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
-        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = sVest.awards(id);
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = sVest.awards(id);
         uint256  timeDelta = block.timestamp - bgn;
         uint256 accruedAmt = accrued(block.timestamp, bgn, fin, tot);
         uint256  unpaidAmt = unpaid(block.timestamp, bgn, clf, fin, tot, rxd);
@@ -333,6 +353,7 @@ contract DssVestSuckableEchidnaTest {
             }
         } catch Error(string memory errmsg) {
             assert(
+                sVest.wards(address(this)) == 0 && mgr != address(this)            && cmpStr(errmsg, "DssVest/not-authorized")   ||
                 usr == address(0)                                                  && cmpStr(errmsg, "DssVest/invalid-award")    ||
                 uint128(end) != end                                                && cmpStr(errmsg, "DssVest/uint128-overflow") ||
                 uint128(unpaidAmt + rxd) != (unpaidAmt + rxd)                      && cmpStr(errmsg, "DssVest/uint128-overflow") ||
@@ -351,6 +372,7 @@ contract DssVestSuckableEchidnaTest {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
         try sVest.move(id, dst) {
             assert(sVest.usr(id) == dst);
+            _mutusr(id);
         } catch Error(string memory errmsg) {
             assert(
                 sVest.usr(id) != address(this)  && cmpStr(errmsg, "DssVest/only-user-can-move")  ||
@@ -359,8 +381,33 @@ contract DssVestSuckableEchidnaTest {
         } catch {
             assert(false); // echidna will fail if other revert cases are caught
         }
-        // Set DssVestMintable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
-        hevm.store(address(sVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(sVest.clf(id)), uint48(sVest.bgn(id)), address(this))));
-        assert(sVest.usr(id) == address(this));
+    }
+
+    // --- Time-Based Fuzz Mutations ---
+
+    function mutauth() public clock(1 hours) {
+        uint256 wards = sVest.wards(address(this)) == 1 ? 0 : 1;
+        // Set DssVestSuckable wards slot n. 0 to override address(this) wards
+        hevm.store(address(sVest), keccak256(abi.encode(address(this), uint256(1))), bytes32(uint256(wards)));
+        assert(sVest.wards(address(this)) == wards);
+    }
+    function mutusr(uint256 id) public clock(1 days) {
+        id = sVest.ids() == 0 ? 0 : id % sVest.ids();
+        if (id == 0) return;
+        _mutusr(id);
+    }
+    function _mutusr(uint256 id) internal {
+        address usr = sVest.usr(id) == address(this) ? address(0) : address(this);
+        // Set DssVestSuckable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
+        hevm.store(address(sVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(sVest.clf(id)), uint48(sVest.bgn(id)), usr)));
+        assert(sVest.usr(id) == usr);
+    }
+    function mutcap(uint256 bump) public clock(90 days) {
+        bump %= MAX;
+        if (bump == 0) return;
+        uint256 data = bump > MIN ? bump * WAD / TIME : MIN * WAD / TIME;
+        // Set DssVestSuckable cap slot n. 4 to override cap with data
+        hevm.store(address(sVest), bytes32(uint256(4)), bytes32(uint256(data)));
+        assert(sVest.cap() == data);
     }
 }
