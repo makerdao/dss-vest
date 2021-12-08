@@ -29,7 +29,7 @@ contract DssVestMintableEchidnaTest {
     uint256 internal constant  YEAR = 365 days;
     uint256 internal constant  MIN  = 500;      // Initial cap amount
     uint256 internal constant  MAX  = 2000;     // Max cap amount
-    uint256 internal immutable salt;           // initialTimestamp
+    uint256 internal immutable salt;            // initialTimestamp
 
 
     // Clock
@@ -328,6 +328,7 @@ contract DssVestMintableEchidnaTest {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
         try mVest.move(id, dst){
             assert(mVest.usr(id) == dst);
+            _mutusr(id);
         } catch Error(string memory errmsg) {
             assert(
                 mVest.usr(id) != address(this) && cmpStr(errmsg, "DssVest/only-user-can-move")  ||
