@@ -25,7 +25,7 @@ contract DssVestMintableEchidnaTest {
     DssVestMintable internal mVest;
     DSToken         internal gem;
 
-    uint256 internal constant  WAD  = 10**18;
+    uint256 internal constant  WAD  = 10 ** 18;
     uint256 internal constant  YEAR = 365 days;
     uint256 internal constant  MIN  = 500;      // Initial cap amount
     uint256 internal constant  MAX  = 2000;     // Max cap amount

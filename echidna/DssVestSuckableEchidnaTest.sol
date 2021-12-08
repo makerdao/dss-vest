@@ -33,11 +33,11 @@ contract DssVestSuckableEchidnaTest {
 
     address internal vow = address(0xfffffff);
 
-    uint256 internal constant  WAD      = 10**18;
-    uint256 internal constant  RAY      = 10**27;
+    uint256 internal constant  WAD      = 10 ** 18;
+    uint256 internal constant  RAY      = 10 ** 27;
     uint256 internal constant  ONE      = RAY;
-    uint256 internal constant  THOUSAND = 10 * 3;
-    uint256 internal constant  MILLION  = 10 * 6;
+    uint256 internal constant  THOUSAND = 10 ** 3;
+    uint256 internal constant  MILLION  = 10 ** 6;
     uint256 internal constant  TIME     = 30 days;
     uint256 internal constant  MIN      = THOUSAND; // Initial cap amount
     uint256 internal constant  MAX      = MILLION;  // Max cap amount
