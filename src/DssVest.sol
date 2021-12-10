@@ -41,6 +41,14 @@ interface TokenLike {
 }
 
 abstract contract DssVest {
+    // --- Auth ---
+    mapping (address => uint256) public wards;
+    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
+    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
+    modifier auth {
+        require(wards[msg.sender] == 1, "DssVest/not-authorized");
+        _;
+    }
 
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
 
@@ -55,16 +63,6 @@ abstract contract DssVest {
     event Yank(uint256 indexed id, uint256 end);
     event Restrict(uint256 indexed id);
     event Unrestrict(uint256 indexed id);
-
-
-    // --- Auth ---
-    mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
-    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
-    modifier auth {
-        require(wards[msg.sender] == 1, "DssVest/not-authorized");
-        _;
-    }
 
     // --- Mutex  ---
     modifier lock {

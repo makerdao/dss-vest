@@ -7,8 +7,8 @@ import "./DssVest.sol";
 
 interface Hevm {
     function warp(uint256) external;
-    function store(address,bytes32,bytes32) external;
-    function load(address,bytes32) external;
+    function store(address, bytes32, bytes32) external;
+    function load(address, bytes32) external returns (bytes32);
 }
 
 interface GemLike {
@@ -757,5 +757,26 @@ contract DssVestTest is DSTest {
         tVest.vest(id);
         assertEq(Token(DAI).balanceOf(address(usr)), 100 * days_vest);
         assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD - 100 * days_vest);
+    }
+    function testWardsSlot0x0() public {
+        // Load memory slot 0x0
+        bytes32 mWards = hevm.load(address(mVest), keccak256(abi.encode(address(this), uint256(0))));
+        bytes32 sWards = hevm.load(address(sVest), keccak256(abi.encode(address(this), uint256(0))));
+        bytes32 tWards = hevm.load(address(tVest), keccak256(abi.encode(address(this), uint256(0))));
+
+        // mVest wards
+        assertTrue(uint256(mWards) > 0);                       // Assert wards has value
+        assertEq(mVest.wards(address(this)), uint256(mWards)); // Assert wards = slot wards
+        assertEq(uint256(mWards), 1);                          // Assert slot wards == 1
+
+        // sVest wards
+        assertTrue(uint256(sWards) > 0);                       // Assert wards has value
+        assertEq(sVest.wards(address(this)), uint256(sWards)); // Assert wards = slot wards
+        assertEq(uint256(sWards), 1);                          // Assert slot wards == 1
+
+        // tVest wards
+        assertTrue(uint256(tWards) > 0);                       // Assert wards has value
+        assertEq(tVest.wards(address(this)), uint256(tWards)); // Assert wards = slot wards
+        assertEq(uint256(tWards), 1);                          // Assert slot wards == 1
     }
 }
