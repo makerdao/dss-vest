@@ -24,7 +24,7 @@ struct Award {
 contract Multisig {
 
     function approve(address dai, address vest) external {
-        Dai(dai).approve(vest, uint256(-1));
+        Dai(dai).approve(vest, type(uint256).max);
     }
 }
 
@@ -59,7 +59,7 @@ contract DssVestTransferrableEchidnaTest {
     constructor() public {
         gem = new Dai(1);
         multisig = new Multisig();
-        gem.mint(address(multisig), uint128(-1));
+        gem.mint(address(multisig), type(uint128).max);
         tVest = new DssVestTransferrable(address(multisig), address(gem));
         tVest.file("cap", MIN * WAD / TIME);
         multisig.approve(address(gem), address(tVest));
