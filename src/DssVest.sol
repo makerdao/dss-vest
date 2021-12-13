@@ -50,6 +50,18 @@ abstract contract DssVest {
         _;
     }
 
+    struct Award {
+        address usr;   // Vesting recipient
+        uint48  bgn;   // Start of vesting period  [timestamp]
+        uint48  clf;   // The cliff date           [timestamp]
+        uint48  fin;   // End of vesting period    [timestamp]
+        address mgr;   // A manager address that can yank
+        uint8   res;   // Restricted
+        uint128 tot;   // Total reward amount
+        uint128 rxd;   // Amount of vest claimed
+    }
+    mapping (uint256 => Award) public awards;
+
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
 
     uint256 internal locked;
@@ -72,17 +84,6 @@ abstract contract DssVest {
         locked = 0;
     }
 
-    struct Award {
-        address usr;   // Vesting recipient
-        uint48  bgn;   // Start of vesting period  [timestamp]
-        uint48  clf;   // The cliff date           [timestamp]
-        uint48  fin;   // End of vesting period    [timestamp]
-        address mgr;   // A manager address that can yank
-        uint8   res;   // Restricted
-        uint128 tot;   // Total reward amount
-        uint128 rxd;   // Amount of vest claimed
-    }
-    mapping (uint256 => Award) public awards;
     uint256 public ids;
 
     uint256 public cap; // Maximum per-second issuance token rate

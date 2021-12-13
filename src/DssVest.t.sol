@@ -11,6 +11,17 @@ interface Hevm {
     function load(address, bytes32) external returns (bytes32);
 }
 
+struct Award {
+    address usr;   // Vesting recipient
+    uint48  bgn;   // Start of vesting period  [timestamp]
+    uint48  clf;   // The cliff date           [timestamp]
+    uint48  fin;   // End of vesting period    [timestamp]
+    address mgr;   // A manager address that can yank
+    uint8   res;   // Restricted
+    uint128 tot;   // Total reward amount
+    uint128 rxd;   // Amount of vest claimed
+}
+
 interface GemLike {
     function approve(address, uint256) external returns (bool);
 }
@@ -778,5 +789,150 @@ contract DssVestTest is DSTest {
         assertTrue(uint256(tWards) > 0);                       // Assert wards has value
         assertEq(tVest.wards(address(this)), uint256(tWards)); // Assert wards = slot wards
         assertEq(uint256(tWards), 1);                          // Assert slot wards == 1
+    }
+
+    function testAwardSlot0x1() public {
+        uint256 mId = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+        uint256 sId = sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+        uint256 tId = tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+
+        mVest.restrict(mId);
+        sVest.restrict(sId);
+        tVest.restrict(tId);
+
+        hevm.warp(now + 10 days);
+
+        mVest.vest(mId, 5 * days_vest);
+        sVest.vest(sId, 5 * days_vest);
+        tVest.vest(tId, 5 * days_vest);
+
+        Award memory mmemaward = testUnpackAward(address(mVest), mId);
+        Award memory smemaward = testUnpackAward(address(sVest), sId);
+        Award memory tmemaward = testUnpackAward(address(tVest), tId);
+
+        // Assert usr = slot 0x1 offset 0 awards.usr
+        assertEq(mVest.usr(mId), mmemaward.usr);
+        assertEq(sVest.usr(sId), smemaward.usr);
+        assertEq(tVest.usr(tId), tmemaward.usr);
+
+        // Assert bgn = slot 0x1 offset 0 awards.bgn
+        assertEq(mVest.bgn(mId), uint256(mmemaward.bgn));
+        assertEq(sVest.bgn(sId), uint256(smemaward.bgn));
+        assertEq(tVest.bgn(tId), uint256(tmemaward.bgn));
+
+        // Assert clf = slot 0x1 offset 0 awards.clf
+        assertEq(mVest.clf(mId), uint256(mmemaward.clf));
+        assertEq(sVest.clf(sId), uint256(smemaward.clf));
+        assertEq(tVest.clf(tId), uint256(tmemaward.clf));
+
+        // Assert fin = slot 0x1 offset 1 awards.fin
+        assertEq(mVest.fin(mId), uint256(mmemaward.fin));
+        assertEq(sVest.fin(sId), uint256(smemaward.fin));
+        assertEq(tVest.fin(tId), uint256(tmemaward.fin));
+
+        // Assert mgr = slot 0x1 offset 1 awards.mgr
+        assertEq(mVest.mgr(mId), mmemaward.mgr);
+        assertEq(sVest.mgr(sId), smemaward.mgr);
+        assertEq(tVest.mgr(tId), tmemaward.mgr);
+
+        // Assert res = slot 0x1 offset 1 awards.res
+        assertEq(mVest.res(mId), uint256(mmemaward.res));
+        assertEq(sVest.res(sId), uint256(smemaward.res));
+        assertEq(tVest.res(tId), uint256(tmemaward.res));
+
+        // Assert tot = slot 0x1 offset 2 awards.tot
+        assertEq(mVest.tot(mId), uint256(mmemaward.tot));
+        assertEq(sVest.tot(sId), uint256(smemaward.tot));
+        assertEq(tVest.tot(tId), uint256(tmemaward.tot));
+
+        // Assert rxd = slot 0x1 offset 2 awards.rxd
+        assertEq(mVest.rxd(mId), uint256(mmemaward.rxd));
+        assertEq(sVest.rxd(sId), uint256(smemaward.rxd));
+        assertEq(tVest.rxd(tId), uint256(tmemaward.rxd));
+    }
+
+    function testUnpackAward(address vest, uint256 id) internal returns (Award memory award) {
+        // Load memory slot 0x1 offset 0
+        bytes32 awardsPacked0x1 = hevm.load(address(vest), keccak256(abi.encode(uint256(id), uint256(1))));
+
+        // Load memory slot 0x1 offset 1
+        bytes32 awardsPacked0x2 = hevm.load(address(vest), bytes32(uint256(1) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
+
+        // Load memory slot 0x1 offset 2
+        bytes32 awardsPacked0x3 = hevm.load(address(vest), bytes32(uint256(2) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
+
+        // Unpack memory slot 0x1 offset 0
+        bytes20 memusr;
+        bytes6  membgn;
+        bytes6  memclf;
+        assembly {
+            memclf := awardsPacked0x1
+            membgn := shl(48, awardsPacked0x1)
+            memusr := shl(96, awardsPacked0x1)
+        }
+
+        // Unpack memory slot 0x1 offset 1
+        bytes6  memfin;
+        bytes20 memmgr;
+        bytes6  memres;
+        assembly {
+            memres := awardsPacked0x2
+            memmgr := shl(48, awardsPacked0x2)
+            memfin := shl(208, awardsPacked0x2)
+        }
+
+        // Unpack memory slot 0x1 offset 2
+        bytes16 memtot;
+        bytes16 memrxd;
+        assembly {
+            memrxd := awardsPacked0x3
+            memtot := shl(128, awardsPacked0x3)
+        }
+
+        // awards.usr
+        assertTrue(uint256(uint160(memusr)) > 0);                      // Assert usr has value
+        assertEq(address(uint160(memusr)), address(this));             // Assert slot awards.usr == address(this)
+
+        // awards.bgn
+        assertTrue(uint256(uint48(membgn)) > 0);                       // Assert bgn has value
+        assertEq(uint256(uint48(membgn)), block.timestamp - 10 days);  // Assert slot awards.bgn == block.timestamp - 10 days
+
+        // awards.clf
+        assertTrue(uint256(uint48(memclf)) > 0);                       // Assert clf has value
+        assertEq(uint256(uint48(memclf)), block.timestamp - 10 days);  // Assert slot awards.clf == bgn + eta
+
+
+        // awards.fin
+        assertTrue(uint256(uint48(memfin)) > 0);                       // Assert fin has value
+        assertEq(uint256(uint48(memfin)), block.timestamp + 90 days);  // Assert slot awards.fin == bgn + tau
+
+        // awards.mgr
+        assertTrue(uint256(uint160(memmgr)) > 0);                      // Assert mgr has value
+        assertEq(address(uint160(memmgr)), address(0xdead));           // Assert slot awards.mgr == address(0xdead)
+
+        // awards.res
+        assertTrue(uint256(uint48(memres)) > 0);                       // Assert res has value
+        assertEq(uint256(uint48(memres)), 1);                          // Assert slot awards.res == 1
+
+        // awards.tot
+        assertTrue(uint256(uint128(memtot)) > 0);                      // Assert tot has value
+        assertEq(uint256(uint128(memtot)), 100 * days_vest);           // Assert slot awards.tot == 100 * days_vest
+
+        // awards.rxd
+        assertTrue(uint256(uint128(memrxd)) > 0);                      // Assert rxd has value
+        assertEq(uint256(uint128(memrxd)), 5 * days_vest);             // Assert slot awards.rxd == 5 * days_vest
+
+        return (
+            Award({
+                usr: address(uint160(memusr)),
+                bgn:  uint48(membgn),
+                clf:  uint48(memclf),
+                fin:  uint48(memfin),
+                mgr: address(uint160(memmgr)),
+                res:    uint8(uint48(memres)),
+                tot: uint128(memtot),
+                rxd: uint128(memrxd)
+            })
+        );
     }
 }
