@@ -6,3 +6,7 @@ checkAsserts: true
 coverage: false
 #maximum time between generated txs; default is one week
 maxTimeDelay: 31556952 # approximately 1 year
+#deployer is address of the contract deployer (who often is privileged owner, etc.)
+deployer: '0x41414141'
+#sender is set of addresses transactions may originate from
+sender: ['0x42424242', '0x43434343']

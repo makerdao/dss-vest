@@ -1,4 +1,4 @@
-[![Fuzz](https://github.com/makerdao/dss-vest/actions/workflows/fuzz.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/fuzz.yml)
+[![Echidna](https://github.com/makerdao/dss-vest/actions/workflows/echidna.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/echidna.yml)
 
 # dss-vest
 
@@ -99,7 +99,7 @@ An authorized user (ex. governance) of the vesting contract, or an optional plan
 
 Allows governance to schedule a point in the future to end the vest. Used for planned offboarding of contributors.
 
-## Fuzz
+## Echidna
 
 ### Install Echidna
 
@@ -115,8 +115,18 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-versions.solc_0_6_12
   ```
 - Run Echidna Tests:
+
+  * DssVestMintableEchidnaTest:
   ```
-  $ echidna-test src/fuzz/DssVestEchidnaTest.sol --contract DssVestEchidnaTest --config echidna.config.yml
+  $ make echidna-mintable
+  ```
+  * DssVestSuckableEchidnaTest:
+  ```
+  $ make echidna-suckable
+  ```
+  * DssVestTransferrableEchidnaTest:
+  ```
+  $ make echidna-transferrable
   ```
 
 ## Certora
