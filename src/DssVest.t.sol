@@ -853,40 +853,40 @@ contract DssVestTest is DSTest {
 
     function testUnpackAward(address vest, uint256 id) internal returns (Award memory award) {
         // Load memory slot 0x1 offset 0
-        bytes32 awardsPacked0x1 = hevm.load(address(vest), keccak256(abi.encode(uint256(id), uint256(1))));
+        bytes32 awardsPacked0x10 = hevm.load(address(vest), keccak256(abi.encode(uint256(id), uint256(1))));
 
         // Load memory slot 0x1 offset 1
-        bytes32 awardsPacked0x2 = hevm.load(address(vest), bytes32(uint256(1) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
+        bytes32 awardsPacked0x11 = hevm.load(address(vest), bytes32(uint256(1) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
 
         // Load memory slot 0x1 offset 2
-        bytes32 awardsPacked0x3 = hevm.load(address(vest), bytes32(uint256(2) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
+        bytes32 awardsPacked0x12 = hevm.load(address(vest), bytes32(uint256(2) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
 
         // Unpack memory slot 0x1 offset 0
         bytes20 memusr;
         bytes6  membgn;
         bytes6  memclf;
         assembly {
-            memclf := awardsPacked0x1
-            membgn := shl(48, awardsPacked0x1)
-            memusr := shl(96, awardsPacked0x1)
+            memclf := awardsPacked0x10
+            membgn := shl(48, awardsPacked0x10)
+            memusr := shl(96, awardsPacked0x10)
         }
 
         // Unpack memory slot 0x1 offset 1
         bytes6  memfin;
         bytes20 memmgr;
-        bytes6  memres;
+        bytes1  memres;
         assembly {
-            memres := awardsPacked0x2
-            memmgr := shl(48, awardsPacked0x2)
-            memfin := shl(208, awardsPacked0x2)
+            memres := shl(40, awardsPacked0x11)
+            memmgr := shl(48, awardsPacked0x11)
+            memfin := shl(208, awardsPacked0x11)
         }
 
         // Unpack memory slot 0x1 offset 2
         bytes16 memtot;
         bytes16 memrxd;
         assembly {
-            memrxd := awardsPacked0x3
-            memtot := shl(128, awardsPacked0x3)
+            memrxd := awardsPacked0x12
+            memtot := shl(128, awardsPacked0x12)
         }
 
         // awards.usr
@@ -911,9 +911,8 @@ contract DssVestTest is DSTest {
         assertEq(address(uint160(memmgr)), address(0xdead));           // Assert slot awards.mgr == address(0xdead)
 
         // awards.res
-        assertTrue(uint256(uint48(memres)) > 0);                       // Assert res has value
-        assertEq(uint256(uint48(memres)), 1);                          // Assert slot awards.res == 1
-
+        assertTrue(uint256(uint8(memres)) > 0);                        // Assert res has value
+        assertEq(uint256(uint8(memres)), 1);                           // Assert slot awards.res == 1
         // awards.tot
         assertTrue(uint256(uint128(memtot)) > 0);                      // Assert tot has value
         assertEq(uint256(uint128(memtot)), 100 * days_vest);           // Assert slot awards.tot == 100 * days_vest
@@ -929,7 +928,7 @@ contract DssVestTest is DSTest {
                 clf:  uint48(memclf),
                 fin:  uint48(memfin),
                 mgr: address(uint160(memmgr)),
-                res:    uint8(uint48(memres)),
+                res:   uint8(memres),
                 tot: uint128(memtot),
                 rxd: uint128(memrxd)
             })
