@@ -62,6 +62,8 @@ abstract contract DssVest {
     }
     mapping (uint256 => Award) public awards;
 
+    uint256 public cap; // Maximum per-second issuance token rate
+
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
 
     uint256 internal locked;
@@ -85,8 +87,6 @@ abstract contract DssVest {
     }
 
     uint256 public ids;
-
-    uint256 public cap; // Maximum per-second issuance token rate
 
     // Getters to access only to the value desired
     function usr(uint256 _id) external view returns (address) {

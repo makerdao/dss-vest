@@ -769,6 +769,7 @@ contract DssVestTest is DSTest {
         assertEq(Token(DAI).balanceOf(address(usr)), 100 * days_vest);
         assertEq(Token(DAI).balanceOf(address(boss)), 10000 * WAD - 100 * days_vest);
     }
+
     function testWardsSlot0x0() public {
         // Load memory slot 0x0
         bytes32 mWards = hevm.load(address(mVest), keccak256(abi.encode(address(this), uint256(0))));
@@ -933,5 +934,27 @@ contract DssVestTest is DSTest {
                 rxd: uint128(memrxd)
             })
         );
+    }
+
+    function testCapSlot0x2() public {
+        // Load memory slot 0x2
+        bytes32 mCap = hevm.load(address(mVest), bytes32(uint256(2)));
+        bytes32 sCap = hevm.load(address(sVest), bytes32(uint256(2)));
+        bytes32 tCap = hevm.load(address(tVest), bytes32(uint256(2)));
+
+        // mVest cap
+        assertTrue(uint256(mCap) > 0);                          // Assert cap has value
+        assertEq(mVest.cap(), uint256(mCap));                   // Assert cap = slot cap
+        assertEq(uint256(mCap), (2000 * WAD) / (4 * 365 days)); // Assert slot cap == (2000 * WAD) / (4 * 365 days)
+
+        // sVest cap
+        assertTrue(uint256(sCap) > 0);                          // Assert cap has value
+        assertEq(sVest.cap(), uint256(sCap));                   // Assert cap = slot cap
+        assertEq(uint256(sCap), (2000 * WAD) / (4 * 365 days)); // Assert slot cap == (2000 * WAD) / (4 * 365 days)
+
+        // tVest cap
+        assertTrue(uint256(tCap) > 0);                          // Assert cap has value
+        assertEq(tVest.cap(), uint256(tCap));                   // Assert cap = slot cap
+        assertEq(uint256(tCap), (2000 * WAD) / (4 * 365 days)); // Assert slot cap == (2000 * WAD) / (4 * 365 days)
     }
 }
