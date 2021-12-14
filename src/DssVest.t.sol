@@ -943,18 +943,44 @@ contract DssVestTest is DSTest {
         bytes32 tCap = hevm.load(address(tVest), bytes32(uint256(2)));
 
         // mVest cap
-        assertTrue(uint256(mCap) > 0);                          // Assert cap has value
-        assertEq(mVest.cap(), uint256(mCap));                   // Assert cap = slot cap
-        assertEq(uint256(mCap), (2000 * WAD) / (4 * 365 days)); // Assert slot cap == (2000 * WAD) / (4 * 365 days)
+        assertTrue(uint256(mCap) > 0);                                 // Assert cap has value
+        assertEq(mVest.cap(), uint256(mCap));                          // Assert cap = slot cap
+        assertEq(uint256(mCap), (2000 * WAD) / (4 * 365 days));        // Assert slot cap == (2000 * WAD) / (4 * 365 days)
 
         // sVest cap
-        assertTrue(uint256(sCap) > 0);                          // Assert cap has value
-        assertEq(sVest.cap(), uint256(sCap));                   // Assert cap = slot cap
-        assertEq(uint256(sCap), (2000 * WAD) / (4 * 365 days)); // Assert slot cap == (2000 * WAD) / (4 * 365 days)
+        assertTrue(uint256(sCap) > 0);                                 // Assert cap has value
+        assertEq(sVest.cap(), uint256(sCap));                          // Assert cap = slot cap
+        assertEq(uint256(sCap), (2000 * WAD) / (4 * 365 days));        // Assert slot cap == (2000 * WAD) / (4 * 365 days)
 
         // tVest cap
-        assertTrue(uint256(tCap) > 0);                          // Assert cap has value
-        assertEq(tVest.cap(), uint256(tCap));                   // Assert cap = slot cap
-        assertEq(uint256(tCap), (2000 * WAD) / (4 * 365 days)); // Assert slot cap == (2000 * WAD) / (4 * 365 days)
+        assertTrue(uint256(tCap) > 0);                                 // Assert cap has value
+        assertEq(tVest.cap(), uint256(tCap));                          // Assert cap = slot cap
+        assertEq(uint256(tCap), (2000 * WAD) / (4 * 365 days));        // Assert slot cap == (2000 * WAD) / (4 * 365 days)
+    }
+
+    function testIdsSlot0x3() public {
+        mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+        sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+        tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+
+        // Load memory slot 0x3
+        bytes32 mIds = hevm.load(address(mVest), bytes32(uint256(3)));
+        bytes32 sIds = hevm.load(address(sVest), bytes32(uint256(3)));
+        bytes32 tIds = hevm.load(address(tVest), bytes32(uint256(3)));
+
+        // mVest ids
+        assertTrue(uint256(mIds) > 0);                                 // Assert ids has value
+        assertEq(mVest.ids(), uint256(mIds));                          // Assert ids = slot ids
+        assertEq(uint256(mIds), 1);                                    // Assert slot ids == 1
+
+        // sVest ids
+        assertTrue(uint256(sIds) > 0);                                 // Assert ids has value
+        assertEq(sVest.ids(), uint256(sIds));                          // Assert ids = slot ids
+        assertEq(uint256(sIds), 1);                                    // Assert slot ids == 1
+
+        // tVest ids
+        assertTrue(uint256(tIds) > 0);                                 // Assert ids has value
+        assertEq(tVest.ids(), uint256(tIds));                          // Assert ids = slot ids
+        assertEq(uint256(tIds), 1);                                    // Assert slot ids == 1
     }
 }
