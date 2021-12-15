@@ -983,4 +983,28 @@ contract DssVestTest is DSTest {
         assertEq(tVest.ids(), uint256(tIds));                          // Assert ids = slot ids
         assertEq(uint256(tIds), 1);                                    // Assert slot ids == 1
     }
+
+    function testLockedSlot0x4() public {
+        // Store memory slot 0x4
+        hevm.store(address(mVest), bytes32(uint256(4)), bytes32(uint256(1)));
+        hevm.store(address(sVest), bytes32(uint256(4)), bytes32(uint256(1)));
+        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(1)));
+
+        // Load memory slot 0x4
+        bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));
+        bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));
+        bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));
+
+        // mVest locked
+        assertTrue(uint256(mLocked) > 0);                              // Assert locked has value
+        assertEq(uint256(mLocked), 1);                                 // Assert slot locked == 1
+
+        // sVest locked
+        assertTrue(uint256(sLocked) > 0);                              // Assert locked has value
+        assertEq(uint256(sLocked), 1);                                 // Assert slot locked == 1
+
+        // tVest locked
+        assertTrue(uint256(tLocked) > 0);                              // Assert locked has value
+        assertEq(uint256(tLocked), 1);                                 // Assert slot locked == 1
+    }
 }

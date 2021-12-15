@@ -66,9 +66,16 @@ abstract contract DssVest {
 
     uint256 public ids; // Total vestings
 
-    uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
-
+    // --- Mutex  ---
     uint256 internal locked;
+    modifier lock {
+        require(locked == 0, "DssVest/system-locked");
+        locked = 1;
+        _;
+        locked = 0;
+    }
+
+    uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
 
     event Rely(address indexed usr);
     event Deny(address indexed usr);
@@ -79,14 +86,6 @@ abstract contract DssVest {
     event Yank(uint256 indexed id, uint256 end);
     event Restrict(uint256 indexed id);
     event Unrestrict(uint256 indexed id);
-
-    // --- Mutex  ---
-    modifier lock {
-        require(locked == 0, "DssVest/system-locked");
-        locked = 1;
-        _;
-        locked = 0;
-    }
 
     // Getters to access only to the value desired
     function usr(uint256 _id) external view returns (address) {
