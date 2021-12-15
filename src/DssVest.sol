@@ -77,15 +77,17 @@ abstract contract DssVest {
 
     uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
 
+    // --- Events ---
     event Rely(address indexed usr);
     event Deny(address indexed usr);
+
+    event File(bytes32 indexed what, uint256 data);
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
-    event Move(uint256 indexed id, address indexed dst);
-    event File(bytes32 indexed what, uint256 data);
-    event Yank(uint256 indexed id, uint256 end);
     event Restrict(uint256 indexed id);
     event Unrestrict(uint256 indexed id);
+    event Yank(uint256 indexed id, uint256 end);
+    event Move(uint256 indexed id, address indexed dst);
 
     // Getters to access only to the value desired
     function usr(uint256 _id) external view returns (address) {
