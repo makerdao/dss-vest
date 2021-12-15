@@ -50,6 +50,7 @@ abstract contract DssVest {
         _;
     }
 
+    // --- Data ---
     struct Award {
         address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period  [timestamp]
@@ -75,7 +76,7 @@ abstract contract DssVest {
         locked = 0;
     }
 
-    uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
+    uint256 public constant  TWENTY_YEARS = 20 * 365 days;
 
     // --- Events ---
     event Rely(address indexed usr);
