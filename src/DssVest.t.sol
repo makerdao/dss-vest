@@ -902,7 +902,6 @@ contract DssVestTest is DSTest {
         assertTrue(uint256(uint48(memclf)) > 0);                       // Assert clf has value
         assertEq(uint256(uint48(memclf)), block.timestamp - 10 days);  // Assert slot awards.clf == bgn + eta
 
-
         // awards.fin
         assertTrue(uint256(uint48(memfin)) > 0);                       // Assert fin has value
         assertEq(uint256(uint48(memfin)), block.timestamp + 90 days);  // Assert slot awards.fin == bgn + tau
@@ -914,6 +913,7 @@ contract DssVestTest is DSTest {
         // awards.res
         assertTrue(uint256(uint8(memres)) > 0);                        // Assert res has value
         assertEq(uint256(uint8(memres)), 1);                           // Assert slot awards.res == 1
+
         // awards.tot
         assertTrue(uint256(uint128(memtot)) > 0);                      // Assert tot has value
         assertEq(uint256(uint128(memtot)), 100 * days_vest);           // Assert slot awards.tot == 100 * days_vest
