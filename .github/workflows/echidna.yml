@@ -1,10 +1,6 @@
-name: Fuzz
+name: Echidna
 
-on:
-  push:
-    branches:
-      - master
-  pull_request:
+on: [push, pull_request]
 
 jobs:
   echidna:
@@ -14,7 +10,9 @@ jobs:
       fail-fast: false
       matrix:
         testName:
-          - DssVestEchidnaTest
+          - DssVestMintableEchidnaTest
+          - DssVestSuckableEchidnaTest
+          - DssVestTransferrableEchidnaTest
 
     steps:
       - uses: actions/checkout@v2
@@ -44,8 +42,8 @@ jobs:
           solc-select use 0.6.12
       - name: Install echidna
         run: |
-          sudo wget -O /tmp/echidna-test.tar.gz https://github.com/crytic/echidna/releases/download/v1.7.2/echidna-test-1.7.2-Ubuntu-18.04.tar.gz
+          sudo wget -O /tmp/echidna-test.tar.gz https://github.com/crytic/echidna/releases/download/v1.7.3/echidna-test-1.7.3-Ubuntu-18.04.tar.gz
           sudo tar -xf /tmp/echidna-test.tar.gz -C /usr/bin
           sudo chmod +x /usr/bin/echidna-test
       - name: Run ${{ matrix.testName }}
-        run: echidna-test src/fuzz/DssVestEchidnaTest.sol --contract ${{ matrix.testName }} --config echidna.config.ci.yml
+        run: echidna-test echidna/${{ matrix.testName }}.sol --contract ${{ matrix.testName }} --config echidna.config.ci.yml
