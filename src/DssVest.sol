@@ -135,7 +135,7 @@ abstract contract DssVest {
         @param what  The tag of the value to change (ex. bytes32("cap"))
         @param data  The value to update (ex. cap of 1000 tokens/yr == 1000*WAD/365 days)
     */
-    function file(bytes32 what, uint256 data) external auth lock {
+    function file(bytes32 what, uint256 data) external lock auth {
         if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
         else revert("DssVest/file-unrecognized-param");
         emit File(what, data);
@@ -170,7 +170,7 @@ abstract contract DssVest {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external auth lock returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
