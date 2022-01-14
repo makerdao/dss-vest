@@ -22,7 +22,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: corpus
-          key: vest-${{ hashFiles('**/src/DssVest.sol') }}
+          key: abi-${{ hashFiles('**/crytic-export/combined_solc.json') }}
 
       - name: Echidna Testing
         uses: crytic/echidna-action@v1
