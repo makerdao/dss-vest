@@ -18,10 +18,17 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v2
 
+      - name: Cache Echidna Corpus
+        uses: actions/cache@v2
+        with:
+          path: corpus
+          key: vest-${{ hashFiles('**/src/DssVest.sol') }}
+
       - name: Echidna Testing
         uses: crytic/echidna-action@v1
         with:
           files: echidna/${{ matrix.testName }}.sol
           contract: ${{ matrix.testName }}
           config: echidna.config.ci.yml
+          corpus-dir: corpus
           solc-version: 0.6.12
