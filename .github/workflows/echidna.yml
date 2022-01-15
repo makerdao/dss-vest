@@ -32,14 +32,16 @@ jobs:
       - name: Solc Select 0.6.12
         run: solc-select install 0.6.12
 
-      - name: Crytic Compile
-        run: crytic-compile echidna --solc-solcs-select 0.6.12 --export-format solc
+      - name: Crytic Compile ${{ matrix.testName }}
+        run: |
+          crytic-compile echidna/${{ matrix.testName }}.sol --solc-solcs-select 0.6.12 --export-format solc
+          jq --sort-keys . crytic-export/combined_solc.json > sorted_crytic_solc.json
 
-      - name: Cache Corpus
+      - name: Cache ${{ matrix.testName }} Corpus
         uses: actions/cache@v2
         with:
           path: corpus
-          key: abi-${{ hashFiles('**/crytic-export/combined_solc.json') }}
+          key: abi-${{ matrix.testName }}-${{ hashFiles('**/sorted_crytic_solc.json') }}
 
       - name: Echidna Testing
         uses: crytic/echidna-action@v1
