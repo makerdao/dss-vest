@@ -35,11 +35,11 @@ jobs:
       - name: Crytic Compile ${{ matrix.testName }}
         run: crytic-compile echidna/${{ matrix.testName }}.sol --solc-solcs-select 0.6.12 --export-format solc
 
-      - name: Cache Echidna Corpus
+      - name: Cache ${{ matrix.testName }} Corpus
         uses: actions/cache@v2
         with:
           path: corpus
-          key: abi-${{ hashFiles('**/crytic-export/combined_solc.json') }}
+          key: abi-${{ matrix.testName }}-${{ hashFiles('**/crytic-export/combined_solc.json') }}
 
       - name: Echidna Testing
         uses: crytic/echidna-action@v1
