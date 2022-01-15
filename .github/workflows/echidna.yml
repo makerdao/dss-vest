@@ -32,7 +32,7 @@ jobs:
       - name: Solc Select 0.6.12
         run: solc-select install 0.6.12
 
-      - name: Crytic Compile ${{ matrix.testName }}
+      - name: Crytic Compile
         run: crytic-compile echidna --solc-solcs-select 0.6.12 --export-format solc
 
       - name: Cache Corpus
