@@ -29,7 +29,7 @@ jobs:
       - name: Install solc-select
         run: pip3 install solc-select
 
-      - name: Solc Select 0.6.12
+      - name: Solc Select Install 0.6.12
         run: solc-select install 0.6.12
 
       - name: Crytic Compile ${{ matrix.testName }}
@@ -43,7 +43,7 @@ jobs:
           path: corpus
           key: abi-${{ matrix.testName }}-${{ hashFiles('**/sorted_crytic_solc.json') }}
 
-      - name: Echidna Testing
+      - name: Fuzz ${{ matrix.testName }}
         uses: crytic/echidna-action@v1
         with:
           files: echidna/${{ matrix.testName }}.sol
