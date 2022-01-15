@@ -53,7 +53,7 @@ jobs:
           check-asserts: true
           test-limit: 50000
           seq-len: 100
-          deployer: "0x41414141"
-          sender: ["0x42424242", "0x43434343"]
-          solc-args: "--optimize --optimize-runs 200"
+          deployer: 0x41414141
+          sender: [0x42424242, 0x43434343]
+          solc-args: --optimize --optimize-runs 200
           solc-version: 0.6.12
