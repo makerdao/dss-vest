@@ -34,7 +34,7 @@ jobs:
 
       - name: Crytic Compile ${{ matrix.testName }}
         run: |
-          crytic-compile echidna/${{ matrix.testName }}.sol --solc-solcs-select 0.6.12 --export-format solc
+          crytic-compile echidna/${{ matrix.testName }}.sol --solc-args "--optimize --optimize-runs 200" --solc-solcs-select 0.6.12 --export-format solc
           jq --sort-keys . crytic-export/combined_solc.json > sorted_crytic_solc.json
 
       - name: Cache ${{ matrix.testName }} Corpus
@@ -50,4 +50,10 @@ jobs:
           contract: ${{ matrix.testName }}
           config: echidna.config.ci.yml
           corpus-dir: corpus
+          check-asserts: true
+          test-limit: 50000
+          seq-len: 100
+          deployer: "0x41414141"
+          sender: ["0x42424242", "0x43434343"]
+          solc-args: "--optimize --optimize-runs 200"
           solc-version: 0.6.12
