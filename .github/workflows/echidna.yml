@@ -51,7 +51,7 @@ jobs:
           config: echidna.config.ci.yml
           corpus-dir: corpus
           check-asserts: true
-          test-limit: 100000
+          test-limit: 500000
           seq-len: 100
           solc-args: --optimize --optimize-runs 200
           solc-version: 0.6.12
