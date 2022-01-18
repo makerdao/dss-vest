@@ -1,5 +1,3 @@
-#coverage controls coverage guided testing
-coverage: false
 #maximum time between generated txs; default is one week
 maxTimeDelay: 31556952 # approximately 1 year
 #deployer is address of the contract deployer (who often is privileged owner, etc.)
