@@ -55,3 +55,9 @@ jobs:
           seq-len: 100
           solc-args: --optimize --optimize-runs 200
           solc-version: 0.6.12
+
+      - name: Upload ${{ matrix.testName }} Coverage
+        uses: actions/upload-artifact@v2
+        with:
+          name: coverage-${{ matrix.testName }}
+          path: corpus/covered.*
