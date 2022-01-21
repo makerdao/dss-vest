@@ -29,12 +29,14 @@ jobs:
       - name: Install solc-select
         run: pip3 install solc-select
 
-      - name: Solc Select Install 0.6.12
-        run: solc-select install 0.6.12
+      - name: Solc Select 0.6.12
+        run: |
+          solc-select install 0.6.12
+          solc-select use 0.6.12
 
       - name: Crytic Compile ${{ matrix.testName }}
         run: |
-          crytic-compile echidna/${{ matrix.testName }}.sol --solc-args "--optimize --optimize-runs 200" --solc-solcs-select 0.6.12 --export-format solc
+          crytic-compile echidna/${{ matrix.testName }}.sol --solc-args "--optimize --optimize-runs 200" --export-format solc
           jq --sort-keys . crytic-export/combined_solc.json > sorted_crytic_solc.json
 
       - name: Cache ${{ matrix.testName }} Corpus
