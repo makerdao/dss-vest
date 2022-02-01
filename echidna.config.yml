@@ -8,8 +8,6 @@ testLimit: 1000000
 seqLen: 200
 #solcArgs allows special args to solc
 solcArgs: "--optimize --optimize-runs 200"
-#cryticArgs allows special args to crytic
-cryticArgs: ["--solc-solcs-select", "0.6.12"]
 #maximum time between generated txs; default is one week
 maxTimeDelay: 15778800 # approximately 6 months
 #directory to save the corpus; by default is disabled
