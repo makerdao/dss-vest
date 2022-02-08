@@ -17,12 +17,12 @@ case "$1" in
              ;;
 esac
 
-SOLC=~/.solc-select/artifacts/solc-0.6.12
+SOLC=~/.nix-profile/bin/solc-0.6.12
 
-# Check if solc-select is installed
-[[ -x solc-select ]] || pip3 install solc-select
+# Check if duppsolc is installed
+[[ -x "$(command -v duppsolc)" ]] || { echo "Please install duppsolc"; exit 1; }
 
 # Check if solc-0.6.12 is installed
-[[ -f "$SOLC" ]] || solc-select install 0.6.12
+[[ -f "$SOLC" ]] || duppsolc 0.6.12
 
 echidna-test echidna/"$VEST".sol --contract "$VEST" --crytic-args "--solc $SOLC" --config echidna.config.yml
