@@ -118,7 +118,6 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   $ duppsolc 0.6.12
   ```
 - Run Echidna Tests:
-
   * DssVestMintableEchidnaTest:
   ```
   $ make echidna-mintable
