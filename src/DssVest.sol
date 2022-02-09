@@ -83,6 +83,7 @@ abstract contract DssVest {
     event Deny(address indexed usr);
 
     event File(bytes32 indexed what, uint256 data);
+
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
     event Restrict(uint256 indexed id);
