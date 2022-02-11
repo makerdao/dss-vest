@@ -979,15 +979,12 @@ contract DssVestTest is DSTest {
         bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));
 
         // mVest locked
-        assertTrue(uint256(mLocked) > 0);                              // Assert locked has value
         assertEq(uint256(mLocked), 1);                                 // Assert slot locked == 1
 
         // sVest locked
-        assertTrue(uint256(sLocked) > 0);                              // Assert locked has value
         assertEq(uint256(sLocked), 1);                                 // Assert slot locked == 1
 
         // tVest locked
-        assertTrue(uint256(tLocked) > 0);                              // Assert locked has value
         assertEq(uint256(tLocked), 1);                                 // Assert slot locked == 1
     }
 }
