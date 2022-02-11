@@ -118,18 +118,18 @@ abstract contract DssVest {
         emit Rely(msg.sender);
     }
 
-    // --- Auth ---
-    modifier auth {
-        require(wards[msg.sender] == 1, "DssVest/not-authorized");
-        _;
-    }
-
     // --- Mutex ---
     modifier lock {
         require(locked == 0, "DssVest/system-locked");
         locked = 1;
         _;
         locked = 0;
+    }
+
+    // --- Auth ---
+    modifier auth {
+        require(wards[msg.sender] == 1, "DssVest/not-authorized");
+        _;
     }
 
     function rely(address usr) external auth {
