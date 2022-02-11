@@ -955,17 +955,14 @@ contract DssVestTest is DSTest {
         bytes32 tIds = hevm.load(address(tVest), bytes32(uint256(3)));
 
         // mVest ids
-        assertTrue(uint256(mIds) > 0);                                 // Assert ids has value
         assertEq(mVest.ids(), uint256(mIds));                          // Assert ids = slot ids
         assertEq(uint256(mIds), 1);                                    // Assert slot ids == 1
 
         // sVest ids
-        assertTrue(uint256(sIds) > 0);                                 // Assert ids has value
         assertEq(sVest.ids(), uint256(sIds));                          // Assert ids = slot ids
         assertEq(uint256(sIds), 1);                                    // Assert slot ids == 1
 
         // tVest ids
-        assertTrue(uint256(tIds) > 0);                                 // Assert ids has value
         assertEq(tVest.ids(), uint256(tIds));                          // Assert ids = slot ids
         assertEq(uint256(tIds), 1);                                    // Assert slot ids == 1
     }
