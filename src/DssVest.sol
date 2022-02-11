@@ -41,16 +41,9 @@ interface TokenLike {
 }
 
 abstract contract DssVest {
-    // --- Auth ---
-    mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
-    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
-    modifier auth {
-        require(wards[msg.sender] == 1, "DssVest/not-authorized");
-        _;
-    }
-
     // --- Data ---
+    mapping (address => uint256) public wards;
+
     struct Award {
         address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period  [timestamp]
@@ -67,14 +60,7 @@ abstract contract DssVest {
 
     uint256 public ids; // Total vestings
 
-    // --- Mutex  ---
     uint256 internal locked;
-    modifier lock {
-        require(locked == 0, "DssVest/system-locked");
-        locked = 1;
-        _;
-        locked = 0;
-    }
 
     uint256 public constant  TWENTY_YEARS = 20 * 365 days;
 
@@ -130,6 +116,29 @@ abstract contract DssVest {
     constructor() public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
+    }
+
+    // --- Auth ---
+    modifier auth {
+        require(wards[msg.sender] == 1, "DssVest/not-authorized");
+        _;
+    }
+
+    // --- Mutex ---
+    modifier lock {
+        require(locked == 0, "DssVest/system-locked");
+        locked = 1;
+        _;
+        locked = 0;
+    }
+
+    function rely(address usr) external auth {
+        wards[usr] = 1;
+        emit Rely(usr);
+    }
+    function deny(address usr) external auth {
+        wards[usr] = 0;
+        emit Deny(usr);
     }
 
     /**
