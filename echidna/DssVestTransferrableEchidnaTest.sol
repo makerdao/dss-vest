@@ -7,6 +7,7 @@ import                  {Dai} from "./Dai.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;
+    function load(address, bytes32) external returns (bytes32);
 }
 
 struct Award {
@@ -144,7 +145,9 @@ contract DssVestTransferrableEchidnaTest {
             assert(tVest.res(id) == 0);
             _mutusr(id);
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+                uint256(tLocked) == 1                                    && cmpStr(errmsg, "DssVest/system-locked")        ||
                 tVest.wards(address(this)) == 0                          && cmpStr(errmsg, "DssVest/not-authorized")       ||
                 usr == address(0)                                        && cmpStr(errmsg, "DssVest/invalid-user")         ||
                 tot == 0                                                 && cmpStr(errmsg, "DssVest/no-vest-total-amount") ||
@@ -205,7 +208,9 @@ contract DssVestTransferrableEchidnaTest {
             }
             assert(gem.totalSupply() == supplyBefore);
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+                uint256(tLocked) == 1                                                 && cmpStr(errmsg, "DssVest/system-locked")       ||
                 award.usr == address(0)                                               && cmpStr(errmsg, "DssVest/invalid-award")       ||
                 award.res !=0 && award.usr != address(this)                           && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
                 accruedAmt - award.rxd > accruedAmt                                   && cmpStr(errmsg, "DssVest/sub-underflow")       ||
@@ -260,7 +265,9 @@ contract DssVestTransferrableEchidnaTest {
             }
             assert(gem.totalSupply() == supplyBefore);
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+                uint256(tLocked) == 1                                                 && cmpStr(errmsg, "DssVest/system-locked")       ||
                 award.usr == address(0)                                               && cmpStr(errmsg, "DssVest/invalid-award")       ||
                 award.res != 0 && award.usr != address(this)                          && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
                 accruedAmt - award.rxd > accruedAmt                                   && cmpStr(errmsg, "DssVest/sub-underflow")       ||
@@ -288,7 +295,9 @@ contract DssVestTransferrableEchidnaTest {
         try tVest.restrict(id) {
             assert(tVest.res(id) == 1);
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+                uint256(tLocked) == 1           && cmpStr(errmsg, "DssVest/system-locked") ||
                 tVest.usr(id) == address(0)     && cmpStr(errmsg, "DssVest/invalid-award") ||
                 tVest.wards(address(this)) == 0 &&
                 tVest.usr(id) != address(this)  && cmpStr(errmsg, "DssVest/not-authorized")
@@ -303,7 +312,9 @@ contract DssVestTransferrableEchidnaTest {
         try tVest.unrestrict(id) {
             assert(tVest.res(id) == 0);
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+               uint256(tLocked) == 1           && cmpStr(errmsg, "DssVest/system-locked") ||
                tVest.usr(id) == address(0)     && cmpStr(errmsg, "DssVest/invalid-award") ||
                tVest.wards(address(this)) == 0 &&
                tVest.usr(id) != address(this)  && cmpStr(errmsg, "DssVest/not-authorized")
@@ -336,7 +347,9 @@ contract DssVestTransferrableEchidnaTest {
                 }
             }
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+                uint256(tLocked) == 1                                              && cmpStr(errmsg, "DssVest/system-locked")    ||
                 tVest.wards(address(this)) == 0 && mgr != address(this)            && cmpStr(errmsg, "DssVest/not-authorized")   ||
                 usr == address(0)                                                  && cmpStr(errmsg, "DssVest/invalid-award")    ||
                 uint128(end) != end                                                && cmpStr(errmsg, "DssVest/uint128-overflow") ||
@@ -358,7 +371,9 @@ contract DssVestTransferrableEchidnaTest {
             assert(tVest.usr(id) == dst);
             _mutusr(id);
         } catch Error(string memory errmsg) {
+            bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
+                uint256(tLocked) == 1           && cmpStr(errmsg, "DssVest/system-locked")       ||
                 tVest.usr(id) != address(this)  && cmpStr(errmsg, "DssVest/only-user-can-move")  ||
                 dst == address(0)               && cmpStr(errmsg, "DssVest/zero-address-invalid")
             );
@@ -369,6 +384,10 @@ contract DssVestTransferrableEchidnaTest {
 
     // --- Time-Based Fuzz Mutations ---
 
+    function mutlock() public clock(1 hours) {
+        // Set DssVestTransferrable locked slot n. 4 to override 0 with 1
+        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(1)));
+    }
     function mutauth() public clock(1 hours) {
         uint256 wards = tVest.wards(address(this)) == 1 ? 0 : 1;
         // Set DssVestTransferrable wards slot n. 0 to override address(this) wards
