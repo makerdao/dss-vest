@@ -977,22 +977,22 @@ contract DssVestTest is DSTest {
         hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(1)));
 
         // mVest locked
-        try mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead)) {
-        } catch Error(string memory errmsg) {
+        try mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead)) {}
+        catch Error(string memory errmsg) {
             bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));             // Load memory slot 0x4
             assertTrue(uint256(mLocked) == 1 && cmpStr(errmsg, "DssVest/system-locked")); // Assert slot locked == 1 and function reverts
         }
 
         // sVest locked
-        try sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead)) {
-        } catch Error(string memory errmsg) {
+        try sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead)) {}
+        catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));             // Load memory slot 0x4
             assertTrue(uint256(sLocked) == 1 && cmpStr(errmsg, "DssVest/system-locked")); // Assert slot locked == 1 and function reverts
         }
 
         // tVest locked
-        try tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead)) {
-        } catch Error(string memory errmsg) {
+        try tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead)) {}
+        catch Error(string memory errmsg) {
             bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));             // Load memory slot 0x4
             assertTrue(uint256(tLocked) == 1 && cmpStr(errmsg, "DssVest/system-locked")); // Assert slot locked == 1 and function reverts
         }
