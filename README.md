@@ -104,16 +104,22 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Install [echidnup](https://github.com/naszam/echidnup#installing)
 - Install Echidna v1.7.3
+  ```
+  $ nix-env -i -f https://github.com/crytic/echidna/archive/v1.7.3.tar.gz
+  ```
+- Install Echidna v1.7.3 via [echidnup](https://github.com/naszam/echidnup#installing)
   ```
   $ echidnup v1.7.3
   ```
 
 ### Run Echidna Tests
 
-- Install [duppsolc](https://github.com/naszam/duppsolc#installing)
 - Install solc 0.6.12
+  ```
+  $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
+  ```
+- Install solc 0.6.12 via [duppsolc](https://github.com/naszam/duppsolc#installing)
   ```
   $ duppsolc 0.6.12
   ```

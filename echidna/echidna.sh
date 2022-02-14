@@ -19,10 +19,7 @@ esac
 
 SOLC=~/.nix-profile/bin/solc-0.6.12
 
-# Check if duppsolc is installed
-[[ -x "$(command -v duppsolc)" ]] || { echo "Please install duppsolc"; exit 1; }
-
 # Check if solc-0.6.12 is installed
-[[ -f "$SOLC" ]] || duppsolc 0.6.12
+[[ -f "$SOLC" ]] || nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
 
 echidna-test echidna/"$VEST".sol --contract "$VEST" --crytic-args "--solc $SOLC" --config echidna.config.yml
