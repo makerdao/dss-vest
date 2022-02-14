@@ -132,13 +132,13 @@ abstract contract DssVest {
         _;
     }
 
-    function rely(address usr) external auth {
-        wards[usr] = 1;
-        emit Rely(usr);
+    function rely(address _usr) external auth {
+        wards[_usr] = 1;
+        emit Rely(_usr);
     }
-    function deny(address usr) external auth {
-        wards[usr] = 0;
-        emit Deny(usr);
+    function deny(address _usr) external auth {
+        wards[_usr] = 0;
+        emit Deny(_usr);
     }
 
     /**
