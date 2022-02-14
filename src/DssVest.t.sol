@@ -790,9 +790,9 @@ contract DssVestTest is DSTest {
     }
 
     function testAwardSlot0x1() public {
-        uint256 mId = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
-        uint256 sId = sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
-        uint256 tId = tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
+        uint256 mId = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 10 days, address(0xdead));
+        uint256 sId = sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 10 days, address(0xdead));
+        uint256 tId = tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 10 days, address(0xdead));
 
         mVest.restrict(mId);
         sVest.restrict(sId);
@@ -894,7 +894,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(uint48(membgn)), block.timestamp - 10 days);  // Assert slot awards.bgn == block.timestamp - 10 days
 
         // awards.clf
-        assertEq(uint256(uint48(memclf)), block.timestamp - 10 days);  // Assert slot awards.clf == bgn + eta
+        assertEq(uint256(uint48(memclf)), block.timestamp);            // Assert slot awards.clf == bgn + eta
 
         // awards.fin
         assertEq(uint256(uint48(memfin)), block.timestamp + 90 days);  // Assert slot awards.fin == bgn + tau
