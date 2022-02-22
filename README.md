@@ -104,32 +104,40 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Building using Nix
+- Install Echidna v1.7.3
   ```
-  $ nix-env -i -f https://github.com/crytic/echidna/tarball/master
+  $ nix-env -i -f https://github.com/crytic/echidna/archive/v1.7.3.tar.gz
+  ```
+- Install Echidna v1.7.3 via [echidnup](https://github.com/naszam/echidnup#installing)
+  ```
+  $ echidnup v1.7.3
   ```
 
 ### Local Dependencies
 
-- Install solc-select and install solc 0.6.12 artifacts:
+- Install solc 0.6.12
   ```
-  $ make solc-select
+  $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
+  ```
+- Install solc 0.6.12 via [duppsolc](https://github.com/naszam/duppsolc#installing)
+  ```
+  $ duppsolc 0.6.12
   ```
 
 ### Run Echidna Tests
 
 - DssVestMintableEchidnaTest:
-```
-$ make echidna-mintable
-```
+  ```
+  $ make echidna-mintable
+  ```
 - DssVestSuckableEchidnaTest:
-```
-$ make echidna-suckable
-```
+  ```
+  $ make echidna-suckable
+  ```
 - DssVestTransferrableEchidnaTest:
-```
-$ make echidna-transferrable
-```
+  ```
+  $ make echidna-transferrable
+  ```
 
 ## Certora
 
