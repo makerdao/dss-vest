@@ -41,38 +41,8 @@ interface TokenLike {
 }
 
 abstract contract DssVest {
-
-    uint256 public   constant  TWENTY_YEARS = 20 * 365 days;
-
-    uint256 internal locked;
-
-    event Rely(address indexed usr);
-    event Deny(address indexed usr);
-    event Init(uint256 indexed id, address indexed usr);
-    event Vest(uint256 indexed id, uint256 amt);
-    event Move(uint256 indexed id, address indexed dst);
-    event File(bytes32 indexed what, uint256 data);
-    event Yank(uint256 indexed id, uint256 end);
-    event Restrict(uint256 indexed id);
-    event Unrestrict(uint256 indexed id);
-
-
-    // --- Auth ---
+    // --- Data ---
     mapping (address => uint256) public wards;
-    function rely(address usr) external auth { wards[usr] = 1; emit Rely(usr); }
-    function deny(address usr) external auth { wards[usr] = 0; emit Deny(usr); }
-    modifier auth {
-        require(wards[msg.sender] == 1, "DssVest/not-authorized");
-        _;
-    }
-
-    // --- Mutex  ---
-    modifier lock {
-        require(locked == 0, "DssVest/system-locked");
-        locked = 1;
-        _;
-        locked = 0;
-    }
 
     struct Award {
         address usr;   // Vesting recipient
@@ -85,9 +55,27 @@ abstract contract DssVest {
         uint128 rxd;   // Amount of vest claimed
     }
     mapping (uint256 => Award) public awards;
-    uint256 public ids;
 
     uint256 public cap; // Maximum per-second issuance token rate
+
+    uint256 public ids; // Total vestings
+
+    uint256 internal locked;
+
+    uint256 public constant  TWENTY_YEARS = 20 * 365 days;
+
+    // --- Events ---
+    event Rely(address indexed usr);
+    event Deny(address indexed usr);
+
+    event File(bytes32 indexed what, uint256 data);
+
+    event Init(uint256 indexed id, address indexed usr);
+    event Vest(uint256 indexed id, uint256 amt);
+    event Restrict(uint256 indexed id);
+    event Unrestrict(uint256 indexed id);
+    event Yank(uint256 indexed id, uint256 end);
+    event Move(uint256 indexed id, address indexed dst);
 
     // Getters to access only to the value desired
     function usr(uint256 _id) external view returns (address) {
@@ -128,6 +116,29 @@ abstract contract DssVest {
     constructor() public {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
+    }
+
+    // --- Mutex ---
+    modifier lock {
+        require(locked == 0, "DssVest/system-locked");
+        locked = 1;
+        _;
+        locked = 0;
+    }
+
+    // --- Auth ---
+    modifier auth {
+        require(wards[msg.sender] == 1, "DssVest/not-authorized");
+        _;
+    }
+
+    function rely(address _usr) external auth {
+        wards[_usr] = 1;
+        emit Rely(_usr);
+    }
+    function deny(address _usr) external auth {
+        wards[_usr] = 0;
+        emit Deny(_usr);
     }
 
     /**

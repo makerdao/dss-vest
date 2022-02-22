@@ -372,7 +372,7 @@ contract DssVestTransferrableEchidnaTest {
     function mutauth() public clock(1 hours) {
         uint256 wards = tVest.wards(address(this)) == 1 ? 0 : 1;
         // Set DssVestTransferrable wards slot n. 0 to override address(this) wards
-        hevm.store(address(tVest), keccak256(abi.encode(address(this), uint256(1))), bytes32(uint256(wards)));
+        hevm.store(address(tVest), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(wards)));
         assert(tVest.wards(address(this)) == wards);
     }
     function mutusr(uint256 id) public clock(1 days) {
@@ -382,16 +382,16 @@ contract DssVestTransferrableEchidnaTest {
     }
     function _mutusr(uint256 id) internal {
         address usr = tVest.usr(id) == address(this) ? address(0) : address(this);
-        // Set DssVestTrasferrable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
-        hevm.store(address(tVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(tVest.clf(id)), uint48(tVest.bgn(id)), usr)));
+        // Set DssVestTrasferrable awards slot n. 1 (clf, bgn, usr) to override awards(id).usr with address(this)
+        hevm.store(address(tVest), keccak256(abi.encode(uint256(id), uint256(1))), bytesToBytes32(abi.encodePacked(uint48(tVest.clf(id)), uint48(tVest.bgn(id)), usr)));
         assert(tVest.usr(id) == usr);
     }
     function mutcap(uint256 bump) public clock(90 days) {
         bump %= MAX;
         if (bump == 0) return;
         uint256 data = bump > MIN ? bump * WAD / TIME : MIN * WAD / TIME;
-        // Set DssVestTransferrable cap slot n. 4 to override cap with data
-        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(data)));
+        // Set DssVestTransferrable cap slot n. 2 to override cap with data
+        hevm.store(address(tVest), bytes32(uint256(2)), bytes32(uint256(data)));
         assert(tVest.cap() == data);
     }
 }
