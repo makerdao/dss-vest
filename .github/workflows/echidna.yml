@@ -43,7 +43,7 @@ jobs:
         uses: actions/cache@v2
         with:
           path: corpus
-          key: abi-${{ matrix.testName }}-${{ hashFiles('**/sorted_crytic_solc.json') }}-v2
+          key: abi-${{ matrix.testName }}-${{ hashFiles('**/sorted_crytic_solc.json') }}-v3
 
       - name: Fuzz ${{ matrix.testName }}
         uses: crytic/echidna-action@v2
