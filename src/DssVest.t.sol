@@ -11,6 +11,13 @@ interface Hevm {
     function load(address, bytes32) external returns (bytes32);
 }
 
+interface EndLikeTest {
+    function cage() external;
+    function thaw() external;
+    function wait() external returns (uint256);
+    function debt() external returns (uint256);
+}
+
 struct Award {
     address usr;   // Vesting recipient
     uint48  bgn;   // Start of vesting period  [timestamp]
@@ -37,6 +44,7 @@ interface Token {
 interface VatLikeTest {
     function wards(address) external view returns (uint256);
     function sin(address) external view returns (uint256);
+    function debt() external view returns (uint256);
 }
 
 contract Manager {
@@ -82,6 +90,7 @@ contract DssVestTest is DSTest {
     address constant DAI_JOIN = 0x9759A6Ac90977b93B58547b4A71c78317f391A28;
     address constant DAI = 0x6B175474E89094C44Da98b954EedeAC495271d0F;
     address constant VOW = 0xA950524441892A31ebddF91d3cEEFa04Bf454466;
+    address constant END = 0xBB856d1742fD182a90239D7AE85706C2FE4e5922;
     uint256 constant WAD = 10**18;
     uint256 constant RAY = 10**27;
     uint256 constant days_vest = WAD;
@@ -648,6 +657,70 @@ contract DssVestTest is DSTest {
         sVest.vest(id);
         assertEq(Token(DAI).balanceOf(address(this)), 100 * days_vest);
         assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 100 * days_vest * RAY);
+    }
+
+    function testSuckableVestKill() public {
+        uint256 originalSin = VatLikeTest(VAT).sin(VOW);
+        uint256 id = sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
+        assertTrue(sVest.valid(id));
+
+        hevm.warp(block.timestamp + 1 days);
+        sVest.vest(id);
+        assertEq(Token(DAI).balanceOf(address(this)), 1 * days_vest);
+        assertEq(VatLikeTest(VAT).sin(VOW), originalSin + 1 * days_vest * RAY);
+
+        hevm.warp(block.timestamp + 9 days);
+
+        try sVest.kill() {
+            assertTrue(false);
+        } catch Error(string memory errmsg) {
+            bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));                      // Load memory slot 0x4 (locked)
+            assertTrue(uint256(sLocked) == 0 && cmpStr(errmsg, "DssVestSuckable/vat-still-live")); // Assert slot locked == 0 and kill reverts
+        } catch {
+            assertTrue(false);
+        }
+
+        // Get End auth to allow call `cage`
+        hevm.store(
+            END,
+            keccak256(abi.encode(address(this), uint256(0))),
+            bytes32(uint256(1))
+        );
+        EndLikeTest(END).cage();
+
+        uint256 when = block.timestamp;
+
+        sVest.kill();
+
+        try sVest.vest(id) {
+            assertTrue(false);
+        } catch Error(string memory errmsg) {
+            bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));             // Load memory slot 0x4 (locked)
+            assertTrue(uint256(sLocked) == 1 && cmpStr(errmsg, "DssVest/system-locked")); // Assert slot locked == 1 and vest reverts
+            assertEq(Token(DAI).balanceOf(address(this)), 1 * days_vest);
+            assertEq(VatLikeTest(VAT).sin(VOW), 0);
+        } catch {
+            assertTrue(false);
+        }
+
+        hevm.warp(when + EndLikeTest(END).wait());
+        uint256 vatDebt = VatLikeTest(VAT).debt();
+
+        // Coerce system surplus to zero to allow end `thaw` execution
+        hevm.store(
+            VAT,
+            keccak256(abi.encode(address(VOW), uint256(5))),
+            bytes32(uint256(0))
+        );
+
+        EndLikeTest(END).thaw();
+
+        uint256 endDebt = EndLikeTest(END).debt();
+        assertEq(endDebt, vatDebt);
+    }
+
+    function testFailNotCaged() public {
+        sVest.kill();
     }
 
     function testCap() public {

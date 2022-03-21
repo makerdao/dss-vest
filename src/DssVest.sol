@@ -34,6 +34,7 @@ interface DaiJoinLike {
 interface VatLike {
     function hope(address) external;
     function suck(address, address, uint256) external;
+    function live() external view returns (uint256);
 }
 
 interface TokenLike {
@@ -429,6 +430,8 @@ contract DssVestSuckable is DssVest {
     VatLike      public immutable vat;
     DaiJoinLike  public immutable daiJoin;
 
+    event Kill();
+
     /**
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
@@ -440,6 +443,15 @@ contract DssVestSuckable is DssVest {
         DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
 
         vat_.hope(address(daiJoin_));
+    }
+
+    /**
+        @dev Permissionless 'live' Circuit Breaker
+    */
+    function kill() external {
+        require(vat.live() == 0, "DssVestSuckable/vat-still-live");
+        locked = 1;
+        emit Kill();
     }
 
     /**
