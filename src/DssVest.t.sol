@@ -669,7 +669,7 @@ contract DssVestTest is DSTest {
         assertEq(vat.sin(VOW), originalSin + 100 * days_vest * RAY);
     }
 
-    function testSuckableVestKill() public {
+    function testSuckableVestCage() public {
         uint256 originalSin = vat.sin(VOW);
         uint256 id = sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
         assertTrue(sVest.valid(id));
@@ -681,11 +681,11 @@ contract DssVestTest is DSTest {
 
         hevm.warp(block.timestamp + 9 days);
 
-        try sVest.kill() {
+        try sVest.cage() {
             assertTrue(false);
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));                      // Load memory slot 0x4 (locked)
-            assertTrue(uint256(sLocked) == 0 && cmpStr(errmsg, "DssVestSuckable/vat-still-live")); // Assert slot locked == 0 and kill reverts
+            assertTrue(uint256(sLocked) == 0 && cmpStr(errmsg, "DssVestSuckable/vat-still-live")); // Assert slot locked == 0 and cage reverts
         } catch {
             assertTrue(false);
         }
@@ -700,13 +700,13 @@ contract DssVestTest is DSTest {
 
         uint256 when = block.timestamp;
 
-        sVest.kill();
+        sVest.cage();
 
         try sVest.vest(id) {
             assertTrue(false);
         } catch Error(string memory errmsg) {
-            bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));             // Load memory slot 0x4 (locked)
-            assertTrue(uint256(sLocked) == 1 && cmpStr(errmsg, "DssVest/system-locked")); // Assert slot locked == 1 and vest reverts
+            bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));                      // Load memory slot 0x4 (locked)
+            assertTrue(uint256(sLocked) == 1 && cmpStr(errmsg, "DssVest/system-locked"));          // Assert slot locked == 1 and vest reverts
             assertEq(dai.balanceOf(address(this)), 1 * days_vest);
             assertEq(vat.sin(VOW), 0);
         } catch {
@@ -730,7 +730,7 @@ contract DssVestTest is DSTest {
     }
 
     function testFailNotCaged() public {
-        sVest.kill();
+        sVest.cage();
     }
 
     function testCap() public {

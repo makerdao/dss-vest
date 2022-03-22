@@ -430,7 +430,7 @@ contract DssVestSuckable is DssVest {
     VatLike      public immutable vat;
     DaiJoinLike  public immutable daiJoin;
 
-    event Kill();
+    event Cage();
 
     /**
         @dev This contract must be authorized to 'suck' on the vat
@@ -446,12 +446,12 @@ contract DssVestSuckable is DssVest {
     }
 
     /**
-        @dev Permissionless 'live' Circuit Breaker
+        @dev Permissionless 'live' Circuit Breaker by relying on existing mutex `lock` check
     */
-    function kill() external {
+    function cage() external {
         require(vat.live() == 0, "DssVestSuckable/vat-still-live");
         locked = 1;
-        emit Kill();
+        emit Cage();
     }
 
     /**
