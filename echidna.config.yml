@@ -2,15 +2,17 @@
 #format: "text"
 #checkAsserts checks assertions
 checkAsserts: true
-#seqLen defines how many transactions are in a test sequence
-seqLen: 200
 #testLimit is the number of test sequences to run
 testLimit: 1000000
+#seqLen defines how many transactions are in a test sequence
+seqLen: 200
+#solcArgs allows special args to solc
+solcArgs: "--optimize --optimize-runs 200"
 #maximum time between generated txs; default is one week
 maxTimeDelay: 15778800 # approximately 6 months
 #directory to save the corpus; by default is disabled
 corpusDir: "corpus"
 #deployer is address of the contract deployer (who often is privileged owner, etc.)
-deployer: '0x41414141'
+deployer: "0x41414141"
 #sender is set of addresses transactions may originate from
-sender: ['0x42424242', '0x43434343']
+sender: ["0x42424242", "0x43434343"]
