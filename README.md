@@ -159,7 +159,7 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 - Install solc-select and install solc 0.6.12 artifacts:
   ```
-  make certora-solc
+  make solc-select
   ```
 
 ### Run Certora Specs
