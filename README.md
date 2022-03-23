@@ -113,7 +113,7 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   $ echidnup v1.7.3
   ```
 
-### Run Echidna Tests
+### Local Dependencies
 
 - Install solc 0.6.12
   ```
@@ -123,16 +123,18 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   ```
   $ duppsolc 0.6.12
   ```
-- Run Echidna Tests:
-  * DssVestMintableEchidnaTest:
+
+### Run Echidna Tests
+
+- DssVestMintableEchidnaTest:
   ```
   $ make echidna-mintable
   ```
-  * DssVestSuckableEchidnaTest:
+- DssVestSuckableEchidnaTest:
   ```
   $ make echidna-suckable
   ```
-  * DssVestTransferrableEchidnaTest:
+- DssVestTransferrableEchidnaTest:
   ```
   $ make echidna-transferrable
   ```
