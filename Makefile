@@ -1,5 +1,5 @@
 all    :; DAPP_BUILD_OPTIMIZE=1 DAPP_BUILD_OPTIMIZE_RUNS=200 dapp --use solc:0.6.12 build
-clean  :; dapp clean
+clean  :; dapp clean && rm -rf crytic-export corpus
 test   :; make && ./test.sh $(match)
 echidna-mintable      :; ./echidna/echidna.sh mintable
 echidna-suckable      :; ./echidna/echidna.sh suckable
