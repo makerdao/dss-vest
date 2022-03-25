@@ -51,12 +51,13 @@ hook Sload uint256 value locked STORAGE {
 }
 
 invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && mgr(_id) == 0 && res(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0
-
+filtered { f -> !f.isFallback }
 invariant usrCantBeZeroIfCreate(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
-
+filtered { f -> !f.isFallback }
 invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id)
-
+filtered { f -> !f.isFallback }
 invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id)
+filtered { f -> !f.isFallback }
 
 // The following invariant is replaced with a rule as it was kind of difficult to be finished this way.
 // Leaving this commented for possible future option to be finished.
@@ -87,6 +88,17 @@ rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
     f@withrevert(e, arg);
 
     assert(rxd(_id) <= tot(_id));
+}
+
+// Verify fallback always reverts
+// Important as we are filtering it out from invariants and some rules
+rule fallback_revert(method f) filtered { f -> f.isFallback } {
+    env e;
+
+    calldataarg arg;
+    f@withrevert(e, arg);
+
+    assert(lastReverted, "Fallback did not revert");
 }
 
 // Verify that returned value is what expected in TWENTY_YEARS
