@@ -3,7 +3,7 @@ pragma solidity 0.6.12;
 
 import "ds-test/test.sol";
 
-import "./DssVest.sol";
+import {DssVest, DssVestMintable, DssVestSuckable, DssVestTransferrable} from "./DssVest.sol";
 
 interface Hevm {
     function warp(uint256) external;
@@ -11,34 +11,27 @@ interface Hevm {
     function load(address, bytes32) external returns (bytes32);
 }
 
-interface EndAbstract {
+interface ChainlogLike {
+    function getAddress(bytes32) external view returns (address);
+}
+
+interface EndLike {
     function cage() external;
     function thaw() external;
     function wait() external returns (uint256);
     function debt() external returns (uint256);
 }
 
-struct Award {
-    address usr;   // Vesting recipient
-    uint48  bgn;   // Start of vesting period  [timestamp]
-    uint48  clf;   // The cliff date           [timestamp]
-    uint48  fin;   // End of vesting period    [timestamp]
-    address mgr;   // A manager address that can yank
-    uint8   res;   // Restricted
-    uint128 tot;   // Total reward amount
-    uint128 rxd;   // Amount of vest claimed
-}
-
-interface DSTokenAbstract {
+interface GemLike {
     function approve(address, uint256) external returns (bool);
     function balanceOf(address) external returns (uint256);
 }
 
-interface MkrAuthorityAbstract {
+interface MkrAuthorityLike {
     function wards(address) external returns (uint256);
 }
 
-interface VatAbstract {
+interface VatLike {
     function wards(address) external view returns (uint256);
     function sin(address) external view returns (uint256);
     function debt() external view returns (uint256);
@@ -50,7 +43,7 @@ contract Manager {
     }
 
     function gemApprove(address gem, address spender) external {
-        DSTokenAbstract(gem).approve(spender, type(uint256).max);
+        GemLike(gem).approve(spender, type(uint256).max);
     }
 }
 
@@ -75,6 +68,17 @@ contract User {
 }
 
 contract DssVestTest is DSTest {
+    struct Award {
+        address usr;   // Vesting recipient
+        uint48  bgn;   // Start of vesting period  [timestamp]
+        uint48  clf;   // The cliff date           [timestamp]
+        uint48  fin;   // End of vesting period    [timestamp]
+        address mgr;   // A manager address that can yank
+        uint8   res;   // Restricted
+        uint128 tot;   // Total reward amount
+        uint128 rxd;   // Amount of vest claimed
+    }
+
     // --- Math ---
     uint256 constant WAD = 10**18;
     uint256 constant RAY = 10**27;
@@ -93,11 +97,11 @@ contract DssVestTest is DSTest {
     Manager                   boss;
 
     ChainlogLike          chainlog;
-    DSTokenAbstract            gem;
-    MkrAuthorityAbstract authority;
-    VatAbstract                vat;
-    DSTokenAbstract            dai;
-    EndAbstract                end;
+    GemLike                    gem;
+    MkrAuthorityLike     authority;
+    VatLike                    vat;
+    GemLike                    dai;
+    EndLike                    end;
 
     address                    VOW;
 
@@ -105,11 +109,11 @@ contract DssVestTest is DSTest {
         hevm = Hevm(address(CHEAT_CODE));
 
          chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
-              gem = DSTokenAbstract(      chainlog.getAddress("MCD_GOV"));
-        authority = MkrAuthorityAbstract( chainlog.getAddress("GOV_GUARD"));
-              vat = VatAbstract(          chainlog.getAddress("MCD_VAT"));
-              dai = DSTokenAbstract(      chainlog.getAddress("MCD_DAI"));
-              end = EndAbstract(          chainlog.getAddress("MCD_END"));
+              gem = GemLike        (      chainlog.getAddress("MCD_GOV"));
+        authority = MkrAuthorityLike(     chainlog.getAddress("GOV_GUARD"));
+              vat = VatLike(              chainlog.getAddress("MCD_VAT"));
+              dai = GemLike(              chainlog.getAddress("MCD_DAI"));
+              end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
         mVest = new DssVestMintable(address(gem));
