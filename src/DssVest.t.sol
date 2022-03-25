@@ -24,6 +24,13 @@ interface EndLike {
 
 interface GemLike {
     function approve(address, uint256) external returns (bool);
+}
+
+interface DaiLike is GemLike {
+    function balanceOf(address) external returns (uint256);
+}
+
+interface DSTokenLike {
     function balanceOf(address) external returns (uint256);
 }
 
@@ -97,10 +104,10 @@ contract DssVestTest is DSTest {
     Manager                   boss;
 
     ChainlogLike          chainlog;
-    GemLike                    gem;
+    DSTokenLike                gem;
     MkrAuthorityLike     authority;
     VatLike                    vat;
-    GemLike                    dai;
+    DaiLike                    dai;
     EndLike                    end;
 
     address                    VOW;
@@ -109,10 +116,10 @@ contract DssVestTest is DSTest {
         hevm = Hevm(address(CHEAT_CODE));
 
          chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
-              gem = GemLike        (      chainlog.getAddress("MCD_GOV"));
+              gem = DSTokenLike    (      chainlog.getAddress("MCD_GOV"));
         authority = MkrAuthorityLike(     chainlog.getAddress("GOV_GUARD"));
               vat = VatLike(              chainlog.getAddress("MCD_VAT"));
-              dai = GemLike(              chainlog.getAddress("MCD_DAI"));
+              dai = DaiLike(              chainlog.getAddress("MCD_DAI"));
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
