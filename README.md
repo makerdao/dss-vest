@@ -1,5 +1,6 @@
 [![Tests](https://github.com/makerdao/dss-vest/actions/workflows/tests.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/tests.yml)
 [![Echidna](https://github.com/makerdao/dss-vest/actions/workflows/echidna.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/echidna.yml)
+[![Certora](https://github.com/makerdao/dss-vest/actions/workflows/certora.yml/badge.svg)](https://github.com/makerdao/dss-vest/actions/workflows/certora.yml)
 
 # dss-vest
 
@@ -160,7 +161,7 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 - Install solc-select and install solc 0.6.12 artifacts:
   ```
-  make certora-solc
+  make solc-select
   ```
 
 ### Run Certora Specs
