@@ -430,8 +430,6 @@ contract DssVestSuckable is DssVest {
     VatLike      public immutable vat;
     DaiJoinLike  public immutable daiJoin;
 
-    event Cage();
-
     /**
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
@@ -446,20 +444,12 @@ contract DssVestSuckable is DssVest {
     }
 
     /**
-        @dev Permissionless 'live' Circuit Breaker by relying on existing mutex `lock` check
-    */
-    function cage() external {
-        require(vat.live() == 0, "DssVestSuckable/vat-still-live");
-        locked = 1;
-        emit Cage();
-    }
-
-    /**
         @dev Override pay to handle suck logic
         @param _guy The recipient of the ERC-20 Dai
         @param _amt The amount of Dai to send to the _guy [WAD]
     */
     function pay(address _guy, uint256 _amt) override internal {
+        require(vat.live() == 1, "DssVestSuckable/vat-not-live");
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
     }
