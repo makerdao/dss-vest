@@ -403,8 +403,12 @@ contract DssVestSuckableEchidnaTest {
     // --- Time-Based Fuzz Mutations ---
 
     function mutlock() public clock(1 hours) {
-        // Set DssVestSuckable locked slot n. 4 to override 0 with 1
-        hevm.store(address(sVest), bytes32(uint256(4)), bytes32(uint256(1)));
+        bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));          // Load memory slot 0x4
+        uint256 locked = uint256(sLocked) == 0 ? 1 : 0;
+        // Set DssVestSuckable locked slot n. 4 to override 0 with 1 and vice versa
+        hevm.store(address(sVest), bytes32(uint256(4)), bytes32(uint256(locked)));
+        sLocked = hevm.load(address(sVest), bytes32(uint256(4)));
+        assert(uint256(sLocked) == locked);
     }
     function mutauth() public clock(1 hours) {
         uint256 wards = sVest.wards(address(this)) == 1 ? 0 : 1;

@@ -385,8 +385,12 @@ contract DssVestTransferrableEchidnaTest {
     // --- Time-Based Fuzz Mutations ---
 
     function mutlock() public clock(1 hours) {
-        // Set DssVestTransferrable locked slot n. 4 to override 0 with 1
-        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(1)));
+        bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));          // Load memory slot 0x4
+        uint256 locked = uint256(tLocked) == 0 ? 1 : 0;
+        // Set DssVestTransferrable locked slot n. 4 to override 0 with 1 and vice versa
+        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(locked)));
+        tLocked = hevm.load(address(tVest), bytes32(uint256(4)));
+        assert(uint256(tLocked) == locked);
     }
     function mutauth() public clock(1 hours) {
         uint256 wards = tVest.wards(address(this)) == 1 ? 0 : 1;
