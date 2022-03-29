@@ -105,13 +105,13 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Install Echidna v1.7.3
+- Install Echidna v2.0.0
   ```
-  $ nix-env -i -f https://github.com/crytic/echidna/archive/v1.7.3.tar.gz
+  $ nix-env -i -f https://github.com/crytic/echidna/archive/v2.0.0.tar.gz
   ```
-- Install Echidna v1.7.3 via [echidnup](https://github.com/naszam/echidnup#installing)
+- Install Echidna v2.0.0 via [echidnup](https://github.com/naszam/echidnup#installing)
   ```
-  $ echidnup v1.7.3
+  $ echidnup v2.0.0
   ```
 
 ### Local Dependencies
