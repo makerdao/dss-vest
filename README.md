@@ -34,6 +34,8 @@ After deployment, governance must set the `cap` value using the `file` function.
 
 Pass the MCD [chainlog](https://github.com/makerdao/dss-chain-log) address to the constructor to set up the contract for scheduled Dai `suck`s. Note: this contract must be given authority to `suck()` Dai from the `vat`'s surplus buffer.
 
+A `vat.live` check is introduced to disable `suck()` in the event of Emergency Shutdown (aka Global Settlement).
+
 After deployment, governance must set the `cap` value using the `file` function.
 
 #### DssVestTransferrable
