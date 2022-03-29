@@ -32,6 +32,7 @@ methods {
     vat.sin(address) returns (uint256) envfree
     vat.debt() returns (uint256) envfree
     vat.vice() returns (uint256) envfree
+    vat.live() returns (uint256) envfree
     dai.wards(address) returns (uint256) envfree
     dai.totalSupply() returns (uint256) envfree
     dai.balanceOf(address) returns (uint256) envfree
@@ -421,6 +422,7 @@ rule vest_revert(uint256 _id) {
     uint256 usrBalance = dai.balanceOf(usr);
     uint256 supply = dai.totalSupply();
     uint256 locked = lockedGhost();
+    uint256 vatLive = vat.live();
     address vow = chainlog.getAddress(e, 0x4d43445f564f5700000000000000000000000000000000000000000000000000);
     uint256 daiJoinLive = daiJoin.live();
     uint256 wardVat = vat.wards(currentContract);
@@ -458,19 +460,20 @@ rule vest_revert(uint256 _id) {
     bool revert6  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
     bool revert7  = e.block.timestamp >= clf && accruedAmt < rxd;
     bool revert8  = rxd + unpaidAmt > max_uint128;
-    bool revert9  = vow == 0;
-    bool revert10 = unpaidAmtRad > max_uint256;
-    bool revert11 = wardVat != 1;
-    bool revert12 = sinVow + unpaidAmtRad > max_uint256;
-    bool revert13 = vatDaiVest + unpaidAmtRad > max_uint256;
-    bool revert14 = vice + unpaidAmtRad > max_uint256;
-    bool revert15 = debt + unpaidAmtRad > max_uint256;
-    bool revert16 = daiJoinLive != 1;
-    bool revert17 = currentContract != daiJoin && canVestDaiJoin != 1;
-    bool revert18 = vatDaiDaiJoin + unpaidAmtRad > max_uint256;
-    bool revert19 = wardDai != 1;
-    bool revert20 = usrBalance + unpaidAmt > max_uint256;
-    bool revert21 = supply + unpaidAmt > max_uint256;
+    bool revert9  = vatLive != 1;
+    bool revert10 = vow == 0;
+    bool revert11 = unpaidAmtRad > max_uint256;
+    bool revert12 = wardVat != 1;
+    bool revert13 = sinVow + unpaidAmtRad > max_uint256;
+    bool revert14 = vatDaiVest + unpaidAmtRad > max_uint256;
+    bool revert15 = vice + unpaidAmtRad > max_uint256;
+    bool revert16 = debt + unpaidAmtRad > max_uint256;
+    bool revert17 = daiJoinLive != 1;
+    bool revert18 = currentContract != daiJoin && canVestDaiJoin != 1;
+    bool revert19 = vatDaiDaiJoin + unpaidAmtRad > max_uint256;
+    bool revert20 = wardDai != 1;
+    bool revert21 = usrBalance + unpaidAmt > max_uint256;
+    bool revert22 = supply + unpaidAmt > max_uint256;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Locked did not revert");
@@ -480,19 +483,20 @@ rule vest_revert(uint256 _id) {
     assert(revert6  => lastReverted, "Division by zero did not revert");
     assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
     assert(revert8  => lastReverted, "Overflow rxd + unpaidAmt or toUint128 cast did not revert");
-    assert(revert9  => lastReverted, "Zero vow address did not revert");
-    assert(revert10 => lastReverted, "Overflow RAY * unpaidAmt did not revert");
-    assert(revert11 => lastReverted, "Vat lack of auth did not revert");
-    assert(revert12 => lastReverted, "Overflow sin + rad did not revert");
-    assert(revert13 => lastReverted, "Overflow dai + rad did not revert");
-    assert(revert14 => lastReverted, "Overflow vice + rad did not revert");
-    assert(revert15 => lastReverted, "Overflow debt + rad did not revert");
-    assert(revert16 => lastReverted, "Not live daiJoin did not revert");
-    assert(revert17 => lastReverted, "The function wish did not revert");
-    assert(revert18 => lastReverted, "Overflow dst + rad did not revert");
-    assert(revert19 => lastReverted, "Lack of dai auth on daiJoin did not revert");
-    assert(revert20 => lastReverted, "Overflow usr balance did not revert");
-    assert(revert21 => lastReverted, "Overflow totalSupply did not revert");
+    assert(revert9  => lastReverted, "Not live Vat did not revert");
+    assert(revert10 => lastReverted, "Zero vow address did not revert");
+    assert(revert11 => lastReverted, "Overflow RAY * unpaidAmt did not revert");
+    assert(revert12 => lastReverted, "Vat lack of auth did not revert");
+    assert(revert13 => lastReverted, "Overflow sin + rad did not revert");
+    assert(revert14 => lastReverted, "Overflow dai + rad did not revert");
+    assert(revert15 => lastReverted, "Overflow vice + rad did not revert");
+    assert(revert16 => lastReverted, "Overflow debt + rad did not revert");
+    assert(revert17 => lastReverted, "Not live daiJoin did not revert");
+    assert(revert18 => lastReverted, "The function wish did not revert");
+    assert(revert19 => lastReverted, "Overflow dst + rad did not revert");
+    assert(revert20 => lastReverted, "Lack of dai auth on daiJoin did not revert");
+    assert(revert21 => lastReverted, "Overflow usr balance did not revert");
+    assert(revert22 => lastReverted, "Overflow totalSupply did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -501,7 +505,8 @@ rule vest_revert(uint256 _id) {
             revert10 || revert11 || revert12 ||
             revert13 || revert14 || revert15 ||
             revert16 || revert17 || revert18 ||
-            revert19 || revert20 || revert21, "Revert rules are not covering all the cases");
+            revert19 || revert20 || revert21 ||
+            revert22, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behave correctly on vest with arbitrary max amt
@@ -578,6 +583,7 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     uint256 usrBalance = dai.balanceOf(usr);
     uint256 supply = dai.totalSupply();
     uint256 locked = lockedGhost();
+    uint256 vatLive = vat.live();
     address vow = chainlog.getAddress(e, 0x4d43445f564f5700000000000000000000000000000000000000000000000000);
     uint256 daiJoinLive = daiJoin.live();
     uint256 wardVat = vat.wards(currentContract);
@@ -617,19 +623,20 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     bool revert6  = e.block.timestamp >= clf && e.block.timestamp >= bgn && e.block.timestamp < fin && fin == bgn;
     bool revert7  = e.block.timestamp >= clf && accruedAmt < rxd;
     bool revert8  = rxd + amt > max_uint128;
-    bool revert9  = vow == 0;
-    bool revert10 = amtRad > max_uint256;
-    bool revert11 = wardVat != 1;
-    bool revert12 = sinVow + amtRad > max_uint256;
-    bool revert13 = vatDaiVest + amtRad > max_uint256;
-    bool revert14 = vice + amtRad > max_uint256;
-    bool revert15 = debt + amtRad > max_uint256;
-    bool revert16 = daiJoinLive != 1;
-    bool revert17 = currentContract != daiJoin && canVestDaiJoin != 1;
-    bool revert18 = vatDaiDaiJoin + amtRad > max_uint256;
-    bool revert19 = wardDai != 1;
-    bool revert20 = usrBalance + amt > max_uint256;
-    bool revert21 = supply + amt > max_uint256;
+    bool revert9  = vatLive != 1;
+    bool revert10 = vow == 0;
+    bool revert11 = amtRad > max_uint256;
+    bool revert12 = wardVat != 1;
+    bool revert13 = sinVow + amtRad > max_uint256;
+    bool revert14 = vatDaiVest + amtRad > max_uint256;
+    bool revert15 = vice + amtRad > max_uint256;
+    bool revert16 = debt + amtRad > max_uint256;
+    bool revert17 = daiJoinLive != 1;
+    bool revert18 = currentContract != daiJoin && canVestDaiJoin != 1;
+    bool revert19 = vatDaiDaiJoin + amtRad > max_uint256;
+    bool revert20 = wardDai != 1;
+    bool revert21 = usrBalance + amt > max_uint256;
+    bool revert22 = supply + amt > max_uint256;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Locked did not revert");
@@ -639,19 +646,20 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     assert(revert6  => lastReverted, "Division by zero did not revert");
     assert(revert7  => lastReverted, "Underflow accruedAmt - rxd did not revert");
     assert(revert8  => lastReverted, "Overflow rxd + amt or toUint128 cast did not revert");
-    assert(revert9  => lastReverted, "Zero vow address did not revert");
-    assert(revert10 => lastReverted, "Overflow RAY * amt did not revert");
-    assert(revert11 => lastReverted, "Lack of vat auth on suckable did not revert");
-    assert(revert12 => lastReverted, "Overflow sin + rad did not revert");
-    assert(revert13 => lastReverted, "Overflow dai + rad did not revert");
-    assert(revert14 => lastReverted, "Overflow vice + rad did not revert");
-    assert(revert15 => lastReverted, "Overflow debt + rad did not revert");
-    assert(revert16 => lastReverted, "Not live daiJoin did not revert");
-    assert(revert17 => lastReverted, "The function wish did not revert");
-    assert(revert18 => lastReverted, "Overflow dst + rad did not revert");
-    assert(revert19 => lastReverted, "Lack of dai auth on daiJoin did not revert");
-    assert(revert20 => lastReverted, "Overflow usr balance did not revert");
-    assert(revert21 => lastReverted, "Overflow totalSupply did not revert");
+    assert(revert9  => lastReverted, "Not live Vat did not revert");
+    assert(revert10 => lastReverted, "Zero vow address did not revert");
+    assert(revert11 => lastReverted, "Overflow RAY * amt did not revert");
+    assert(revert12 => lastReverted, "Lack of vat auth on suckable did not revert");
+    assert(revert13 => lastReverted, "Overflow sin + rad did not revert");
+    assert(revert14 => lastReverted, "Overflow dai + rad did not revert");
+    assert(revert15 => lastReverted, "Overflow vice + rad did not revert");
+    assert(revert16 => lastReverted, "Overflow debt + rad did not revert");
+    assert(revert17 => lastReverted, "Not live daiJoin did not revert");
+    assert(revert18 => lastReverted, "The function wish did not revert");
+    assert(revert19 => lastReverted, "Overflow dst + rad did not revert");
+    assert(revert20 => lastReverted, "Lack of dai auth on daiJoin did not revert");
+    assert(revert21 => lastReverted, "Overflow usr balance did not revert");
+    assert(revert22 => lastReverted, "Overflow totalSupply did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -660,7 +668,8 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
             revert10 || revert11 || revert12 ||
             revert13 || revert14 || revert15 ||
             revert16 || revert17 || revert18 ||
-            revert19 || revert20 || revert21, "Revert rules are not covering all the cases");
+            revert19 || revert20 || revert21 ||
+            revert22, "Revert rules are not covering all the cases");
 }
 
 // Verify that amt behaves correctly on accrued
