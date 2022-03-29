@@ -75,13 +75,9 @@ contract DssVestSuckableEchidnaTest {
     }
 
     // --- Math ---
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
-    }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x - y;
-        assert(z <= x); // check if there is a subtraction overflow
     }
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
@@ -138,13 +134,13 @@ contract DssVestSuckableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = sVest.ids();
         try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(sVest.ids() == add(prevId, 1));
+            assert(sVest.ids() == _add(prevId, 1));
             assert(sVest.ids() == id);
             assert(sVest.valid(id));
             assert(sVest.usr(id) == usr);
             assert(sVest.bgn(id) == toUint48(bgn));
-            assert(sVest.clf(id) == toUint48(add(bgn, eta)));
-            assert(sVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(sVest.clf(id) == toUint48(_add(bgn, eta)));
+            assert(sVest.fin(id) == toUint48(_add(bgn, tau)));
             assert(sVest.tot(id) == toUint128(tot));
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
@@ -208,11 +204,11 @@ contract DssVestSuckableEchidnaTest {
                     assert(sVest.rxd(id) == award.tot);
                 }
                 else {
-                    assert(sVest.rxd(id) == toUint128(add(award.rxd, unpaidAmt)));
+                    assert(sVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
-                assert(vat.sin(vow) == add(sinBefore, mul(unpaidAmt, RAY)));
-                assert(dai.totalSupply() == add(supplyBefore, unpaidAmt));
-                assert(dai.balanceOf(award.usr) == add(usrBalanceBefore, unpaidAmt));
+                assert(vat.sin(vow) == _add(sinBefore, mul(unpaidAmt, RAY)));
+                assert(dai.totalSupply() == _add(supplyBefore, unpaidAmt));
+                assert(dai.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4
@@ -272,10 +268,10 @@ contract DssVestSuckableEchidnaTest {
                 assert(dai.balanceOf(award.usr) == usrBalanceBefore);
             }
             else {
-                assert(sVest.rxd(id) == toUint128(add(award.rxd, amt)));
-                assert(vat.sin(vow) == add(sinBefore, mul(amt, RAY)));
-                assert(dai.totalSupply() == add(supplyBefore, amt));
-                assert(dai.balanceOf(award.usr) == add(usrBalanceBefore, amt));
+                assert(sVest.rxd(id) == toUint128(_add(award.rxd, amt)));
+                assert(vat.sin(vow) == _add(sinBefore, mul(amt, RAY)));
+                assert(dai.totalSupply() == _add(supplyBefore, amt));
+                assert(dai.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4
@@ -361,7 +357,7 @@ contract DssVestSuckableEchidnaTest {
                     assert(sVest.clf(id) == end);
                     assert(sVest.tot(id) == 0);
                 } else {
-                    assert(sVest.tot(id) == toUint128(add(unpaidAmt, rxd)));
+                    assert(sVest.tot(id) == toUint128(_add(unpaidAmt, rxd)));
                 }
             }
         } catch Error(string memory errmsg) {

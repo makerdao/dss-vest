@@ -69,7 +69,7 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     // --- Math ---
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
     }
@@ -132,13 +132,13 @@ contract DssVestTransferrableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = tVest.ids();
         try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(tVest.ids() == add(prevId, 1));
+            assert(tVest.ids() == _add(prevId, 1));
             assert(tVest.ids() == id);
             assert(tVest.valid(id));
             assert(tVest.usr(id) == usr);
             assert(tVest.bgn(id) == toUint48(bgn));
-            assert(tVest.clf(id) == toUint48(add(bgn, eta)));
-            assert(tVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(tVest.clf(id) == toUint48(_add(bgn, eta)));
+            assert(tVest.fin(id) == toUint48(_add(bgn, tau)));
             assert(tVest.tot(id) == toUint128(tot));
             assert(tVest.rxd(id) == 0);
             assert(tVest.mgr(id) == mgr);
@@ -201,10 +201,10 @@ contract DssVestTransferrableEchidnaTest {
                     assert(tVest.rxd(id) == award.tot);
                 }
                 else {
-                    assert(tVest.rxd(id) == toUint128(add(award.rxd, unpaidAmt)));
+                    assert(tVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
                 assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
-                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, unpaidAmt));
+                assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
             assert(gem.totalSupply() == supplyBefore);
         } catch Error(string memory errmsg) {
@@ -259,9 +259,9 @@ contract DssVestTransferrableEchidnaTest {
                 assert(gem.balanceOf(award.usr) == usrBalanceBefore);
             }
             else {
-                assert(tVest.rxd(id) == toUint128(add(award.rxd, amt)));
+                assert(tVest.rxd(id) == toUint128(_add(award.rxd, amt)));
                 assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
-                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, amt));
+                assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }
             assert(gem.totalSupply() == supplyBefore);
         } catch Error(string memory errmsg) {
@@ -343,7 +343,7 @@ contract DssVestTransferrableEchidnaTest {
                     assert(tVest.clf(id) == end);
                     assert(tVest.tot(id) == 0);
                 } else {
-                    assert(tVest.tot(id) == toUint128(add(unpaidAmt, rxd)));
+                    assert(tVest.tot(id) == toUint128(_add(unpaidAmt, rxd)));
                 }
             }
         } catch Error(string memory errmsg) {

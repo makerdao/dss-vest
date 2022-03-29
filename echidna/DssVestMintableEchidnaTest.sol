@@ -57,13 +57,9 @@ contract DssVestMintableEchidnaTest {
     }
 
     // --- Math ---
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
-    }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x - y;
-        assert(z <= x); // check if there is a subtraction overflow
     }
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
@@ -120,13 +116,13 @@ contract DssVestMintableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = mVest.ids();
         try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(mVest.ids() == add(prevId, 1));
+            assert(mVest.ids() == _add(prevId, 1));
             assert(mVest.ids() == id);
             assert(mVest.valid(id));
             assert(mVest.usr(id) == usr);
             assert(mVest.bgn(id) == toUint48(bgn));
-            assert(mVest.clf(id) == toUint48(add(bgn, eta)));
-            assert(mVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(mVest.clf(id) == toUint48(_add(bgn, eta)));
+            assert(mVest.fin(id) == toUint48(_add(bgn, tau)));
             assert(mVest.tot(id) == toUint128(tot));
             assert(mVest.rxd(id) == 0);
             assert(mVest.mgr(id) == mgr);
@@ -188,10 +184,10 @@ contract DssVestMintableEchidnaTest {
                     assert(mVest.rxd(id) == award.tot);
                 }
                 else {
-                    assert(mVest.rxd(id) == toUint128(add(award.rxd, unpaidAmt)));
+                    assert(mVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
-                assert(gem.totalSupply() == add(supplyBefore, unpaidAmt));
-                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, unpaidAmt));
+                assert(gem.totalSupply() == _add(supplyBefore, unpaidAmt));
+                assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
         } catch Error(string memory errmsg) {
             bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));      // Load memory slot 0x4
@@ -238,9 +234,9 @@ contract DssVestMintableEchidnaTest {
                 assert(gem.balanceOf(award.usr) == usrBalanceBefore);
             }
             else {
-                assert(mVest.rxd(id) == toUint128(add(award.rxd, amt)));
-                assert(gem.totalSupply() == add(supplyBefore, amt));
-                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, amt));
+                assert(mVest.rxd(id) == toUint128(_add(award.rxd, amt)));
+                assert(gem.totalSupply() == _add(supplyBefore, amt));
+                assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }
         } catch Error(string memory errmsg) {
             bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));      // Load memory slot 0x4
@@ -315,7 +311,7 @@ contract DssVestMintableEchidnaTest {
                     assert(mVest.clf(id) == end);
                     assert(mVest.tot(id) == 0);
                 } else {
-                    assert(mVest.tot(id) == toUint128(add(unpaidAmt, rxd)));
+                    assert(mVest.tot(id) == toUint128(_add(unpaidAmt, rxd)));
                 }
             }
         } catch Error(string memory errmsg) {
