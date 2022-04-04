@@ -68,7 +68,7 @@ contract DssVestSuckableEchidnaTest {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
     }
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         assert(y == 0 || z / y == x);
     }
@@ -195,7 +195,7 @@ contract DssVestSuckableEchidnaTest {
                 else {
                     assert(sVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
-                assert(vat.sin(vow) == _add(sinBefore, mul(unpaidAmt, RAY)));
+                assert(vat.sin(vow) == _add(sinBefore, _mul(unpaidAmt, RAY)));
                 assert(dai.totalSupply() == _add(supplyBefore, unpaidAmt));
                 assert(dai.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
@@ -258,7 +258,7 @@ contract DssVestSuckableEchidnaTest {
             }
             else {
                 assert(sVest.rxd(id) == toUint128(_add(award.rxd, amt)));
-                assert(vat.sin(vow) == _add(sinBefore, mul(amt, RAY)));
+                assert(vat.sin(vow) == _add(sinBefore, _mul(amt, RAY)));
                 assert(dai.totalSupply() == _add(supplyBefore, amt));
                 assert(dai.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }

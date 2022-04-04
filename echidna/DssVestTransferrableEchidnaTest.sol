@@ -62,13 +62,9 @@ contract DssVestTransferrableEchidnaTest {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
     }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x - y;
         assert(z <= x); // check if there is a subtraction overflow
-    }
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x * y;
-        assert(y == 0 || z / y == x);
     }
     function toUint8(uint256 x) internal pure returns (uint8 z) {
         z = uint8(x);
@@ -192,7 +188,7 @@ contract DssVestTransferrableEchidnaTest {
                 else {
                     assert(tVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
-                assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
+                assert(gem.balanceOf(address(multisig)) == _sub(msigBalanceBefore, unpaidAmt));
                 assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
             assert(gem.totalSupply() == supplyBefore);
@@ -249,7 +245,7 @@ contract DssVestTransferrableEchidnaTest {
             }
             else {
                 assert(tVest.rxd(id) == toUint128(_add(award.rxd, amt)));
-                assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
+                assert(gem.balanceOf(address(multisig)) == _sub(msigBalanceBefore, amt));
                 assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }
             assert(gem.totalSupply() == supplyBefore);

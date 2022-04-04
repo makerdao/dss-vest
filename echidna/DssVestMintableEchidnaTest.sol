@@ -50,10 +50,6 @@ contract DssVestMintableEchidnaTest {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
     }
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x * y;
-        assert(y == 0 || z / y == x);
-    }
     function toUint8(uint256 x) internal pure returns (uint8 z) {
         z = uint8(x);
         assert(z == x);
