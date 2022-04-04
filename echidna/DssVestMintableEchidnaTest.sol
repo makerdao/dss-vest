@@ -2,23 +2,12 @@
 
 pragma solidity 0.6.12;
 
-import {DssVestMintable} from "../src/DssVest.sol";
+import {DssVest, DssVestMintable} from "../src/DssVest.sol";
 import         {DSToken} from "./DSToken.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;
     function load(address, bytes32) external returns (bytes32);
-}
-
-struct Award {
-    address usr;   // Vesting recipient
-    uint48  bgn;   // Start of vesting period  [timestamp]
-    uint48  clf;   // The cliff date           [timestamp]
-    uint48  fin;   // End of vesting period    [timestamp]
-    address mgr;   // A manager address that can yank
-    uint8   res;   // Restricted
-    uint128 tot;   // Total reward amount
-    uint128 rxd;   // Amount of vest claimed
 }
 
 contract DssVestMintableEchidnaTest {
@@ -158,7 +147,7 @@ contract DssVestMintableEchidnaTest {
 
     function vest(uint256 id) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: mVest.usr(id),
             bgn: toUint48(mVest.bgn(id)),
             clf: toUint48(mVest.clf(id)),
@@ -211,7 +200,7 @@ contract DssVestMintableEchidnaTest {
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = mVest.ids() == 0 ? id : id % mVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: mVest.usr(id),
             bgn: toUint48(mVest.bgn(id)),
             clf: toUint48(mVest.clf(id)),

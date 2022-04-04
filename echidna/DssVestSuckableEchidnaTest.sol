@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import {DssVestSuckable} from "../src/DssVest.sol";
+import {DssVest, DssVestSuckable} from "../src/DssVest.sol";
 import        {ChainLog} from "./ChainLog.sol";
 import             {Vat} from "./Vat.sol";
 import         {DaiJoin} from "./DaiJoin.sol";
@@ -11,17 +11,6 @@ import             {Dai} from "./Dai.sol";
 interface Hevm {
     function store(address, bytes32, bytes32) external;
     function load(address, bytes32) external returns (bytes32);
-}
-
-struct Award {
-    address usr;   // Vesting recipient
-    uint48  bgn;   // Start of vesting period  [timestamp]
-    uint48  clf;   // The cliff date           [timestamp]
-    uint48  fin;   // End of vesting period    [timestamp]
-    address mgr;   // A manager address that can yank
-    uint8   res;   // Restricted
-    uint128 tot;   // Total reward amount
-    uint128 rxd;   // Amount of vest claimed
 }
 
 contract DssVestSuckableEchidnaTest {
@@ -176,7 +165,7 @@ contract DssVestSuckableEchidnaTest {
 
     function vest(uint256 id) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: sVest.usr(id),
             bgn: toUint48(sVest.bgn(id)),
             clf: toUint48(sVest.clf(id)),
@@ -243,7 +232,7 @@ contract DssVestSuckableEchidnaTest {
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: sVest.usr(id),
             bgn: toUint48(sVest.bgn(id)),
             clf: toUint48(sVest.clf(id)),

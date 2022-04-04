@@ -2,23 +2,12 @@
 
 pragma solidity 0.6.12;
 
-import {DssVestTransferrable} from "../src/DssVest.sol";
+import {DssVest, DssVestTransferrable} from "../src/DssVest.sol";
 import                  {Dai} from "./Dai.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;
     function load(address, bytes32) external returns (bytes32);
-}
-
-struct Award {
-    address usr;   // Vesting recipient
-    uint48  bgn;   // Start of vesting period  [timestamp]
-    uint48  clf;   // The cliff date           [timestamp]
-    uint48  fin;   // End of vesting period    [timestamp]
-    address mgr;   // A manager address that can yank
-    uint8   res;   // Restricted
-    uint128 tot;   // Total reward amount
-    uint128 rxd;   // Amount of vest claimed
 }
 
 /// @dev A contract that will receive Dai, and allows for it to be retrieved.
@@ -174,7 +163,7 @@ contract DssVestTransferrableEchidnaTest {
 
     function vest(uint256 id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: tVest.usr(id),
             bgn: toUint48(tVest.bgn(id)),
             clf: toUint48(tVest.clf(id)),
@@ -235,7 +224,7 @@ contract DssVestTransferrableEchidnaTest {
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: tVest.usr(id),
             bgn: toUint48(tVest.bgn(id)),
             clf: toUint48(tVest.clf(id)),
