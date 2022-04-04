@@ -76,17 +76,6 @@ contract User {
 }
 
 contract DssVestTest is DSTest {
-    struct Award {
-        address usr;   // Vesting recipient
-        uint48  bgn;   // Start of vesting period  [timestamp]
-        uint48  clf;   // The cliff date           [timestamp]
-        uint48  fin;   // End of vesting period    [timestamp]
-        address mgr;   // A manager address that can yank
-        uint8   res;   // Restricted
-        uint128 tot;   // Total reward amount
-        uint128 rxd;   // Amount of vest claimed
-    }
-
     // --- Math ---
     uint256 constant WAD = 10**18;
     uint256 constant RAY = 10**27;
@@ -883,9 +872,9 @@ contract DssVestTest is DSTest {
         sVest.vest(sId, 5 * days_vest);
         tVest.vest(tId, 5 * days_vest);
 
-        Award memory mmemaward = testUnpackAward(address(mVest), mId);
-        Award memory smemaward = testUnpackAward(address(sVest), sId);
-        Award memory tmemaward = testUnpackAward(address(tVest), tId);
+        DssVest.Award memory mmemaward = testUnpackAward(address(mVest), mId);
+        DssVest.Award memory smemaward = testUnpackAward(address(sVest), sId);
+        DssVest.Award memory tmemaward = testUnpackAward(address(tVest), tId);
 
         // Assert usr = slot 0x1 offset 0 awards.usr
         assertEq(mVest.usr(mId), mmemaward.usr);
@@ -928,7 +917,7 @@ contract DssVestTest is DSTest {
         assertEq(tVest.rxd(tId), uint256(tmemaward.rxd));
     }
 
-    function testUnpackAward(address vest, uint256 id) internal returns (Award memory award) {
+    function testUnpackAward(address vest, uint256 id) internal returns (DssVest.Award memory award) {
         // Load memory slot 0x1 offset 0
         bytes32 awardsPacked0x10 = hevm.load(address(vest), keccak256(abi.encode(uint256(id), uint256(1))));
 
@@ -991,7 +980,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(uint128(memrxd)), 5 * days_vest);             // Assert slot awards.rxd == 5 * days_vest
 
         return (
-            Award({
+            DssVest.Award({
                 usr: address(uint160(memusr)),
                 bgn:  uint48(membgn),
                 clf:  uint48(memclf),
