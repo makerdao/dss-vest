@@ -697,7 +697,7 @@ contract DssVestTest is DSTest {
         } catch Error(string memory errmsg) {
             assertTrue(vat.live() == 0 && cmpStr(errmsg, "DssVestSuckable/vat-not-live"));
             assertEq(dai.balanceOf(address(this)), 1 * days_vest);
-            assertEq(vat.sin(VOW), 0);
+            assertEq(vat.sin(VOW), 0); // true only if there is more surplus than debt in the system
         } catch {
             assertTrue(false);
         }
