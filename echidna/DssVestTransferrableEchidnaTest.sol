@@ -206,8 +206,7 @@ contract DssVestTransferrableEchidnaTest {
                 uint128(award.rxd + unpaidAmt) != (award.rxd + unpaidAmt)             && cmpStr(errmsg, "DssVest/uint128-overflow")            ||
                 gem.balanceOf(address(multisig)) < unpaidAmt                          && cmpStr(errmsg, "gem/insufficient-balance")            ||
                 gem.allowance(address(multisig), address(tVest)) != type(uint256).max &&
-                gem.allowance(address(multisig), address(tVest)) < unpaidAmt          && cmpStr(errmsg, "gem/insufficient-allowance")          ||
-                                                                                         cmpStr(errmsg, "DssVestTransferable/failed-transfer")
+                gem.allowance(address(multisig), address(tVest)) < unpaidAmt          && cmpStr(errmsg, "gem/insufficient-allowance")
             );
         } catch {
             assert(
@@ -264,9 +263,7 @@ contract DssVestTransferrableEchidnaTest {
                 uint128(award.rxd + amt) != (award.rxd + amt)                         && cmpStr(errmsg, "DssVest/uint128-overflow")            ||
                 gem.balanceOf(address(multisig)) < amt                                && cmpStr(errmsg, "gem/insufficient-balance")            ||
                 gem.allowance(address(multisig), address(tVest)) != type(uint256).max &&
-                gem.allowance(address(multisig), address(tVest)) < amt                && cmpStr(errmsg, "gem/insufficient-allowance")          ||
-                                                                                         cmpStr(errmsg, "DssVestTransferable/failed-transfer")
-
+                gem.allowance(address(multisig), address(tVest)) < amt                && cmpStr(errmsg, "gem/insufficient-allowance")
             );
         } catch {
             assert(
