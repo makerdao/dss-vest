@@ -387,7 +387,7 @@ contract DssVestSuckableEchidnaTest {
 
     // --- Time-Based Fuzz Mutations ---
 
-    function mutlock() public clock(1 hours) {
+    function mutlock() private clock(1 hours) {
         bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));          // Load memory slot 0x4
         uint256 locked = uint256(sLocked) == 0 ? 1 : 0;
         // Set DssVestSuckable locked slot n. 4 to override 0 with 1 and vice versa
@@ -395,19 +395,19 @@ contract DssVestSuckableEchidnaTest {
         sLocked = hevm.load(address(sVest), bytes32(uint256(4)));
         assert(uint256(sLocked) == locked);
     }
-    function mutauth() public clock(1 hours) {
+    function mutauth() private clock(1 hours) {
         uint256 wards = sVest.wards(address(this)) == 1 ? 0 : 1;
         // Set DssVestSuckable wards slot n. 0 to override address(this) wards
         hevm.store(address(sVest), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(wards)));
         assert(sVest.wards(address(this)) == wards);
     }
-    function mutlive() public clock(1 hours) {
+    function mutlive() private clock(1 hours) {
         uint256 live = vat.live() == 1 ? 0 : 1;
         // Set Vat live slot n. 10 to override 1 with 0 and vice versa
         hevm.store(address(vat), bytes32(uint256(10)), bytes32(uint256(live)));
         assert(vat.live() == live);
     }
-    function mutusr(uint256 id) public clock(1 days) {
+    function mutusr(uint256 id) private clock(1 days) {
         id = sVest.ids() == 0 ? 0 : id % sVest.ids();
         if (id == 0) return;
         _mutusr(id);
@@ -418,7 +418,7 @@ contract DssVestSuckableEchidnaTest {
         hevm.store(address(sVest), keccak256(abi.encode(uint256(id), uint256(1))), bytesToBytes32(abi.encodePacked(uint48(sVest.clf(id)), uint48(sVest.bgn(id)), usr)));
         assert(sVest.usr(id) == usr);
     }
-    function mutcap(uint256 bump) public clock(90 days) {
+    function mutcap(uint256 bump) private clock(90 days) {
         bump %= MAX;
         if (bump == 0) return;
         uint256 data = bump > MIN ? bump * WAD / TIME : MIN * WAD / TIME;

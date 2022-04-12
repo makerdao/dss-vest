@@ -337,7 +337,7 @@ contract DssVestMintableEchidnaTest {
 
     // --- Time-Based Fuzz Mutations ---
 
-    function mutlock() public clock(1 hours) {
+    function mutlock() private clock(1 hours) {
         bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));          // Load memory slot 0x4
         uint256 locked = uint256(mLocked) == 0 ? 1 : 0;
         // Set DssVestMintable locked slot n. 4 to override 0 with 1 and vice versa
@@ -345,13 +345,13 @@ contract DssVestMintableEchidnaTest {
         mLocked = hevm.load(address(mVest), bytes32(uint256(4)));
         assert(uint256(mLocked) == locked);
     }
-    function mutauth() public clock(1 hours) {
+    function mutauth() private clock(1 hours) {
         uint256 wards = mVest.wards(address(this)) == 1 ? 0 : 1;
         // Set DssVestMintable wards slot n. 0 to override address(this) wards
         hevm.store(address(mVest), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(wards)));
         assert(mVest.wards(address(this)) == wards);
     }
-    function mutusr(uint256 id) public clock(1 days) {
+    function mutusr(uint256 id) private clock(1 days) {
         id = mVest.ids() == 0 ? 0 : id % mVest.ids();
         if (id == 0) return;
         _mutusr(id);
@@ -362,7 +362,7 @@ contract DssVestMintableEchidnaTest {
         hevm.store(address(mVest), keccak256(abi.encode(uint256(id), uint256(1))), bytesToBytes32(abi.encodePacked(uint48(mVest.clf(id)), uint48(mVest.bgn(id)), usr)));
         assert(mVest.usr(id) == usr);
     }
-    function mutcap(uint256 bump) public clock(90 days) {
+    function mutcap(uint256 bump) private clock(90 days) {
         bump %= MAX;
         if (bump == 0) return;
         uint256 data = bump > MIN ? bump * WAD / YEAR : MIN * WAD / YEAR;
