@@ -195,16 +195,16 @@ contract DssVestTransferrableEchidnaTest {
         } catch Error(string memory errmsg) {
             bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
-                uint256(tLocked) == 1                                                 && cmpStr(errmsg, "DssVest/system-locked")               ||
-                award.usr == address(0)                                               && cmpStr(errmsg, "DssVest/invalid-award")               ||
-                award.res !=0 && award.usr != address(this)                           && cmpStr(errmsg, "DssVest/only-user-can-claim")         ||
-                accruedAmt - award.rxd > accruedAmt                                   && cmpStr(errmsg, "DssVest/sub-underflow")               ||
-                award.fin - award.bgn > award.fin                                     && cmpStr(errmsg, "DssVest/sub-underflow")               ||
-                timeDelta > block.timestamp                                           && cmpStr(errmsg, "DssVest/sub-underflow")               ||
-                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot    && cmpStr(errmsg, "DssVest/mul-overflow")                ||
-                award.rxd + unpaidAmt < award.rxd                                     && cmpStr(errmsg, "DssVest/add-overflow")                ||
-                uint128(award.rxd + unpaidAmt) != (award.rxd + unpaidAmt)             && cmpStr(errmsg, "DssVest/uint128-overflow")            ||
-                gem.balanceOf(address(multisig)) < unpaidAmt                          && cmpStr(errmsg, "gem/insufficient-balance")            ||
+                uint256(tLocked) == 1                                                 && cmpStr(errmsg, "DssVest/system-locked")       ||
+                award.usr == address(0)                                               && cmpStr(errmsg, "DssVest/invalid-award")       ||
+                award.res !=0 && award.usr != address(this)                           && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
+                accruedAmt - award.rxd > accruedAmt                                   && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                award.fin - award.bgn > award.fin                                     && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta > block.timestamp                                           && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot    && cmpStr(errmsg, "DssVest/mul-overflow")        ||
+                award.rxd + unpaidAmt < award.rxd                                     && cmpStr(errmsg, "DssVest/add-overflow")        ||
+                uint128(award.rxd + unpaidAmt) != (award.rxd + unpaidAmt)             && cmpStr(errmsg, "DssVest/uint128-overflow")    ||
+                gem.balanceOf(address(multisig)) < unpaidAmt                          && cmpStr(errmsg, "gem/insufficient-balance")    ||
                 gem.allowance(address(multisig), address(tVest)) != type(uint256).max &&
                 gem.allowance(address(multisig), address(tVest)) < unpaidAmt          && cmpStr(errmsg, "gem/insufficient-allowance")
             );
@@ -252,16 +252,16 @@ contract DssVestTransferrableEchidnaTest {
         } catch Error(string memory errmsg) {
             bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
-                uint256(tLocked) == 1                                                 && cmpStr(errmsg, "DssVest/system-locked")               ||
-                award.usr == address(0)                                               && cmpStr(errmsg, "DssVest/invalid-award")               ||
-                award.res != 0 && award.usr != address(this)                          && cmpStr(errmsg, "DssVest/only-user-can-claim")         ||
-                accruedAmt - award.rxd > accruedAmt                                   && cmpStr(errmsg, "DssVest/sub-underflow")               ||
-                award.fin - award.bgn > award.fin                                     && cmpStr(errmsg, "DssVest/sub-underflow")               ||
-                timeDelta > block.timestamp                                           && cmpStr(errmsg, "DssVest/sub-underflow")               ||
-                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot    && cmpStr(errmsg, "DssVest/mul-overflow")                ||
-                award.rxd + amt < award.rxd                                           && cmpStr(errmsg, "DssVest/add-overflow")                ||
-                uint128(award.rxd + amt) != (award.rxd + amt)                         && cmpStr(errmsg, "DssVest/uint128-overflow")            ||
-                gem.balanceOf(address(multisig)) < amt                                && cmpStr(errmsg, "gem/insufficient-balance")            ||
+                uint256(tLocked) == 1                                                 && cmpStr(errmsg, "DssVest/system-locked")       ||
+                award.usr == address(0)                                               && cmpStr(errmsg, "DssVest/invalid-award")       ||
+                award.res != 0 && award.usr != address(this)                          && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
+                accruedAmt - award.rxd > accruedAmt                                   && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                award.fin - award.bgn > award.fin                                     && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta > block.timestamp                                           && cmpStr(errmsg, "DssVest/sub-underflow")       ||
+                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot    && cmpStr(errmsg, "DssVest/mul-overflow")        ||
+                award.rxd + amt < award.rxd                                           && cmpStr(errmsg, "DssVest/add-overflow")        ||
+                uint128(award.rxd + amt) != (award.rxd + amt)                         && cmpStr(errmsg, "DssVest/uint128-overflow")    ||
+                gem.balanceOf(address(multisig)) < amt                                && cmpStr(errmsg, "gem/insufficient-balance")    ||
                 gem.allowance(address(multisig), address(tVest)) != type(uint256).max &&
                 gem.allowance(address(multisig), address(tVest)) < amt                && cmpStr(errmsg, "gem/insufficient-allowance")
             );
