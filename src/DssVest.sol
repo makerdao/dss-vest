@@ -34,6 +34,7 @@ interface DaiJoinLike {
 interface VatLike {
     function hope(address) external;
     function suck(address, address, uint256) external;
+    function live() external view returns (uint256);
 }
 
 interface TokenLike {
@@ -407,7 +408,7 @@ contract DssVestMintable is DssVest {
         @param _gem The contract address of the mintable token
     */
     constructor(address _gem) public DssVest() {
-        require(_gem != address(0), "DssVest/Invalid-token-address");
+        require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
 
@@ -434,7 +435,7 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _chainlog) public DssVest() {
-        require(_chainlog != address(0), "DssVest/Invalid-chainlog-address");
+        require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
         DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
@@ -448,6 +449,7 @@ contract DssVestSuckable is DssVest {
         @param _amt The amount of Dai to send to the _guy [WAD]
     */
     function pay(address _guy, uint256 _amt) override internal {
+        require(vat.live() == 1, "DssVestSuckable/vat-not-live");
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
     }
@@ -469,8 +471,8 @@ contract DssVestTransferrable is DssVest {
         @param _gem  The token to be distributed
     */
     constructor(address _czar, address _gem) public DssVest() {
-        require(_czar != address(0), "DssVest/Invalid-distributor-address");
-        require(_gem  != address(0), "DssVest/Invalid-token-address");
+        require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
+        require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
         gem  = TokenLike(_gem);
     }
@@ -481,6 +483,6 @@ contract DssVestTransferrable is DssVest {
         @param _amt The amount of gem to send to the _guy (in native token units)
     */
     function pay(address _guy, uint256 _amt) override internal {
-        require(gem.transferFrom(czar, _guy, _amt));
+        require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
     }
 }

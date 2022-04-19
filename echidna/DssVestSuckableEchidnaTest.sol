@@ -2,7 +2,7 @@
 
 pragma solidity 0.6.12;
 
-import {DssVestSuckable} from "../src/DssVest.sol";
+import {DssVest, DssVestSuckable} from "../src/DssVest.sol";
 import        {ChainLog} from "./ChainLog.sol";
 import             {Vat} from "./Vat.sol";
 import         {DaiJoin} from "./DaiJoin.sol";
@@ -11,17 +11,6 @@ import             {Dai} from "./Dai.sol";
 interface Hevm {
     function store(address, bytes32, bytes32) external;
     function load(address, bytes32) external returns (bytes32);
-}
-
-struct Award {
-    address usr;   // Vesting recipient
-    uint48  bgn;   // Start of vesting period  [timestamp]
-    uint48  clf;   // The cliff date           [timestamp]
-    uint48  fin;   // End of vesting period    [timestamp]
-    address mgr;   // A manager address that can yank
-    uint8   res;   // Restricted
-    uint128 tot;   // Total reward amount
-    uint128 rxd;   // Amount of vest claimed
 }
 
 contract DssVestSuckableEchidnaTest {
@@ -75,15 +64,11 @@ contract DssVestSuckableEchidnaTest {
     }
 
     // --- Math ---
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
     }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x - y;
-        assert(z <= x); // check if there is a subtraction overflow
-    }
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x * y;
         assert(y == 0 || z / y == x);
     }
@@ -138,13 +123,13 @@ contract DssVestSuckableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = sVest.ids();
         try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(sVest.ids() == add(prevId, 1));
+            assert(sVest.ids() == _add(prevId, 1));
             assert(sVest.ids() == id);
             assert(sVest.valid(id));
             assert(sVest.usr(id) == usr);
             assert(sVest.bgn(id) == toUint48(bgn));
-            assert(sVest.clf(id) == toUint48(add(bgn, eta)));
-            assert(sVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(sVest.clf(id) == toUint48(_add(bgn, eta)));
+            assert(sVest.fin(id) == toUint48(_add(bgn, tau)));
             assert(sVest.tot(id) == toUint128(tot));
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
@@ -180,7 +165,7 @@ contract DssVestSuckableEchidnaTest {
 
     function vest(uint256 id) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: sVest.usr(id),
             bgn: toUint48(sVest.bgn(id)),
             clf: toUint48(sVest.clf(id)),
@@ -208,26 +193,27 @@ contract DssVestSuckableEchidnaTest {
                     assert(sVest.rxd(id) == award.tot);
                 }
                 else {
-                    assert(sVest.rxd(id) == toUint128(add(award.rxd, unpaidAmt)));
+                    assert(sVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
-                assert(vat.sin(vow) == add(sinBefore, mul(unpaidAmt, RAY)));
-                assert(dai.totalSupply() == add(supplyBefore, unpaidAmt));
-                assert(dai.balanceOf(award.usr) == add(usrBalanceBefore, unpaidAmt));
+                assert(vat.sin(vow) == _add(sinBefore, _mul(unpaidAmt, RAY)));
+                assert(dai.totalSupply() == _add(supplyBefore, unpaidAmt));
+                assert(dai.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
-                uint256(sLocked) == 1                                              && cmpStr(errmsg, "DssVest/system-locked")       ||
-                award.usr == address(0)                                            && cmpStr(errmsg, "DssVest/invalid-award")       ||
-                award.res != 0 && award.usr != address(this)                       && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
-                accruedAmt - award.rxd > accruedAmt                                && cmpStr(errmsg, "DssVest/sub-underflow")       ||
-                award.fin - award.bgn > award.fin                                  && cmpStr(errmsg, "DssVest/sub-underflow")       ||
-                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")       ||
-                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot && cmpStr(errmsg, "DssVest/mul-overflow")        ||
-                award.rxd + unpaidAmt < award.rxd                                  && cmpStr(errmsg, "DssVest/add-overflow")        ||
-                uint128(award.rxd + unpaidAmt) != (award.rxd + unpaidAmt)          && cmpStr(errmsg, "DssVest/uint128-overflow")    ||
-                unpaidAmt * RAY / RAY != unpaidAmt                                 && cmpStr(errmsg, "DssVest/mul-overflow")        ||
-                daiJoin.live() == 0                                                && cmpStr(errmsg, "DaiJoin/not-live")            ||
+                uint256(sLocked) == 1                                              && cmpStr(errmsg, "DssVest/system-locked")        ||
+                award.usr == address(0)                                            && cmpStr(errmsg, "DssVest/invalid-award")        ||
+                award.res != 0 && award.usr != address(this)                       && cmpStr(errmsg, "DssVest/only-user-can-claim")  ||
+                accruedAmt - award.rxd > accruedAmt                                && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                award.fin - award.bgn > award.fin                                  && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot && cmpStr(errmsg, "DssVest/mul-overflow")         ||
+                award.rxd + unpaidAmt < award.rxd                                  && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                uint128(award.rxd + unpaidAmt) != (award.rxd + unpaidAmt)          && cmpStr(errmsg, "DssVest/uint128-overflow")     ||
+                vat.live() == 0                                                    && cmpStr(errmsg, "DssVestSuckable/vat-not-live") ||
+                unpaidAmt * RAY / RAY != unpaidAmt                                 && cmpStr(errmsg, "DssVest/mul-overflow")         ||
+                daiJoin.live() == 0                                                && cmpStr(errmsg, "DaiJoin/not-live")             ||
                 vat.can(address(sVest), address(daiJoin)) != 1                     && cmpStr(errmsg, "Vat/not-allowed")
             );
         } catch {
@@ -246,7 +232,7 @@ contract DssVestSuckableEchidnaTest {
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = sVest.ids() == 0 ? id : id % sVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: sVest.usr(id),
             bgn: toUint48(sVest.bgn(id)),
             clf: toUint48(sVest.clf(id)),
@@ -271,25 +257,26 @@ contract DssVestSuckableEchidnaTest {
                 assert(dai.balanceOf(award.usr) == usrBalanceBefore);
             }
             else {
-                assert(sVest.rxd(id) == toUint128(add(award.rxd, amt)));
-                assert(vat.sin(vow) == add(sinBefore, mul(amt, RAY)));
-                assert(dai.totalSupply() == add(supplyBefore, amt));
-                assert(dai.balanceOf(award.usr) == add(usrBalanceBefore, amt));
+                assert(sVest.rxd(id) == toUint128(_add(award.rxd, amt)));
+                assert(vat.sin(vow) == _add(sinBefore, _mul(amt, RAY)));
+                assert(dai.totalSupply() == _add(supplyBefore, amt));
+                assert(dai.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4
             assert(
-                uint256(sLocked) == 1                                              && cmpStr(errmsg, "DssVest/system-locked")       ||
-                award.usr == address(0)                                            && cmpStr(errmsg, "DssVest/invalid-award")       ||
-                award.res != 0 && award.usr != address(this)                       && cmpStr(errmsg, "DssVest/only-user-can-claim") ||
-                accruedAmt - award.rxd > accruedAmt                                && cmpStr(errmsg, "DssVest/sub-underflow")       ||
-                award.fin - award.bgn > award.fin                                  && cmpStr(errmsg, "DssVest/sub-underflow")       ||
-                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")       ||
-                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot && cmpStr(errmsg, "DssVest/mul-overflow")        ||
-                award.rxd + amt < award.rxd                                        && cmpStr(errmsg, "DssVest/add-overflow")        ||
-                uint128(award.rxd + amt) != (award.rxd + amt)                      && cmpStr(errmsg, "DssVest/uint128-overflow")    ||
-                amt * RAY / RAY != amt                                             && cmpStr(errmsg, "DssVest/mul-overflow")        ||
-                daiJoin.live() == 0                                                && cmpStr(errmsg, "DaiJoin/not-live")            ||
+                uint256(sLocked) == 1                                              && cmpStr(errmsg, "DssVest/system-locked")        ||
+                award.usr == address(0)                                            && cmpStr(errmsg, "DssVest/invalid-award")        ||
+                award.res != 0 && award.usr != address(this)                       && cmpStr(errmsg, "DssVest/only-user-can-claim")  ||
+                accruedAmt - award.rxd > accruedAmt                                && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                award.fin - award.bgn > award.fin                                  && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                timeDelta > block.timestamp                                        && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                timeDelta != 0 && (award.tot * timeDelta) / timeDelta != award.tot && cmpStr(errmsg, "DssVest/mul-overflow")         ||
+                award.rxd + amt < award.rxd                                        && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                uint128(award.rxd + amt) != (award.rxd + amt)                      && cmpStr(errmsg, "DssVest/uint128-overflow")     ||
+                vat.live() == 0                                                    && cmpStr(errmsg, "DssVestSuckable/vat-not-live") ||
+                amt * RAY / RAY != amt                                             && cmpStr(errmsg, "DssVest/mul-overflow")         ||
+                daiJoin.live() == 0                                                && cmpStr(errmsg, "DaiJoin/not-live")             ||
                 vat.can(address(sVest), address(daiJoin)) != 1                     && cmpStr(errmsg, "Vat/not-allowed")
             );
         } catch {
@@ -359,7 +346,7 @@ contract DssVestSuckableEchidnaTest {
                     assert(sVest.clf(id) == end);
                     assert(sVest.tot(id) == 0);
                 } else {
-                    assert(sVest.tot(id) == toUint128(add(unpaidAmt, rxd)));
+                    assert(sVest.tot(id) == toUint128(_add(unpaidAmt, rxd)));
                 }
             }
         } catch Error(string memory errmsg) {
@@ -400,17 +387,27 @@ contract DssVestSuckableEchidnaTest {
 
     // --- Time-Based Fuzz Mutations ---
 
-    function mutlock() public clock(1 hours) {
-        // Set DssVestSuckable locked slot n. 4 to override 0 with 1
-        hevm.store(address(sVest), bytes32(uint256(4)), bytes32(uint256(1)));
+    function mutlock() private clock(1 hours) {
+        bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));          // Load memory slot 0x4
+        uint256 locked = uint256(sLocked) == 0 ? 1 : 0;
+        // Set DssVestSuckable locked slot n. 4 to override 0 with 1 and vice versa
+        hevm.store(address(sVest), bytes32(uint256(4)), bytes32(uint256(locked)));
+        sLocked = hevm.load(address(sVest), bytes32(uint256(4)));
+        assert(uint256(sLocked) == locked);
     }
-    function mutauth() public clock(1 hours) {
+    function mutauth() private clock(1 hours) {
         uint256 wards = sVest.wards(address(this)) == 1 ? 0 : 1;
         // Set DssVestSuckable wards slot n. 0 to override address(this) wards
         hevm.store(address(sVest), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(wards)));
         assert(sVest.wards(address(this)) == wards);
     }
-    function mutusr(uint256 id) public clock(1 days) {
+    function mutlive() private clock(1 hours) {
+        uint256 live = vat.live() == 1 ? 0 : 1;
+        // Set Vat live slot n. 10 to override 1 with 0 and vice versa
+        hevm.store(address(vat), bytes32(uint256(10)), bytes32(uint256(live)));
+        assert(vat.live() == live);
+    }
+    function mutusr(uint256 id) private clock(1 days) {
         id = sVest.ids() == 0 ? 0 : id % sVest.ids();
         if (id == 0) return;
         _mutusr(id);
@@ -421,7 +418,7 @@ contract DssVestSuckableEchidnaTest {
         hevm.store(address(sVest), keccak256(abi.encode(uint256(id), uint256(1))), bytesToBytes32(abi.encodePacked(uint48(sVest.clf(id)), uint48(sVest.bgn(id)), usr)));
         assert(sVest.usr(id) == usr);
     }
-    function mutcap(uint256 bump) public clock(90 days) {
+    function mutcap(uint256 bump) private clock(90 days) {
         bump %= MAX;
         if (bump == 0) return;
         uint256 data = bump > MIN ? bump * WAD / TIME : MIN * WAD / TIME;

@@ -2,23 +2,12 @@
 
 pragma solidity 0.6.12;
 
-import {DssVestTransferrable} from "../src/DssVest.sol";
+import {DssVest, DssVestTransferrable} from "../src/DssVest.sol";
 import                  {Dai} from "./Dai.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;
     function load(address, bytes32) external returns (bytes32);
-}
-
-struct Award {
-    address usr;   // Vesting recipient
-    uint48  bgn;   // Start of vesting period  [timestamp]
-    uint48  clf;   // The cliff date           [timestamp]
-    uint48  fin;   // End of vesting period    [timestamp]
-    address mgr;   // A manager address that can yank
-    uint8   res;   // Restricted
-    uint128 tot;   // Total reward amount
-    uint128 rxd;   // Amount of vest claimed
 }
 
 /// @dev A contract that will receive Dai, and allows for it to be retrieved.
@@ -69,17 +58,13 @@ contract DssVestTransferrableEchidnaTest {
     }
 
     // --- Math ---
-    function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x + y;
         assert(z >= x); // check if there is an addition overflow
     }
-    function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
+    function _sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x - y;
         assert(z <= x); // check if there is a subtraction overflow
-    }
-    function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
-        z = x * y;
-        assert(y == 0 || z / y == x);
     }
     function toUint8(uint256 x) internal pure returns (uint8 z) {
         z = uint8(x);
@@ -132,13 +117,13 @@ contract DssVestTransferrableEchidnaTest {
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = tVest.ids();
         try tVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
-            assert(tVest.ids() == add(prevId, 1));
+            assert(tVest.ids() == _add(prevId, 1));
             assert(tVest.ids() == id);
             assert(tVest.valid(id));
             assert(tVest.usr(id) == usr);
             assert(tVest.bgn(id) == toUint48(bgn));
-            assert(tVest.clf(id) == toUint48(add(bgn, eta)));
-            assert(tVest.fin(id) == toUint48(add(bgn, tau)));
+            assert(tVest.clf(id) == toUint48(_add(bgn, eta)));
+            assert(tVest.fin(id) == toUint48(_add(bgn, tau)));
             assert(tVest.tot(id) == toUint128(tot));
             assert(tVest.rxd(id) == 0);
             assert(tVest.mgr(id) == mgr);
@@ -174,7 +159,7 @@ contract DssVestTransferrableEchidnaTest {
 
     function vest(uint256 id) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: tVest.usr(id),
             bgn: toUint48(tVest.bgn(id)),
             clf: toUint48(tVest.clf(id)),
@@ -201,10 +186,10 @@ contract DssVestTransferrableEchidnaTest {
                     assert(tVest.rxd(id) == award.tot);
                 }
                 else {
-                    assert(tVest.rxd(id) == toUint128(add(award.rxd, unpaidAmt)));
+                    assert(tVest.rxd(id) == toUint128(_add(award.rxd, unpaidAmt)));
                 }
-                assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, unpaidAmt));
-                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, unpaidAmt));
+                assert(gem.balanceOf(address(multisig)) == _sub(msigBalanceBefore, unpaidAmt));
+                assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, unpaidAmt));
             }
             assert(gem.totalSupply() == supplyBefore);
         } catch Error(string memory errmsg) {
@@ -235,7 +220,7 @@ contract DssVestTransferrableEchidnaTest {
 
     function vest_amt(uint256 id, uint256 maxAmt) public {
         id = tVest.ids() == 0 ? id : id % tVest.ids();
-        Award memory award = Award({
+        DssVest.Award memory award = DssVest.Award({
             usr: tVest.usr(id),
             bgn: toUint48(tVest.bgn(id)),
             clf: toUint48(tVest.clf(id)),
@@ -259,9 +244,9 @@ contract DssVestTransferrableEchidnaTest {
                 assert(gem.balanceOf(award.usr) == usrBalanceBefore);
             }
             else {
-                assert(tVest.rxd(id) == toUint128(add(award.rxd, amt)));
-                assert(gem.balanceOf(address(multisig)) == sub(msigBalanceBefore, amt));
-                assert(gem.balanceOf(award.usr) == add(usrBalanceBefore, amt));
+                assert(tVest.rxd(id) == toUint128(_add(award.rxd, amt)));
+                assert(gem.balanceOf(address(multisig)) == _sub(msigBalanceBefore, amt));
+                assert(gem.balanceOf(award.usr) == _add(usrBalanceBefore, amt));
             }
             assert(gem.totalSupply() == supplyBefore);
         } catch Error(string memory errmsg) {
@@ -343,7 +328,7 @@ contract DssVestTransferrableEchidnaTest {
                     assert(tVest.clf(id) == end);
                     assert(tVest.tot(id) == 0);
                 } else {
-                    assert(tVest.tot(id) == toUint128(add(unpaidAmt, rxd)));
+                    assert(tVest.tot(id) == toUint128(_add(unpaidAmt, rxd)));
                 }
             }
         } catch Error(string memory errmsg) {
@@ -384,17 +369,21 @@ contract DssVestTransferrableEchidnaTest {
 
     // --- Time-Based Fuzz Mutations ---
 
-    function mutlock() public clock(1 hours) {
-        // Set DssVestTransferrable locked slot n. 4 to override 0 with 1
-        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(1)));
+    function mutlock() private clock(1 hours) {
+        bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));          // Load memory slot 0x4
+        uint256 locked = uint256(tLocked) == 0 ? 1 : 0;
+        // Set DssVestTransferrable locked slot n. 4 to override 0 with 1 and vice versa
+        hevm.store(address(tVest), bytes32(uint256(4)), bytes32(uint256(locked)));
+        tLocked = hevm.load(address(tVest), bytes32(uint256(4)));
+        assert(uint256(tLocked) == locked);
     }
-    function mutauth() public clock(1 hours) {
+    function mutauth() private clock(1 hours) {
         uint256 wards = tVest.wards(address(this)) == 1 ? 0 : 1;
         // Set DssVestTransferrable wards slot n. 0 to override address(this) wards
         hevm.store(address(tVest), keccak256(abi.encode(address(this), uint256(0))), bytes32(uint256(wards)));
         assert(tVest.wards(address(this)) == wards);
     }
-    function mutusr(uint256 id) public clock(1 days) {
+    function mutusr(uint256 id) private clock(1 days) {
         id = tVest.ids() == 0 ? 0 : id % tVest.ids();
         if (id == 0) return;
         _mutusr(id);
@@ -405,7 +394,7 @@ contract DssVestTransferrableEchidnaTest {
         hevm.store(address(tVest), keccak256(abi.encode(uint256(id), uint256(1))), bytesToBytes32(abi.encodePacked(uint48(tVest.clf(id)), uint48(tVest.bgn(id)), usr)));
         assert(tVest.usr(id) == usr);
     }
-    function mutcap(uint256 bump) public clock(90 days) {
+    function mutcap(uint256 bump) private clock(90 days) {
         bump %= MAX;
         if (bump == 0) return;
         uint256 data = bump > MIN ? bump * WAD / TIME : MIN * WAD / TIME;

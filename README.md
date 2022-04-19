@@ -34,6 +34,8 @@ After deployment, governance must set the `cap` value using the `file` function.
 
 Pass the MCD [chainlog](https://github.com/makerdao/dss-chain-log) address to the constructor to set up the contract for scheduled Dai `suck`s. Note: this contract must be given authority to `suck()` Dai from the `vat`'s surplus buffer.
 
+A `vat.live` check is introduced to disable `vest()` in the event of Emergency Shutdown (aka Global Settlement).
+
 After deployment, governance must set the `cap` value using the `file` function.
 
 #### DssVestTransferrable
@@ -105,13 +107,13 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Install Echidna v1.7.3
+- Install Echidna v2.0.0
   ```
-  $ nix-env -i -f https://github.com/crytic/echidna/archive/v1.7.3.tar.gz
+  $ nix-env -i -f https://github.com/crytic/echidna/archive/v2.0.0.tar.gz
   ```
-- Install Echidna v1.7.3 via [echidnup](https://github.com/naszam/echidnup#installing)
+- Install Echidna v2.0.0 via [echidnup](https://github.com/naszam/echidnup#installing)
   ```
-  $ echidnup v1.7.3
+  $ echidnup v2.0.0
   ```
 
 ### Local Dependencies
