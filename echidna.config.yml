@@ -1,7 +1,7 @@
 #format can be "text" or "json" for different output (human or machine readable)
 #format: "text"
-#checkAsserts checks assertions
-checkAsserts: true
+#select the mode to test, which can be property, assertion, overflow, exploration, optimization
+testMode: "assertion"
 #testLimit is the number of test sequences to run
 testLimit: 1000000
 #seqLen defines how many transactions are in a test sequence
