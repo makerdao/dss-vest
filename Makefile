@@ -1,6 +1,7 @@
-all    :; DAPP_BUILD_OPTIMIZE=1 DAPP_BUILD_OPTIMIZE_RUNS=200 dapp --use solc:0.6.12 build
-clean  :; dapp clean && rm -rf crytic-export corpus
-test   :; make && ./test.sh $(match)
+all    				  :; DAPP_BUILD_OPTIMIZE=1 DAPP_BUILD_OPTIMIZE_RUNS=200 dapp --use solc:0.6.12 build
+clean  				  :; dapp clean && rm -rf crytic-export corpus
+test   				  :; make && ./test.sh $(match)
+test-forge 	 		  :; ./test-forge.sh match="$(match)" block="$(block)" match-test="$(match-test)" match-contract="$(match-contract)"
 solc-select           :; pip3 install solc-select && solc-select install 0.6.12
 echidna-mintable      :; ./echidna/echidna.sh mintable
 echidna-suckable      :; ./echidna/echidna.sh suckable
