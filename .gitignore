@@ -1,5 +1,8 @@
 /out
 
+# forge
+cache/
+
 # echidna
 crytic-export/
 corpus/
