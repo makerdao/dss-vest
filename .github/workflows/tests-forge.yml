@@ -12,7 +12,7 @@ jobs:
           version: nightly
 
       - name: Install Dependencies
-        run: forge install
+        run: git submodule update --init --recursive
 
       - name: Run tests
         run: forge test -v --force --fork-url ${{ secrets.ETH_RPC_URL }} --use 0.6.12
