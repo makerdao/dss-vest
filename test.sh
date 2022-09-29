@@ -17,26 +17,30 @@ do
     esac
 done
 
+export DAPP_BUILD_OPTIMIZE=1
+export DAPP_BUILD_OPTIMIZE_RUNS=200
+export FOUNDRY_SOLC=0.6.12
+
 if [[ -z "$MATCH" && -z "$BLOCK" && -z "$MATCH_TEST" && -z "$MATCH_CONTRACT" ]]; then
-    forge test --fork-url "$ETH_RPC_URL" -vv --force --use 0.6.12
+    forge test --fork-url "$ETH_RPC_URL" -vv --force
 elif [[ -z "$MATCH" && -z "$MATCH_TEST" && -z "$MATCH_CONTRACT" ]]; then
-    forge test --fork-url "$ETH_RPC_URL" --fork-block-number "$BLOCK" -vv --force --use 0.6.12
+    forge test --fork-url "$ETH_RPC_URL" --fork-block-number "$BLOCK" -vv --force
 else
     if [[ -n "$BLOCK" ]]; then
         if [[ -n "$MATCH" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" --fork-block-number "$BLOCK" -vvv --force --use 0.6.12
+            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" --fork-block-number "$BLOCK" -vvv --force
         elif [[ -n "$MATCH_TEST" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" --fork-block-number "$BLOCK" -vvv --force --use 0.6.12
+            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" --fork-block-number "$BLOCK" -vvv --force
         else
-            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" --fork-block-number "$BLOCK" -vvv --force --use 0.6.12
+            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" --fork-block-number "$BLOCK" -vvv --force
         fi
     else
         if [[ -n "$MATCH" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" -vvv --force --use 0.6.12
+            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" -vvv --force
         elif [[ -n "$MATCH_TEST" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" -vvv --force --use 0.6.12
+            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" -vvv --force
         else
-            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" -vvv --force --use 0.6.12
+            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" -vvv --force
         fi
     fi
 fi
