@@ -22,25 +22,25 @@ export DAPP_BUILD_OPTIMIZE_RUNS=200
 export FOUNDRY_SOLC=0.6.12
 
 if [[ -z "$MATCH" && -z "$BLOCK" && -z "$MATCH_TEST" && -z "$MATCH_CONTRACT" ]]; then
-    forge test --fork-url "$ETH_RPC_URL" -vv --force
+    forge test --fork-url "$ETH_RPC_URL" -vvv
 elif [[ -z "$MATCH" && -z "$MATCH_TEST" && -z "$MATCH_CONTRACT" ]]; then
-    forge test --fork-url "$ETH_RPC_URL" --fork-block-number "$BLOCK" -vv --force
+    forge test --fork-url "$ETH_RPC_URL" --fork-block-number "$BLOCK" -vvv
 else
     if [[ -n "$BLOCK" ]]; then
         if [[ -n "$MATCH" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" --fork-block-number "$BLOCK" -vvv --force
+            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" --fork-block-number "$BLOCK" -vvvv
         elif [[ -n "$MATCH_TEST" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" --fork-block-number "$BLOCK" -vvv --force
+            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" --fork-block-number "$BLOCK" -vvvv
         else
-            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" --fork-block-number "$BLOCK" -vvv --force
+            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" --fork-block-number "$BLOCK" -vvvv
         fi
     else
         if [[ -n "$MATCH" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" -vvv --force
+            forge test --fork-url "$ETH_RPC_URL" --match "$MATCH" -vvvv
         elif [[ -n "$MATCH_TEST" ]]; then
-            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" -vvv --force
+            forge test --fork-url "$ETH_RPC_URL" --match-test "$MATCH_TEST" -vvvv
         else
-            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" -vvv --force
+            forge test --fork-url "$ETH_RPC_URL" --match-contract "$MATCH_CONTRACT" -vvvv
         fi
     fi
 fi
