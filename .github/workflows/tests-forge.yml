@@ -4,7 +4,8 @@ jobs:
   tests:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repository
+        uses: actions/checkout@v3
 
       - name: Install Foundry
         uses: foundry-rs/foundry-toolchain@v1
@@ -15,4 +16,6 @@ jobs:
         run: git submodule update --init --recursive
 
       - name: Run tests
-        run: forge test -v --force --fork-url ${{ secrets.ETH_RPC_URL }} --use 0.6.12
+        run: make test-forge
+        env:
+          ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
