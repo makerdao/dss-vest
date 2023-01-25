@@ -2,6 +2,10 @@
 .env
 settings.json
 
+# yarn
+node_modules
+*.log
+
 # forge
 cache/
 

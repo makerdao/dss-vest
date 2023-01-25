@@ -1,0 +1,14 @@
+{
+  "name": "dss-vest",
+  "version": "1.2.0",
+  "description": "adds erc2771 to dss-vest",
+  "main": "src/DssVest.sol",
+  "repository": "git@github.com:corpus-io/dss-vest.git",
+  "author": "malteish <malteish@corpus.io>",
+  "license": "AGPL-3.0-or-later",
+  "private": false,
+  "dependencies": {
+    "@opengsn/contracts": "2.2.5",
+    "@openzeppelin/contracts": "4.8.1"
+  }
+}
