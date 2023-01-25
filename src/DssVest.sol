@@ -114,7 +114,7 @@ abstract contract DssVest {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor() public {
+    constructor() {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
@@ -407,7 +407,7 @@ contract DssVestMintable is DssVest {
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
     */
-    constructor(address _gem) public DssVest() {
+    constructor(address _gem) DssVest() {
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
@@ -434,7 +434,7 @@ contract DssVestSuckable is DssVest {
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
-    constructor(address _chainlog) public DssVest() {
+    constructor(address _chainlog) DssVest() {
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
@@ -470,7 +470,7 @@ contract DssVestTransferrable is DssVest {
         @param _czar The owner of the tokens to be distributed
         @param _gem  The token to be distributed
     */
-    constructor(address _czar, address _gem) public DssVest() {
+    constructor(address _czar, address _gem) DssVest() {
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
