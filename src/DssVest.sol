@@ -117,8 +117,8 @@ abstract contract DssVest is ERC2771Context {
         @dev Base vesting logic contract constructor
     */
     constructor(address _trustedForwarder) ERC2771Context(_trustedForwarder) {
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
+        wards[_msgSender()] = 1;
+        emit Rely(_msgSender());
     }
 
     // --- Mutex ---
@@ -131,7 +131,7 @@ abstract contract DssVest is ERC2771Context {
 
     // --- Auth ---
     modifier auth {
-        require(wards[msg.sender] == 1, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1, "DssVest/not-authorized");
         _;
     }
 
@@ -234,7 +234,7 @@ abstract contract DssVest is ERC2771Context {
     function _vest(uint256 _id, uint256 _maxAmt) internal lock {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
-        require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
+        require(_award.res == 0 || _award.usr == _msgSender(), "DssVest/only-user-can-claim");
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         amt = min(amt, _maxAmt);
         awards[_id].rxd = toUint128(add(_award.rxd, amt));
@@ -303,7 +303,7 @@ abstract contract DssVest is ERC2771Context {
     function restrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
-        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1 || usr_ == _msgSender(), "DssVest/not-authorized");
         awards[_id].res = 1;
         emit Restrict(_id);
     }
@@ -315,7 +315,7 @@ abstract contract DssVest is ERC2771Context {
     function unrestrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
-        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1 || usr_ == _msgSender(), "DssVest/not-authorized");
         awards[_id].res = 0;
         emit Unrestrict(_id);
     }
@@ -343,7 +343,7 @@ abstract contract DssVest is ERC2771Context {
         @param _end A scheduled time to end the vest
     */
     function _yank(uint256 _id, uint256 _end) internal lock {
-        require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1 || awards[_id].mgr == _msgSender(), "DssVest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
         if (_end < block.timestamp) {
@@ -378,7 +378,7 @@ abstract contract DssVest is ERC2771Context {
         @param _dst The address to send ownership of the contract to
     */
     function move(uint256 _id, address _dst) external lock {
-        require(awards[_id].usr == msg.sender, "DssVest/only-user-can-move");
+        require(awards[_id].usr == _msgSender(), "DssVest/only-user-can-move");
         require(_dst != address(0), "DssVest/zero-address-invalid");
         awards[_id].usr = _dst;
         emit Move(_id, _dst);
