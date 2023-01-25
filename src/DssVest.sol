@@ -19,6 +19,8 @@
 
 pragma solidity 0.8.17;
 
+import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+
 interface MintLike {
     function mint(address, uint256) external;
 }
@@ -41,7 +43,7 @@ interface TokenLike {
     function transferFrom(address, address, uint256) external returns (bool);
 }
 
-abstract contract DssVest {
+abstract contract DssVest is ERC2771Context {
     // --- Data ---
     mapping (address => uint256) public wards;
 
@@ -114,9 +116,9 @@ abstract contract DssVest {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor() {
-        wards[msg.sender] = 1;
-        emit Rely(msg.sender);
+    constructor(address _trustedForwarder) ERC2771Context(_trustedForwarder) {
+        wards[_msgSender()] = 1;
+        emit Rely(_msgSender());
     }
 
     // --- Mutex ---
@@ -129,7 +131,7 @@ abstract contract DssVest {
 
     // --- Auth ---
     modifier auth {
-        require(wards[msg.sender] == 1, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1, "DssVest/not-authorized");
         _;
     }
 
@@ -232,7 +234,7 @@ abstract contract DssVest {
     function _vest(uint256 _id, uint256 _maxAmt) internal lock {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
-        require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
+        require(_award.res == 0 || _award.usr == _msgSender(), "DssVest/only-user-can-claim");
         uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
         amt = min(amt, _maxAmt);
         awards[_id].rxd = toUint128(add(_award.rxd, amt));
@@ -301,7 +303,7 @@ abstract contract DssVest {
     function restrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
-        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1 || usr_ == _msgSender(), "DssVest/not-authorized");
         awards[_id].res = 1;
         emit Restrict(_id);
     }
@@ -313,7 +315,7 @@ abstract contract DssVest {
     function unrestrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
-        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1 || usr_ == _msgSender(), "DssVest/not-authorized");
         awards[_id].res = 0;
         emit Unrestrict(_id);
     }
@@ -341,7 +343,7 @@ abstract contract DssVest {
         @param _end A scheduled time to end the vest
     */
     function _yank(uint256 _id, uint256 _end) internal lock {
-        require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "DssVest/not-authorized");
+        require(wards[_msgSender()] == 1 || awards[_id].mgr == _msgSender(), "DssVest/not-authorized");
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
         if (_end < block.timestamp) {
@@ -376,7 +378,7 @@ abstract contract DssVest {
         @param _dst The address to send ownership of the contract to
     */
     function move(uint256 _id, address _dst) external lock {
-        require(awards[_id].usr == msg.sender, "DssVest/only-user-can-move");
+        require(awards[_id].usr == _msgSender(), "DssVest/only-user-can-move");
         require(_dst != address(0), "DssVest/zero-address-invalid");
         awards[_id].usr = _dst;
         emit Move(_id, _dst);
@@ -407,7 +409,7 @@ contract DssVestMintable is DssVest {
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
     */
-    constructor(address _gem) DssVest() {
+    constructor(address _forwarder, address _gem) DssVest(_forwarder) {
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
@@ -434,7 +436,7 @@ contract DssVestSuckable is DssVest {
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
-    constructor(address _chainlog) DssVest() {
+    constructor(address _forwarder, address _chainlog) DssVest(_forwarder) {
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
@@ -470,7 +472,7 @@ contract DssVestTransferrable is DssVest {
         @param _czar The owner of the tokens to be distributed
         @param _gem  The token to be distributed
     */
-    constructor(address _czar, address _gem) DssVest() {
+    constructor(address _forwarder, address _czar, address _gem) DssVest(_forwarder) {
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;

@@ -2,6 +2,8 @@
 pragma solidity 0.8.17;
 
 import "ds-test/test.sol";
+import "@opengsn/contracts/src/forwarder/Forwarder.sol";
+
 
 import {DssVest, DssVestMintable, DssVestSuckable, DssVestTransferrable} from "./DssVest.sol";
 
@@ -84,6 +86,9 @@ contract DssVestTest is DSTest {
     // --- Hevm ---
     Hevm hevm;
 
+    // init forwarder
+    Forwarder forwarder = new Forwarder();
+
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE =
         bytes20(uint160(uint256(keccak256('hevm cheat code'))));
@@ -103,6 +108,8 @@ contract DssVestTest is DSTest {
     address                    VOW;
 
     function setUp() public {
+
+
         hevm = Hevm(address(CHEAT_CODE));
 
          chainlog = ChainlogLike(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F);
@@ -113,12 +120,12 @@ contract DssVestTest is DSTest {
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
-        mVest = new DssVestMintable(address(gem));
+        mVest = new DssVestMintable(address(forwarder), address(gem));
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(chainlog));
+        sVest = new DssVestSuckable(address(forwarder), address(chainlog));
         sVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
-        tVest = new DssVestTransferrable(address(boss), address(dai));
+        tVest = new DssVestTransferrable(address(forwarder), address(boss), address(dai));
         tVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss.gemApprove(address(dai), address(tVest));
 
@@ -149,7 +156,7 @@ contract DssVestTest is DSTest {
     }
 
     function testCost() public {
-        new DssVestMintable(address(gem));
+        new DssVestMintable(address(forwarder), address(gem));
     }
 
     function testInit() public {
