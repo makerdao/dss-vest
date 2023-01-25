@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.17;
 
 interface MintLike {
     function mint(address, uint256) external;
@@ -33,7 +33,9 @@ interface DaiJoinLike {
 
 interface VatLike {
     function hope(address) external;
+
     function suck(address, address, uint256) external;
+
     function live() external view returns (uint256);
 }
 
@@ -43,19 +45,19 @@ interface TokenLike {
 
 abstract contract DssVest {
     // --- Data ---
-    mapping (address => uint256) public wards;
+    mapping(address => uint256) public wards;
 
     struct Award {
-        address usr;   // Vesting recipient
-        uint48  bgn;   // Start of vesting period  [timestamp]
-        uint48  clf;   // The cliff date           [timestamp]
-        uint48  fin;   // End of vesting period    [timestamp]
-        address mgr;   // A manager address that can yank
-        uint8   res;   // Restricted
-        uint128 tot;   // Total reward amount
-        uint128 rxd;   // Amount of vest claimed
+        address usr; // Vesting recipient
+        uint48 bgn; // Start of vesting period  [timestamp]
+        uint48 clf; // The cliff date           [timestamp]
+        uint48 fin; // End of vesting period    [timestamp]
+        address mgr; // A manager address that can yank
+        uint8 res; // Restricted
+        uint128 tot; // Total reward amount
+        uint128 rxd; // Amount of vest claimed
     }
-    mapping (uint256 => Award) public awards;
+    mapping(uint256 => Award) public awards;
 
     uint256 public cap; // Maximum per-second issuance token rate
 
@@ -63,7 +65,7 @@ abstract contract DssVest {
 
     uint256 internal locked;
 
-    uint256 public constant  TWENTY_YEARS = 20 * 365 days;
+    uint256 public constant TWENTY_YEARS = 20 * 365 days;
 
     // --- Events ---
     event Rely(address indexed usr);
@@ -114,13 +116,13 @@ abstract contract DssVest {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor() public {
+    constructor() {
         wards[msg.sender] = 1;
         emit Rely(msg.sender);
     }
 
     // --- Mutex ---
-    modifier lock {
+    modifier lock() {
         require(locked == 0, "DssVest/system-locked");
         locked = 1;
         _;
@@ -128,7 +130,7 @@ abstract contract DssVest {
     }
 
     // --- Auth ---
-    modifier auth {
+    modifier auth() {
         require(wards[msg.sender] == 1, "DssVest/not-authorized");
         _;
     }
@@ -137,6 +139,7 @@ abstract contract DssVest {
         wards[_usr] = 1;
         emit Rely(_usr);
     }
+
     function deny(address _usr) external auth {
         wards[_usr] = 0;
         emit Deny(_usr);
@@ -148,7 +151,8 @@ abstract contract DssVest {
         @param data  The value to update (ex. cap of 1000 tokens/yr == 1000*WAD/365 days)
     */
     function file(bytes32 what, uint256 data) external lock auth {
-        if      (what == "cap")         cap = data;     // The maximum amount of tokens that can be streamed per-second per vest
+        if (what == "cap")
+            cap = data; // The maximum amount of tokens that can be streamed per-second per vest
         else revert("DssVest/file-unrecognized-param");
         emit File(what, data);
     }
@@ -156,18 +160,23 @@ abstract contract DssVest {
     function min(uint256 x, uint256 y) internal pure returns (uint256 z) {
         z = x > y ? y : x;
     }
+
     function add(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x + y) >= x, "DssVest/add-overflow");
     }
+
     function sub(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require((z = x - y) <= x, "DssVest/sub-underflow");
     }
+
     function mul(uint256 x, uint256 y) internal pure returns (uint256 z) {
         require(y == 0 || (z = x * y) / y == x, "DssVest/mul-overflow");
     }
+
     function toUint48(uint256 x) internal pure returns (uint48 z) {
         require((z = uint48(x)) == x, "DssVest/uint48-overflow");
     }
+
     function toUint128(uint256 x) internal pure returns (uint128 z) {
         require((z = uint128(x)) == x, "DssVest/uint128-overflow");
     }
@@ -182,16 +191,29 @@ abstract contract DssVest {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
-        require(_usr != address(0),                        "DssVest/invalid-user");
-        require(_tot > 0,                                  "DssVest/no-vest-total-amount");
-        require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
-        require(_bgn > sub(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-long-ago");
-        require(_tau > 0,                                  "DssVest/tau-zero");
-        require(_tot / _tau <= cap,                        "DssVest/rate-too-high");
-        require(_tau <= TWENTY_YEARS,                      "DssVest/tau-too-long");
-        require(_eta <= _tau,                              "DssVest/eta-too-long");
-        require(ids < type(uint256).max,                   "DssVest/ids-overflow");
+    function create(
+        address _usr,
+        uint256 _tot,
+        uint256 _bgn,
+        uint256 _tau,
+        uint256 _eta,
+        address _mgr
+    ) external lock auth returns (uint256 id) {
+        require(_usr != address(0), "DssVest/invalid-user");
+        require(_tot > 0, "DssVest/no-vest-total-amount");
+        require(
+            _bgn < add(block.timestamp, TWENTY_YEARS),
+            "DssVest/bgn-too-far"
+        );
+        require(
+            _bgn > sub(block.timestamp, TWENTY_YEARS),
+            "DssVest/bgn-too-long-ago"
+        );
+        require(_tau > 0, "DssVest/tau-zero");
+        require(_tot / _tau <= cap, "DssVest/rate-too-high");
+        require(_tau <= TWENTY_YEARS, "DssVest/tau-too-long");
+        require(_eta <= _tau, "DssVest/eta-too-long");
+        require(ids < type(uint256).max, "DssVest/ids-overflow");
 
         id = ++ids;
         awards[id] = Award({
@@ -232,8 +254,18 @@ abstract contract DssVest {
     function _vest(uint256 _id, uint256 _maxAmt) internal lock {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
-        require(_award.res == 0 || _award.usr == msg.sender, "DssVest/only-user-can-claim");
-        uint256 amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
+        require(
+            _award.res == 0 || _award.usr == msg.sender,
+            "DssVest/only-user-can-claim"
+        );
+        uint256 amt = unpaid(
+            block.timestamp,
+            _award.bgn,
+            _award.clf,
+            _award.fin,
+            _award.tot,
+            _award.rxd
+        );
         amt = min(amt, _maxAmt);
         awards[_id].rxd = toUint128(add(_award.rxd, amt));
         pay(_award.usr, amt);
@@ -259,7 +291,12 @@ abstract contract DssVest {
         @param _tot  The total amount of the contract
         @return amt  The accrued amount
     */
-    function accrued(uint256 _time, uint48 _bgn, uint48 _fin, uint128 _tot) internal pure returns (uint256 amt) {
+    function accrued(
+        uint256 _time,
+        uint48 _bgn,
+        uint48 _fin,
+        uint128 _tot
+    ) internal pure returns (uint256 amt) {
         if (_time < _bgn) {
             amt = 0;
         } else if (_time >= _fin) {
@@ -277,7 +314,14 @@ abstract contract DssVest {
     function unpaid(uint256 _id) external view returns (uint256 amt) {
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
-        amt = unpaid(block.timestamp, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd);
+        amt = unpaid(
+            block.timestamp,
+            _award.bgn,
+            _award.clf,
+            _award.fin,
+            _award.tot,
+            _award.rxd
+        );
     }
 
     /**
@@ -290,7 +334,14 @@ abstract contract DssVest {
         @param _rxd  The number of gems received
         @return amt  The claimable amount
     */
-    function unpaid(uint256 _time, uint48 _bgn, uint48 _clf, uint48 _fin, uint128 _tot, uint128 _rxd) internal pure returns (uint256 amt) {
+    function unpaid(
+        uint256 _time,
+        uint48 _bgn,
+        uint48 _clf,
+        uint48 _fin,
+        uint128 _tot,
+        uint128 _rxd
+    ) internal pure returns (uint256 amt) {
         amt = _time < _clf ? 0 : sub(accrued(_time, _bgn, _fin, _tot), _rxd);
     }
 
@@ -301,7 +352,10 @@ abstract contract DssVest {
     function restrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
-        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        require(
+            wards[msg.sender] == 1 || usr_ == msg.sender,
+            "DssVest/not-authorized"
+        );
         awards[_id].res = 1;
         emit Restrict(_id);
     }
@@ -313,7 +367,10 @@ abstract contract DssVest {
     function unrestrict(uint256 _id) external lock {
         address usr_ = awards[_id].usr;
         require(usr_ != address(0), "DssVest/invalid-award");
-        require(wards[msg.sender] == 1 || usr_ == msg.sender, "DssVest/not-authorized");
+        require(
+            wards[msg.sender] == 1 || usr_ == msg.sender,
+            "DssVest/not-authorized"
+        );
         awards[_id].res = 0;
         emit Unrestrict(_id);
     }
@@ -341,7 +398,10 @@ abstract contract DssVest {
         @param _end A scheduled time to end the vest
     */
     function _yank(uint256 _id, uint256 _end) internal lock {
-        require(wards[msg.sender] == 1 || awards[_id].mgr == msg.sender, "DssVest/not-authorized");
+        require(
+            wards[msg.sender] == 1 || awards[_id].mgr == msg.sender,
+            "DssVest/not-authorized"
+        );
         Award memory _award = awards[_id];
         require(_award.usr != address(0), "DssVest/invalid-award");
         if (_end < block.timestamp) {
@@ -359,11 +419,18 @@ abstract contract DssVest {
                 awards[_id].tot = 0;
             } else {
                 awards[_id].tot = toUint128(
-                                    add(
-                                        unpaid(_end, _award.bgn, _award.clf, _award.fin, _award.tot, _award.rxd),
-                                        _award.rxd
-                                    )
-                                );
+                    add(
+                        unpaid(
+                            _end,
+                            _award.bgn,
+                            _award.clf,
+                            _award.fin,
+                            _award.tot,
+                            _award.rxd
+                        ),
+                        _award.rxd
+                    )
+                );
             }
         }
 
@@ -396,18 +463,17 @@ abstract contract DssVest {
         @param _guy The payment target.
         @param _amt The payment amount. [units are implementation-specific]
     */
-    function pay(address _guy, uint256 _amt) virtual internal;
+    function pay(address _guy, uint256 _amt) internal virtual;
 }
 
 contract DssVestMintable is DssVest {
-
     MintLike public immutable gem;
 
     /**
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
     */
-    constructor(address _gem) public DssVest() {
+    constructor(address _gem) DssVest() {
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
@@ -417,28 +483,32 @@ contract DssVestMintable is DssVest {
         @param _guy The recipient of the minted token
         @param _amt The amount of token units to send to the _guy
     */
-    function pay(address _guy, uint256 _amt) override internal {
+    function pay(address _guy, uint256 _amt) internal override {
         gem.mint(_guy, _amt);
     }
 }
 
 contract DssVestSuckable is DssVest {
-
-    uint256 internal constant RAY = 10**27;
+    uint256 internal constant RAY = 10 ** 27;
 
     ChainlogLike public immutable chainlog;
-    VatLike      public immutable vat;
-    DaiJoinLike  public immutable daiJoin;
+    VatLike public immutable vat;
+    DaiJoinLike public immutable daiJoin;
 
     /**
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
-    constructor(address _chainlog) public DssVest() {
-        require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
+    constructor(address _chainlog) DssVest() {
+        require(
+            _chainlog != address(0),
+            "DssVestSuckable/Invalid-chainlog-address"
+        );
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
-        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
+        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(
+            chainlog_.getAddress("MCD_JOIN_DAI")
+        );
 
         vat_.hope(address(daiJoin_));
     }
@@ -448,7 +518,7 @@ contract DssVestSuckable is DssVest {
         @param _guy The recipient of the ERC-20 Dai
         @param _amt The amount of Dai to send to the _guy [WAD]
     */
-    function pay(address _guy, uint256 _amt) override internal {
+    function pay(address _guy, uint256 _amt) internal override {
         require(vat.live() == 1, "DssVestSuckable/vat-not-live");
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         daiJoin.exit(_guy, _amt);
@@ -461,8 +531,7 @@ contract DssVestSuckable is DssVest {
      contributors.
 */
 contract DssVestTransferrable is DssVest {
-
-    address   public immutable czar;
+    address public immutable czar;
     TokenLike public immutable gem;
 
     /**
@@ -470,11 +539,17 @@ contract DssVestTransferrable is DssVest {
         @param _czar The owner of the tokens to be distributed
         @param _gem  The token to be distributed
     */
-    constructor(address _czar, address _gem) public DssVest() {
-        require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
-        require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
+    constructor(address _czar, address _gem) DssVest() {
+        require(
+            _czar != address(0),
+            "DssVestTransferrable/Invalid-distributor-address"
+        );
+        require(
+            _gem != address(0),
+            "DssVestTransferrable/Invalid-token-address"
+        );
         czar = _czar;
-        gem  = TokenLike(_gem);
+        gem = TokenLike(_gem);
     }
 
     /**
@@ -482,7 +557,10 @@ contract DssVestTransferrable is DssVest {
         @param _guy The recipient of the ERC-20 Dai
         @param _amt The amount of gem to send to the _guy (in native token units)
     */
-    function pay(address _guy, uint256 _amt) override internal {
-        require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
+    function pay(address _guy, uint256 _amt) internal override {
+        require(
+            gem.transferFrom(czar, _guy, _amt),
+            "DssVestTransferrable/failed-transfer"
+        );
     }
 }
