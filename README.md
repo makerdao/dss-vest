@@ -180,3 +180,13 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   ```
   make certora-transferrable
   ```
+
+## Foundry
+
+Some foundry tests have been added extending the contracts to be ERC2771 compliant. Other unit tests can also be run with foundry. To do so, follow these steps:
+1. Get a rpc URL that can be used for mainnet forks, e.g. from infura
+2. Run 
+    ```
+    forge test --fork-url "$ETH_RPC_URL"
+    ```
+    Either replace `"$ETH_RPC_URL"` with the URL from step 1, or make sure the environment variable contains this URL.
