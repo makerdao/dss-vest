@@ -263,38 +263,65 @@ contract DssVestERC2771Test is Test {
         assertEq(mgr, mgrAddress);
     }
 
-    function testVest() public {
-        uint256 id = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
+    /**
+     * @notice Trigger payout as user using a meta tx that is sent by relayer
+     * @dev Many local variables had to be removed to avoid stack too deep error
+     */
+    function testVestERC2771() public {
+        vm.prank(wardAddress);
+        uint256 id = mVest.create(usrAddress, 100 * days_vest, block.timestamp, 100 days, 0 days, mgrAddress);
 
         hevm.warp(block.timestamp + 10 days);
 
-        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = mVest.awards(id);
-        assertEq(usr, address(this));
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        assertEq(usr, usrAddress);
         assertEq(uint256(bgn), block.timestamp - 10 days);
         assertEq(uint256(fin), block.timestamp + 90 days);
         assertEq(uint256(tot), 100 * days_vest);
         assertEq(uint256(rxd), 0);
-        assertEq(gem.balanceOf(address(this)), 0);
+        assertEq(gem.balanceOf(usrAddress), 0);
 
-        mVest.vest(id);
-        (usr, bgn, clf, fin, mgr,, tot, rxd) = mVest.awards(id);
-        assertEq(usr, address(this));
+        IForwarder.ForwardRequest memory request = IForwarder.ForwardRequest({
+            from: usrAddress,
+            to: address(mVest),
+            value: 0,
+            gas: 1000000,
+            nonce: forwarder.getNonce(usrAddress),
+            data: abi.encodeWithSelector(
+            bytes4(keccak256(bytes("vest(uint256)"))),
+            id
+        ),
+            validUntil: block.timestamp + 1 hours // like this, the signature will expire after 1 hour. So the platform hotwallet can take some time to execute the transaction.
+        });
+
+        // sign request.        
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            usrPrivateKey,
+            keccak256(abi.encodePacked(
+                "\x19\x01",
+                domainSeparator,
+                keccak256(
+                    forwarder._getEncoded(request, requestType, "0")
+                )
+            ))
+        );
+
+        vm.prank(relayer);
+        forwarder.execute(
+            request,
+            domainSeparator,
+            requestType,
+            "0",
+            abi.encodePacked(r, s, v)
+        );
+
+        (usr, bgn, clf, fin,,, tot, rxd) = mVest.awards(id);
+        assertEq(usr, usrAddress);
         assertEq(uint256(bgn), block.timestamp - 10 days);
         assertEq(uint256(fin), block.timestamp + 90 days);
         assertEq(uint256(tot), 100 * days_vest);
         assertEq(uint256(rxd), 10 * days_vest);
-        assertEq(gem.balanceOf(address(this)), 10 * days_vest);
-
-        hevm.warp(block.timestamp + 70 days);
-
-        mVest.vest(id, type(uint256).max);
-        (usr, bgn, clf, fin, mgr,, tot, rxd) = mVest.awards(id);
-        assertEq(usr, address(this));
-        assertEq(uint256(bgn), block.timestamp - 80 days);
-        assertEq(uint256(fin), block.timestamp + 20 days);
-        assertEq(uint256(tot), 100 * days_vest);
-        assertEq(uint256(rxd), 80 * days_vest);
-        assertEq(gem.balanceOf(address(this)), 80 * days_vest);
+        assertEq(gem.balanceOf(usrAddress), 10 * days_vest);
     }
 
     /**
