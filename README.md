@@ -4,7 +4,7 @@
 
 # dss-vest
 
-A token vesting plan for contributors. Includes scheduling, cliff vesting, and third-party revocation.
+A token vesting plan for contributors. Includes scheduling, cliff vesting, third-party revocation and meta transaction following ERC2771.
 
 ### Requirements
 
