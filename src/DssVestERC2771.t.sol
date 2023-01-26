@@ -93,13 +93,15 @@ contract DssVestERC2771Test is Test {
     bytes32 domainSeparator;
     bytes32 requestType;
 
-    // addresses
-    // DO NOT USE IN PRODUCTION! Key was generated online for testing only.
-    uint256 public constant bossPrivateKey =
-        0x3c69254ad72222e3ddf37667b8173dd773bdbdfd93d4af1d192815ff0662de5f;
-    address public bossAddress = vm.addr(bossPrivateKey); // = 0x38d6703d37988C644D6d31551e9af6dcB762E618;
+    // DO NOT USE THESE KEYS IN PRODUCTION! They were generated and stored very unsafely.
+    uint256 public constant wardPrivateKey =
+        0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a;
+    address public wardAddress = vm.addr(wardPrivateKey); // = 0x3C44CdDdB6a900fa2b585dd299e03d12FA4293BC;
 
-    // DO NOT USE IN PRODUCTION! Key was generated online for testing only.
+    uint256 public constant mgrPrivateKey =
+        0x3c69254ad72222e3ddf37667b8173dd773bdbdfd93d4af1d192815ff0662de5f;
+    address public mgrAddress = vm.addr(mgrPrivateKey); // = 0x38d6703d37988C644D6d31551e9af6dcB762E618;
+
     uint256 public constant usrPrivateKey =
         0x8da4ef21b864d2cc526dbdb2a120bd2874c36c9d0a1fb7f8c63d7f7a8b41de8f;
     address public usrAddress = vm.addr(usrPrivateKey); // = 0x63FaC9201494f0bd17B9892B9fae4d52fe3BD377;
@@ -138,6 +140,8 @@ contract DssVestERC2771Test is Test {
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
+        // deploy contracts as ward
+        vm.startPrank(wardAddress);
         mVest = new DssVestMintable(address(forwarder), address(gem));
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
         sVest = new DssVestSuckable(address(forwarder), address(chainlog));
@@ -146,6 +150,7 @@ contract DssVestERC2771Test is Test {
         tVest = new DssVestTransferrable(address(forwarder), address(boss), address(dai));
         tVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss.gemApprove(address(dai), address(tVest));
+        vm.stopPrank();
 
 
         // Set testing contract as a MKR Auth
@@ -200,15 +205,15 @@ contract DssVestERC2771Test is Test {
             block.timestamp, 
             100 days, 
             0 days, 
-            bossAddress
+            mgrAddress
         );
 
         IForwarder.ForwardRequest memory request = IForwarder.ForwardRequest({
-            from: usrAddress,
+            from: wardAddress,
             to: address(mVest),
             value: 0,
             gas: 1000000,
-            nonce: forwarder.getNonce(usrAddress),
+            nonce: forwarder.getNonce(wardAddress),
             data: payload,
             validUntil: block.timestamp + 1 hours // like this, the signature will expire after 1 hour. So the platform hotwallet can take some time to execute the transaction.
         });
@@ -229,12 +234,12 @@ contract DssVestERC2771Test is Test {
 
         // sign request.        
         (uint8 v, bytes32 r, bytes32 s) = vm.sign(
-            usrPrivateKey,
+            wardPrivateKey,
             digest
         );
         bytes memory signature = abi.encodePacked(r, s, v); // https://docs.openzeppelin.com/contracts/2.x/utilities
 
-        require(address(this) != usrAddress, "FWD: sender is the user");
+        require(address(this) != wardAddress, "sender is the ward");
         vm.prank(address(this));
         forwarder.execute(
             request,
@@ -245,18 +250,17 @@ contract DssVestERC2771Test is Test {
         );
 
         console.log("signing address: ", request.from);
-        mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));
         (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = mVest.awards(1);
-        assertEq(usr, address(this));
+        assertEq(usr, usrAddress);
         assertEq(uint256(bgn), block.timestamp);
         assertEq(uint256(clf), block.timestamp);
         assertEq(uint256(fin), block.timestamp + 100 days);
         assertEq(uint256(tot), 100 * days_vest);
         assertEq(uint256(rxd), 0);
-        assertEq(mgr, address(1));
+        assertEq(mgr, mgrAddress);
     }
 
-    function testVest() public {
+    function testVestERC2771() public {
         uint256 id = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
         hevm.warp(block.timestamp + 10 days);
@@ -295,7 +299,7 @@ contract DssVestERC2771Test is Test {
     }
 
     function testVestInsideCliff() public {
-        uint256 id = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 50 days, address(0));
+        uint256 id = mVest.create(usrAddress, 100 * days_vest, block.timestamp, 100 days, 50 days, address(0));
 
         hevm.warp(block.timestamp + 10 days);
 
@@ -418,7 +422,7 @@ contract DssVestERC2771Test is Test {
     }
 
     function testYank() public {
-        uint256 id = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
+        uint256 id = mVest.create(usrAddress, 100 * days_vest, block.timestamp, 100 days, 1 days, address(0));
         assertTrue(mVest.valid(id));
         mVest.yank(id); // yank before cliff
         assertTrue(!mVest.valid(id));
