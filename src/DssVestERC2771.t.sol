@@ -396,6 +396,7 @@ contract DssVestERC2771Test is Test {
         hevm.warp(block.timestamp + 999 days);
         assertEq(mVest.unpaid(id), 2 * days_vest);
         assertEq(mVest.accrued(id), 4 * days_vest);
+        vm.prank(usrAddress);
         mVest.vest(id); // user collects at some future time
         assertTrue(!mVest.valid(id));
         assertEq(gem.balanceOf(usrAddress), 4 * days_vest);

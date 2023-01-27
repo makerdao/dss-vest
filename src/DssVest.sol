@@ -204,7 +204,7 @@ abstract contract DssVest is ERC2771Context {
             tot: toUint128(_tot),
             rxd: 0,
             mgr: _mgr,
-            res: 0
+            res: 1
         });
         emit Init(id, _usr);
     }
