@@ -537,7 +537,8 @@ contract DssVestTest is DSTest {
     function testUnRestrictedVest() public {
         ThirdPartyVest alice = new ThirdPartyVest();
         uint256 id = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
-
+        mVest.unrestrict(id);
+        
         hevm.warp(block.timestamp + 10 days);
 
         (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = mVest.awards(id);
@@ -593,6 +594,10 @@ contract DssVestTest is DSTest {
         User bob = new User();
         uint256 id = mVest.create(address(bob), 100 * days_vest, block.timestamp, 100 days, 0 days, address(0));
 
+        assertEq(mVest.res(id), 1);
+
+        bob.unrestrict(address(mVest), id);
+        
         assertEq(mVest.res(id), 0);
 
         bob.restrict(address(mVest), id);
@@ -825,6 +830,9 @@ contract DssVestTest is DSTest {
             0,
             address(0)
         );
+
+        usr.unrestrict(address(tVest), id);
+
 
         assertTrue(tVest.valid(id));
         hevm.warp(block.timestamp + 1 days);
