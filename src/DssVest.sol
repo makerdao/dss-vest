@@ -175,7 +175,7 @@ abstract contract DssVest is ERC2771Context {
     }
 
     /**
-        @dev Govanance adds a vesting contract
+        @dev Governance adds a vesting contract
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
