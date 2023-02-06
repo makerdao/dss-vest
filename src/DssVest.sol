@@ -175,7 +175,7 @@ abstract contract DssVest is ERC2771Context {
     }
 
     /**
-        @dev Govanance adds a vesting contract
+        @dev Governance adds a vesting contract
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
@@ -283,7 +283,7 @@ abstract contract DssVest is ERC2771Context {
     }
 
     /**
-        @dev amount of tokens accrued, not accounting for tokens paid
+        @dev amount of tokens accrued, but not paid yet
         @param _time The timestamp to perform the calculation
         @param _bgn  The start time of the contract
         @param _clf  The timestamp of the cliff
