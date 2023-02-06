@@ -641,7 +641,8 @@ contract DssVestTest is DSTest {
     }
 
     function testFailTotTooHigh() public {
-        mVest.create(address(this), type(uint128).max, block.timestamp, 100 days, 0 days, address(0));
+        mVest.file("cap", type(uint256).max);
+        mVest.create(address(this), uint256(type(uint128).max) + 1 , block.timestamp, 100 days, 0 days, address(0));
     }
 
     function testFailZeroUser() public {
