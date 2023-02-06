@@ -283,7 +283,7 @@ abstract contract DssVest is ERC2771Context {
     }
 
     /**
-        @dev amount of tokens accrued, not accounting for tokens paid
+        @dev amount of tokens accrued, but not paid yet
         @param _time The timestamp to perform the calculation
         @param _bgn  The start time of the contract
         @param _clf  The timestamp of the cliff
