@@ -118,12 +118,12 @@ abstract contract DssVest is ERC2771Context, Initializable {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor (address _trustedForwarder) ERC2771Context(_trustedForwarder) {
-        initialize(_trustedForwarder, _msgSender());    
+    constructor (address trustedForwarder) ERC2771Context(trustedForwarder) {
+        initialize(trustedForwarder, _msgSender());    
         }
 
-    function initialize(address _trustedForwarder, address _ward) initializer public {
-        _trustedForwarder = _trustedForwarder;
+    function initialize(address trustedForwarder, address _ward) public {
+        //_trustedForwarder = trustedForwarder; // todo: fix inability to set trustedForwarder
         wards[_ward] = 1;
         emit Rely(_ward);
     }
@@ -417,12 +417,11 @@ contract DssVestMintable is DssVest {
         @param _gem The contract address of the mintable token
     */
     constructor(address _forwarder, address _gem) DssVest(_forwarder) {
-
         initialize(_forwarder, _gem, _msgSender());   
     }
 
     function initialize(address _forwarder, address _gem, address _ward) initializer public {
-        DssVest.initialize(_forwarder, _ward);
+        super.initialize(_forwarder, _ward);
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }

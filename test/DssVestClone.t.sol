@@ -18,7 +18,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 import {DssVestMintable} from "../src/DssVest.sol";
 import "../src/DssVestCloneFactory.sol";
 
-contract DssVestDemo is Test {
+contract DssVestCloneDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
     uint256 constant vestDuration = 4 * 365 days; // 4 years
     uint256 constant vestCliff = 1 * 365 days; // 1 year
@@ -85,17 +85,27 @@ contract DssVestDemo is Test {
 
         // Deploy vesting contract as some user with some address as token address. 
         // It will be unusable, but that does not matter.
-        DssVestMintable vestingImplementation = new DssVestMintable(address(forwarder), vm.addr(0x1));
+        DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2));
         DssVestCloneFactory vestingFactory = new DssVestCloneFactory(address(vestingImplementation));
 
         // Deploy proxy clone
         mVest = DssVestMintable(vestingFactory.createVestingClone(address(forwarder), address(companyToken), companyAdminAddress));
+
+        console.log("implementation address: ", address(vestingImplementation));
+        console.log("factory address: ", address(vestingFactory));
+        console.log("clone address: ", address(mVest));
 
         // initialize vesting contract 
         vm.startPrank(companyAdminAddress);
         //mVest = new DssVestMintable(address(forwarder), address(companyToken));
         mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
+        console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
+
+        // try calling the DssVest initialize function
+        mVest.initialize(vm.addr(0x3), vm.addr(0x4));
+
+        console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));
 
 
         // grant minting allowance
