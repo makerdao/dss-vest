@@ -12,7 +12,7 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 
 
 
-import {DssVest, DssVestMintable} from "./DssVest.sol";
+import {DssVest, DssVestMintable} from "../src/DssVest.sol";
 
 contract DssVestDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
