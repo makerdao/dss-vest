@@ -81,7 +81,7 @@ contract DssVestDemo is Test {
         // deploy vesting contract as companyAdmin.
         vm.startPrank(companyAdminAddress);
         mVest = new DssVestMintable(address(forwarder), address(companyToken));
-        mVest.file("cap", (totalVestAmount / vestDuration) + 1e18 ); // TODO: find out why the cap is not set correctly. It should work without the + 1e18
+        mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
         // grant minting allowance
         companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
@@ -94,7 +94,6 @@ contract DssVestDemo is Test {
         Vm.Log[] memory logs = vm.getRecordedLogs();
         // the next line extracts the domain separator from the event emitted by the forwarder
         domainSeparator = logs[0].topics[1]; // internally, the forwarder calls this domainHash in registerDomainSeparator. But expects is as domainSeparator in execute().
-        console.log("domainSeparator", vm.toString(domainSeparator));
         require(forwarder.domains(domainSeparator), "Registering failed");
 
         // register request type with forwarder. Since the forwarder does not check the request type, we can use any string as function name.
@@ -103,10 +102,36 @@ contract DssVestDemo is Test {
         logs = vm.getRecordedLogs();
         // the next line extracts the request type from the event emitted by the forwarder
         requestType = logs[0].topics[1];
-        console.log("requestType", vm.toString(requestType));
         require(forwarder.typeHashes(requestType), "Registering failed");
     }
 
+    /**
+     * @notice does the full setup and payout without meta tx
+     * @dev Many local variables had to be removed to avoid stack too deep error
+     */
+    function testDemoEverythinglocal() public {
+
+        uint startDate = block.timestamp;
+        // create vest as company admin
+        vm.prank(companyAdminAddress);
+        uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, vestCliff, companyAdminAddress);
+
+        // accrued and claimable tokens can be checked at any time
+        uint timeShift = 9 * 30 days;
+        vm.warp(startDate + timeShift);
+        uint unpaid = mVest.unpaid(id);
+        assertEq(unpaid, 0, "unpaid is wrong: no tokens should be claimable yet");
+        uint accrued = mVest.accrued(id);
+        assertEq(accrued, totalVestAmount * timeShift / vestDuration, "accrued is wrong: some tokens should be accrued already");
+
+        // claim tokens as employee
+        timeShift = 2 * 365 days;
+        vm.warp(startDate + timeShift);
+        assertEq(companyToken.balanceOf(employeeAddress), 0, "employee already has tokens");
+        vm.prank(employeeAddress);
+        mVest.vest(id);
+        assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
+    }
 
 
     /**
@@ -163,8 +188,6 @@ contract DssVestDemo is Test {
             suffixData,
             signature
         );
-
-        console.log("signing address: ", request.from);
         (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = mVest.awards(1);
         assertEq(usr, employeeAddress);
         assertEq(uint256(bgn), block.timestamp);
@@ -181,10 +204,6 @@ contract DssVestDemo is Test {
      */
     function testVestERC2771local() public {
         vm.prank(companyAdminAddress);
-
-        console.log("create vest");
-        console.log("block.timestamp", block.timestamp);
-
         uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, 0 days, companyAdminAddress);
 
         uint timeShift = 10 days;
@@ -239,33 +258,5 @@ contract DssVestDemo is Test {
         assertEq(uint256(tot), totalVestAmount, "totalVestAmount is wrong");
         assertEq(uint256(rxd), totalVestAmount * timeShift / vestDuration, "rxd is wrong");
         assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employeeAddress balance is wrong");
-    }
-
-    /**
-     * @notice does the full setup and payout without meta tx
-     * @dev Many local variables had to be removed to avoid stack too deep error
-     */
-    function testDemoEverythinglocal() public {
-
-        uint startDate = block.timestamp;
-        // create vest as company admin
-        vm.prank(companyAdminAddress);
-        uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, vestCliff, companyAdminAddress);
-
-        // accrued and claimable tokens can be checked at any time
-        uint timeShift = 9 * 30 days;
-        vm.warp(startDate + timeShift);
-        uint unpaid = mVest.unpaid(id);
-        assertEq(unpaid, 0, "unpaid is wrong: no tokens should be claimable yet");
-        uint accrued = mVest.accrued(id);
-        assertEq(accrued, totalVestAmount * timeShift / vestDuration, "accrued is wrong: some tokens should be accrued already");
-
-        // claim tokens as employee
-        timeShift = 2 * 365 days;
-        vm.warp(startDate + timeShift);
-        assertEq(companyToken.balanceOf(employeeAddress), 0, "employee already has tokens");
-        vm.prank(employeeAddress);
-        mVest.vest(id);
-        assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
     }
 }
