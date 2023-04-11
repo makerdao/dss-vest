@@ -21,6 +21,7 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import "@openzeppelin/contracts/proxy/Clones.sol";
 
 interface MintLike {
     function mint(address, uint256) external;
@@ -117,14 +118,14 @@ abstract contract DssVest is ERC2771Context, Initializable {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor (address _trustedForwarder) ERC2771Context(_trustedForwarder) initializer {
-        initialize(_trustedForwarder);    
+    constructor (address _trustedForwarder) ERC2771Context(_trustedForwarder) {
+        initialize(_trustedForwarder, _msgSender());    
         }
 
-    function initialize(address _trustedForwarder) initializer public {
+    function initialize(address _trustedForwarder, address _ward) initializer public {
         _trustedForwarder = _trustedForwarder;
-        wards[_msgSender()] = 1;
-        emit Rely(_msgSender());
+        wards[_ward] = 1;
+        emit Rely(_ward);
     }
 
     // --- Mutex ---
@@ -415,13 +416,13 @@ contract DssVestMintable is DssVest {
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
     */
-    constructor(address _forwarder, address _gem) DssVest(_forwarder) initializer {
+    constructor(address _forwarder, address _gem) DssVest(_forwarder) {
 
-        initialize(_forwarder, _gem);   
+        initialize(_forwarder, _gem, _msgSender());   
     }
 
-    function initialize(address _forwarder, address _gem) initializer public {
-        DssVest.initialize(_forwarder);
+    function initialize(address _forwarder, address _gem, address _ward) initializer public {
+        DssVest.initialize(_forwarder, _ward);
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
@@ -448,12 +449,12 @@ contract DssVestSuckable is DssVest {
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
-    constructor(address _forwarder, address _chainlog) DssVest(_forwarder) initializer {
-        initialize(_forwarder, _chainlog);
+    constructor(address _forwarder, address _chainlog) DssVest(_forwarder) {
+        initialize(_forwarder, _chainlog, _msgSender());
     }
 
-    function initialize(address _forwarder, address _chainlog) initializer public {
-        DssVest.initialize(_forwarder);
+    function initialize(address _forwarder, address _chainlog, address _ward) initializer public {
+        DssVest.initialize(_forwarder, _ward);
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
@@ -489,13 +490,13 @@ contract DssVestTransferrable is DssVest {
         @param _czar The owner of the tokens to be distributed
         @param _gem  The token to be distributed
     */
-    constructor(address _forwarder, address _czar, address _gem) DssVest(_forwarder) initializer {
-        initialize(_forwarder, _czar, _gem);    
+    constructor(address _forwarder, address _czar, address _gem) DssVest(_forwarder) {
+        initialize(_forwarder, _czar, _gem, _msgSender());    
     }
 
-    function initialize(address _forwarder, address _czar, address _gem) initializer public {
+    function initialize(address _forwarder, address _czar, address _gem, address _ward) initializer public {
         // call parent initializer
-        DssVest.initialize(_forwarder);
+        DssVest.initialize(_forwarder, _ward);
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
