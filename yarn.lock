@@ -9,7 +9,20 @@
   dependencies:
     "@openzeppelin/contracts" "^4.2.0"
 
+"@openzeppelin/contracts@4.8.0":
+  version "4.8.0"
+  resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.8.0.tgz#6854c37df205dd2c056bdfa1b853f5d732109109"
+  integrity sha512-AGuwhRRL+NaKx73WKRNzeCxOCOCxpaqF+kp8TJ89QzAipSwZy/NoflkWaL9bywXFRhIzXt8j38sfF7KBKCPWLw==
+
 "@openzeppelin/contracts@4.8.1", "@openzeppelin/contracts@^4.2.0":
   version "4.8.1"
   resolved "https://registry.yarnpkg.com/@openzeppelin/contracts/-/contracts-4.8.1.tgz#709cfc4bbb3ca9f4460d60101f15dac6b7a2d5e4"
   integrity sha512-xQ6eUZl+RDyb/FiZe1h+U7qr/f4p/SrTSQcTPH2bjur3C5DbuW/zFgCU/b1P/xcIaEqJep+9ju4xDRi3rmChdQ==
+
+"@tokenize.it/contracts@^4.0.1":
+  version "4.0.1"
+  resolved "https://registry.yarnpkg.com/@tokenize.it/contracts/-/contracts-4.0.1.tgz#a73f3bb8c7d62be5b280d85164bf26c934e4673f"
+  integrity sha512-dUB0SrAQ8+XXD0kynVlSJ1vBbCGGYE6QY2s/m0VM0B2uQdIMwbFyAOo0hlDr5wJA30tYxcIWvvGit+97BI7Byg==
+  dependencies:
+    "@opengsn/contracts" "2.2.5"
+    "@openzeppelin/contracts" "4.8.0"

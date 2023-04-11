@@ -10,5 +10,13 @@
   "dependencies": {
     "@opengsn/contracts": "2.2.5",
     "@openzeppelin/contracts": "4.8.1"
+  },
+  "scripts": {
+    "prepack": "yarn npmignore --auto && yarn test && yarn build ",
+    "build": "yarn hardhat compile && yarn tsc --declaration",
+    "test": "forge test --fork-url $ETH_RPC_URL"
+  },
+  "devDependencies": {
+    "@tokenize.it/contracts": "4.0.1"
   }
 }

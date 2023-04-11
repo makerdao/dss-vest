@@ -189,4 +189,9 @@ Some foundry tests have been added extending the contracts to be ERC2771 complia
     ```
     forge test --fork-url "$ETH_RPC_URL"
     ```
+    or 
+     
+    ```
+    ETH_RPC_URL=$ETH_RPC_URL yarn test 
+    ```
     Either replace `"$ETH_RPC_URL"` with the URL from step 1, or make sure the environment variable contains this URL.
