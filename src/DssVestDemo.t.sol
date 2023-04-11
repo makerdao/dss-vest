@@ -17,6 +17,7 @@ import {DssVest, DssVestMintable} from "./DssVest.sol";
 contract DssVestDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
     uint256 constant vestDuration = 4 * 365 days; // 4 years
+    uint256 constant vestCliff = 1 * 365 days; // 1 year
 
     // init forwarder
     Forwarder forwarder = new Forwarder();
@@ -105,6 +106,8 @@ contract DssVestDemo is Test {
         console.log("requestType", vm.toString(requestType));
         require(forwarder.typeHashes(requestType), "Registering failed");
     }
+
+
 
     /**
      * @notice Create a new vest as companyAdmin using a meta tx that is sent by relayer
@@ -236,5 +239,33 @@ contract DssVestDemo is Test {
         assertEq(uint256(tot), totalVestAmount, "totalVestAmount is wrong");
         assertEq(uint256(rxd), totalVestAmount * timeShift / vestDuration, "rxd is wrong");
         assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employeeAddress balance is wrong");
+    }
+
+    /**
+     * @notice does the full setup and payout without meta tx
+     * @dev Many local variables had to be removed to avoid stack too deep error
+     */
+    function testDemoEverythinglocal() public {
+
+        uint startDate = block.timestamp;
+        // create vest as company admin
+        vm.prank(companyAdminAddress);
+        uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, vestCliff, companyAdminAddress);
+
+        // accrued and claimable tokens can be checked at any time
+        uint timeShift = 9 * 30 days;
+        vm.warp(startDate + timeShift);
+        uint unpaid = mVest.unpaid(id);
+        assertEq(unpaid, 0, "unpaid is wrong: no tokens should be claimable yet");
+        uint accrued = mVest.accrued(id);
+        assertEq(accrued, totalVestAmount * timeShift / vestDuration, "accrued is wrong: some tokens should be accrued already");
+
+        // claim tokens as employee
+        timeShift = 2 * 365 days;
+        vm.warp(startDate + timeShift);
+        assertEq(companyToken.balanceOf(employeeAddress), 0, "employee already has tokens");
+        vm.prank(employeeAddress);
+        mVest.vest(id);
+        assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
     }
 }
