@@ -14,7 +14,8 @@
   "scripts": {
     "prepack": "yarn npmignore --auto && yarn test && yarn build ",
     "build": "yarn hardhat compile && yarn tsc --declaration",
-    "test": "forge test --fork-url $ETH_RPC_URL"
+    "test": "forge test --fork-url $ETH_RPC_URL",
+    "test:local": "forge test --match-test local"
   },
   "devDependencies": {
     "@tokenize.it/contracts": "4.0.1"

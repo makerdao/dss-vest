@@ -109,7 +109,7 @@ contract DssVestDemo is Test {
     /**
      * @notice Create a new vest as companyAdmin using a meta tx that is sent by relayer
      */
-    function testInitERC2771() public {
+    function testInitERC2771local() public {
         // build request
         bytes memory payload = abi.encodeWithSelector(
             mVest.create.selector,
@@ -176,7 +176,7 @@ contract DssVestDemo is Test {
      * @notice Trigger payout as user using a meta tx that is sent by relayer
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testVestERC2771() public {
+    function testVestERC2771local() public {
         vm.prank(companyAdminAddress);
 
         console.log("create vest");
