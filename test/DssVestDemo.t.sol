@@ -7,12 +7,10 @@ import "@opengsn/contracts/src/forwarder/Forwarder.sol";
 import "@tokenize.it/contracts/contracts/Token.sol";
 import "@tokenize.it/contracts/contracts/AllowList.sol";
 import "@tokenize.it/contracts/contracts/FeeSettings.sol";
-import "@openzeppelin/contracts/proxy/Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-
-
-
 import {DssVest, DssVestMintable} from "../src/DssVest.sol";
+import "../src/Factory.sol";
+
 
 contract DssVestDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
@@ -53,6 +51,9 @@ contract DssVestDemo is Test {
 
         vm.warp(60 * 365 days); // in local testing, the time would start at 1. This causes problems with the vesting contract. So we warp to 60 years.
 
+        // deploy factory contract
+        DssVestNaiveFactory factory = new DssVestNaiveFactory();
+
         // deploy tokenize.it platform and company token
         vm.startPrank(platformAdminAddress);
         AllowList allowList = new AllowList();
@@ -78,15 +79,16 @@ contract DssVestDemo is Test {
 
 
 
-        // deploy vesting contract as companyAdmin.
+        // deploy vesting contract with any wallet, setting forwarder, token and admin
+        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
+
+        // configure vesting contract
         vm.startPrank(companyAdminAddress);
-        mVest = new DssVestMintable(address(forwarder), address(companyToken));
         mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
         // grant minting allowance
         companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
         vm.stopPrank();
-
 
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
         vm.recordLogs();

@@ -31,7 +31,7 @@ contract DssVestFactoryDemo is Test {
     // DO NOT USE THESE KEYS IN PRODUCTION! They were generated and stored very unsafely.
     uint256 public constant platformAdminPrivateKey =
         0x3c69254ad72222e3ddf37667b8173dd773bdbdfd93d4af1d192815ff0662de5f;
-    address public platformAdminAddress = vm.addr(companyAdminPrivateKey); // = 0x38d6703d37988C644D6d31551e9af6dcB762E618;
+    address public platformAdminAddress = vm.addr(platformAdminPrivateKey); // = 0x38d6703d37988C644D6d31551e9af6dcB762E618;
 
     uint256 public constant companyAdminPrivateKey =
         0x5de4111afa1a4b94908f83103eb1f1706367c2e68ca870fc3fb9a804cdab365a;
@@ -83,15 +83,17 @@ contract DssVestFactoryDemo is Test {
         );
         vm.stopPrank();
 
-        // Deploy vesting contract as some user with some address as token address. 
-        // It will be unusable, but that does not matter.
-        DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2));
+        // deploy factory
         DssVestNaiveFactory factory = new DssVestNaiveFactory();
 
         // Deploy instance
         mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
 
-        console.log("implementation address: ", address(vestingImplementation));
+        require(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not trusted");
+        require(address(mVest.gem()) == address(companyToken), "Token not set");
+        require(mVest.wards(companyAdminAddress) == 1, "Company admin is not a ward");
+        require(mVest.wards(address(this)) == 0, "Msg.sender is a ward");
+        
         console.log("factory address: ", address(factory));
         console.log("clone address: ", address(mVest));
 
@@ -100,33 +102,33 @@ contract DssVestFactoryDemo is Test {
         //mVest = new DssVestMintable(address(forwarder), address(companyToken));
         mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
-        console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
-
-        console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));
-        console.log("clone's forwarder is 0: ", mVest.isTrustedForwarder(address(0x0)));
-
-
         // grant minting allowance
         companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
         vm.stopPrank();
-
-
-        // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
-        vm.recordLogs();
-        forwarder.registerDomainSeparator(string(abi.encodePacked(address(mVest))), "v1.0"); // simply uses address string as name
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        // the next line extracts the domain separator from the event emitted by the forwarder
-        domainSeparator = logs[0].topics[1]; // internally, the forwarder calls this domainHash in registerDomainSeparator. But expects is as domainSeparator in execute().
-        require(forwarder.domains(domainSeparator), "Registering failed");
-
-        // register request type with forwarder. Since the forwarder does not check the request type, we can use any string as function name.
-        vm.recordLogs();
-        forwarder.registerRequestType("someFunctionName", "some function parameters");
-        logs = vm.getRecordedLogs();
-        // the next line extracts the request type from the event emitted by the forwarder
-        requestType = logs[0].topics[1];
-        require(forwarder.typeHashes(requestType), "Registering failed");
     }
+
+    function testNoWrongWardslocal() public {
+
+        vm.startPrank(platformAdminAddress);
+        // Deploy instance
+        DssVestNaiveFactory factory = new DssVestNaiveFactory();
+        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
+        vm.stopPrank();
+
+        console.log("factory address: ", address(factory));
+        console.log("companyAdminAddress: ", companyAdminAddress);
+        console.log("test account address: ", address(this));
+        console.log("platformAdminAddress: ", platformAdminAddress);
+
+        require(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not trusted");
+        require(address(mVest.gem()) == address(companyToken), "Token not set");
+        require(mVest.wards(companyAdminAddress) == 1, "Company admin is not a ward");
+        require(mVest.wards(address(factory)) == 0, "Factory is a ward");
+        require(mVest.wards(platformAdminAddress) == 0, "Platform is a ward");
+        require(mVest.wards(address(this)) == 0, "Test account is a ward");
+        
+    }
+
 
     /**
      * @notice does the full setup and payout without meta tx
