@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 
 
 import {DssVestMintable} from "../src/DssVest.sol";
-import "../src/DssVestCloneFactory.sol";
+import "../src/DssVestNaiveFactory.sol";
 
 contract DssVestCloneDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
@@ -86,13 +86,13 @@ contract DssVestCloneDemo is Test {
         // Deploy vesting contract as some user with some address as token address. 
         // It will be unusable, but that does not matter.
         DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2));
-        DssVestCloneFactory vestingFactory = new DssVestCloneFactory(address(vestingImplementation));
+        DssVestNaiveFactory factory = new DssVestNaiveFactory();
 
-        // Deploy proxy clone
-        mVest = DssVestMintable(vestingFactory.createVestingClone(address(forwarder), address(companyToken), companyAdminAddress));
+        // Deploy instance
+        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
 
         console.log("implementation address: ", address(vestingImplementation));
-        console.log("factory address: ", address(vestingFactory));
+        console.log("factory address: ", address(factory));
         console.log("clone address: ", address(mVest));
 
         // initialize vesting contract 
