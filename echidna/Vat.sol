@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.5.12;
+pragma solidity 0.8.17;
 
 // FIXME: This contract was altered compared to the production version.
 // It doesn't use LibNote anymore.
@@ -65,7 +65,7 @@ contract Vat {
     uint256 public live;  // Active Flag
 
     // --- Init ---
-    constructor() public {
+    constructor() {
         wards[msg.sender] = 1;
         live = 1;
     }
