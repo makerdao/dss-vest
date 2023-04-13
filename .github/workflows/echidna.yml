@@ -23,7 +23,7 @@ jobs:
         run: yarn install
 
       - name: Set up Python 3.8
-        uses: actions/setup-python@v3
+        uses: actions/setup-python@v4
         with:
           python-version: 3.8
 
@@ -44,7 +44,7 @@ jobs:
           jq --sort-keys . crytic-export/combined_solc.json > sorted_crytic_solc.json
 
       - name: Cache ${{ matrix.testName }} Corpus
-        uses: actions/cache@v3.3.1
+        uses: actions/cache@v3
         with:
           path: corpus
           key: abi-${{ matrix.testName }}-${{ hashFiles('**/sorted_crytic_solc.json') }}-v3
@@ -65,7 +65,7 @@ jobs:
           crytic-args: "--solc-remaps @openzeppelin/=node_modules/@openzeppelin/"
 
       - name: Upload ${{ matrix.testName }} Coverage
-        uses: actions/upload-artifact@v3.1.2
+        uses: actions/upload-artifact@v3
         with:
           name: coverage-${{ matrix.testName }}
           path: corpus/covered.*

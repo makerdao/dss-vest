@@ -163,7 +163,7 @@ rule deny_revert(address usr) {
 }
 
 // Verify that ids behave correctly on award getters
-rule award(uint256 _id) {
+rule award_getters(uint256 _id) {
     address _usr; uint48 _bgn; uint48 _clf; uint48 _fin; address _mgr; uint8 _res; uint128 _tot; uint128 _rxd;
     _usr, _bgn, _clf, _fin, _mgr, _res, _tot, _rxd = awards(_id);
 
@@ -187,7 +187,7 @@ rule award(uint256 _id) {
 }
 
 // Verify revert rules on award getters
-rule award_revert(uint256 _id) {
+rule award_getters_revert(uint256 _id) {
 
     // The only revert path for the award getters is sending ETH.
     // However as these getters are defined as envfree, it is already being checked
@@ -196,28 +196,28 @@ rule award_revert(uint256 _id) {
     // With the following assertion we prove there aren't any other revert paths.
 
     usr@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for usr");
 
     bgn@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for bgn");
 
     clf@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for clf");
 
     fin@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for fin");
 
     mgr@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for mgr");
 
     res@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for res");
 
     tot@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for tot");
 
     rxd@withrevert(_id);
-    assert(lastReverted => false, "Revert rules are not covering all the cases");
+    assert(lastReverted => false, "Revert rules are not covering all the cases for rxd");
 }
 
 // Verify that cap behaves correctly on file
