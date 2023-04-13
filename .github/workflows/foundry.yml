@@ -22,7 +22,7 @@ jobs:
 
       - name: Run tests
         working-directory: .
-        run: yarn test
+        run: yarn test &&  forge coverage --report lcov --fork-url $ETH_RPC_URL
         env:
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
 
