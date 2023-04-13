@@ -1,6 +1,6 @@
 on: [push, workflow_dispatch]
 
-name: test
+name: Foundry
 
 jobs:
   check:
