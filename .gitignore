@@ -48,3 +48,4 @@ broadcast/
 .VSCodeCounter/
 typechain-types
 
+.zip-output-url.txt
