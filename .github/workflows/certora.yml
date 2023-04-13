@@ -42,5 +42,3 @@ jobs:
 
       - name: Verify ${{ matrix.vest }}
         run: make certora-${{ matrix.vest }}
-        env:
-          CERTORAKEY: ${{ secrets.CERTORAKEY }}
