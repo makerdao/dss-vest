@@ -22,4 +22,6 @@ jobs:
 
       - name: Run tests
         working-directory: .
-        run: yarn test:local
+        run: yarn test
+        env:
+          ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
