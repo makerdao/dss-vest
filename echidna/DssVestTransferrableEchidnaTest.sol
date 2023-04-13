@@ -127,7 +127,7 @@ contract DssVestTransferrableEchidnaTest {
             assert(tVest.tot(id) == toUint128(tot));
             assert(tVest.rxd(id) == 0);
             assert(tVest.mgr(id) == mgr);
-            assert(tVest.res(id) == 0);
+            assert(tVest.res(id) == 1);
             _mutusr(id);
         } catch Error(string memory errmsg) {
             bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4

@@ -111,7 +111,7 @@ contract DssVestMintableEchidnaTest {
             assert(mVest.tot(id) == toUint128(tot));
             assert(mVest.rxd(id) == 0);
             assert(mVest.mgr(id) == mgr);
-            assert(mVest.res(id) == 0);
+            assert(mVest.res(id) == 1);
             _mutusr(id);
         } catch Error(string memory errmsg) {
             bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));      // Load memory slot 0x4

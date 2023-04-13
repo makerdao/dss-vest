@@ -134,7 +134,7 @@ contract DssVestSuckableEchidnaTest {
             assert(sVest.tot(id) == toUint128(tot));
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
-            assert(sVest.res(id) == 0);
+            assert(sVest.res(id) == 1);
             _mutusr(id);
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4
