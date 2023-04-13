@@ -1,6 +1,6 @@
 name: Echidna
 
-on: [push, pull_request]
+on: [push, pull_request, workflow_dispatch]
 
 jobs:
   echidna:
@@ -29,10 +29,10 @@ jobs:
       - name: Install solc-select
         run: pip3 install solc-select
 
-      - name: Solc Select 0.6.12
+      - name: Solc Select 0.8.17
         run: |
-          solc-select install 0.6.12
-          solc-select use 0.6.12
+          solc-select install 0.8.17
+          solc-select use 0.8.17
 
       - name: Crytic Compile ${{ matrix.testName }}
         run: |
@@ -56,7 +56,7 @@ jobs:
           test-limit: 250000
           seq-len: 100
           solc-args: --optimize --optimize-runs 200
-          solc-version: 0.6.12
+          solc-version: 0.8.17
           echidna-version: v2.0.0
 
       - name: Upload ${{ matrix.testName }} Coverage

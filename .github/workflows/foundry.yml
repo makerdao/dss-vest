@@ -25,3 +25,11 @@ jobs:
         run: yarn test
         env:
           ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+
+      - name: Coverage
+        uses: VeryGoodOpenSource/very_good_coverage@v2
+        with:
+          path: "./lcov.info"
+          min_coverage: 95
+          exclude: "test/* script/*"
+      
