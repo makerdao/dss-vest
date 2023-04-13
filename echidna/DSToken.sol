@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 // hevm: flattened sources of src/chief.sol
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.17;
 
 ////// lib/ds-roles/lib/ds-auth/src/auth.sol
 // This program is free software: you can redistribute it and/or modify
@@ -34,7 +34,7 @@ contract DSAuth is DSAuthEvents {
     DSAuthority  public  authority;
     address      public  owner;
 
-    constructor() public {
+    constructor() {
         owner = msg.sender;
         emit LogSetOwner(msg.sender);
     }
@@ -198,7 +198,7 @@ contract DSToken is DSMath, DSAuth {
     uint256                                           public  decimals = 18; // standard token precision. override to customize
     bytes32                                           public  name = "";     // Optional token name
 
-    constructor(bytes32 symbol_) public {
+    constructor(bytes32 symbol_) {
         symbol = symbol_;
     }
 
@@ -215,7 +215,7 @@ contract DSToken is DSMath, DSAuth {
     }
 
     function approve(address guy) external returns (bool) {
-        return approve(guy, uint(-1));
+        return approve(guy, type(uint256).max);
     }
 
     function approve(address guy, uint wad) public stoppable returns (bool) {
@@ -235,7 +235,7 @@ contract DSToken is DSMath, DSAuth {
         stoppable
         returns (bool)
     {
-        if (src != msg.sender && allowance[src][msg.sender] != uint(-1)) {
+        if (src != msg.sender && allowance[src][msg.sender] != type(uint256).max) {
             require(allowance[src][msg.sender] >= wad, "ds-token-insufficient-approval");
             allowance[src][msg.sender] = sub(allowance[src][msg.sender], wad);
         }
@@ -277,7 +277,7 @@ contract DSToken is DSMath, DSAuth {
     }
 
     function burn(address guy, uint wad) public auth stoppable {
-        if (guy != msg.sender && allowance[guy][msg.sender] != uint(-1)) {
+        if (guy != msg.sender && allowance[guy][msg.sender] != type(uint256).max) {
             require(allowance[guy][msg.sender] >= wad, "ds-token-insufficient-approval");
             allowance[guy][msg.sender] = sub(allowance[guy][msg.sender], wad);
         }

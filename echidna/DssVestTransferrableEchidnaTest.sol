@@ -46,11 +46,11 @@ contract DssVestTransferrableEchidnaTest {
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
-    constructor() public {
+    constructor() {
         gem = new Dai(1);
         multisig = new Multisig();
         gem.mint(address(multisig), type(uint128).max);
-        tVest = new DssVestTransferrable(address(multisig), address(gem));
+        tVest = new DssVestTransferrable(address(0x1), address(multisig), address(gem));
         tVest.file("cap", MIN * WAD / TIME);
         multisig.approve(address(gem), address(tVest));
         salt = block.timestamp;
