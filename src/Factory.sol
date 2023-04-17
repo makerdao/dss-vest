@@ -6,7 +6,7 @@ import {DssVestMintable} from "./DssVest.sol";
 
 contract DssVestNaiveFactory {
 
-    event DssVestMintableCreated(address dssVestMintable, address indexed companyAdminAddress);
+    event DssVestMintableCreated(address dssVestMintable, address companyAdminAddress);
 
     /**
     @dev Creates a new DssVestMintable contract and transfers the ownership to the companyAdminAddress
