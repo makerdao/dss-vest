@@ -1,0 +1,12 @@
+[profile.ci]
+fuzz-runs = 10_000
+
+[profile.default]
+# via-ir = true # Enable the IR-based optimizer (yul)
+optimizer = true
+optimizer_runs = 10_000
+gas_reports = ["Factory", "DssVest"]
+solc = "0.8.17"
+
+[rpc_endpoints]
+goerli = "${GOERLI_RPC_URL}"

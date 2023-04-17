@@ -10,7 +10,7 @@ A token vesting plan for contributors. Includes scheduling, cliff vesting, third
 
 - [Dapptools](https://github.com/dapphub/dapptools)
 
-### Deployment
+### Deployment using DappHub
 
 `dss-vest` allows DAOs to create a participant vesting plan via token mints or surplus withdrawals.
 
@@ -43,6 +43,22 @@ After deployment, governance must set the `cap` value using the `file` function.
 Pass the authorized sender address and the address of the token contract to the constructor to set up the contract for streaming arbitrary ERC20 tokens. Note: this contract must be given ERC `approve()` authority to withdraw tokens from this contract.
 
 After deployment, the owner must also set the `cap` value using the `file` function.
+
+### Deployment using Foundry
+
+```bash
+source .env
+forge create --rpc-url $GOERLI_RPC_URL --private-key $PRIVATE_KEY --verify --etherscan-api-key=$ETHERSCAN_API_KEY src/Factory.sol:DssVestNaiveFactory
+```
+
+After the first DssVestMintable has been created using the factory, it should be verified.
+* paste the constructor arguments into a file stored at `$FILE`. The format is described [here](https://book.getfoundry.sh/reference/forge/forge-verify-contract#examples) (see last example).
+* verify
+  ```bash
+  forge verify-contract $CONTRACT_ADDRESS --chain goerli --constructor-args-path $FILE src/DssVest.sol:DssVestMintable
+  ```
+
+
 
 ### Creating a vest
 
