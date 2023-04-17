@@ -1,12 +1,13 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.17;
 
 import {DssVest, DssVestSuckable} from "../src/DssVest.sol";
 import        {ChainLog} from "./ChainLog.sol";
 import             {Vat} from "./Vat.sol";
 import         {DaiJoin} from "./DaiJoin.sol";
 import             {Dai} from "./Dai.sol";
+import  {ERC2771Context} from "../node_modules/@openzeppelin/contracts/metatx/ERC2771Context.sol";
 
 interface Hevm {
     function store(address, bytes32, bytes32) external;
@@ -47,7 +48,7 @@ contract DssVestSuckableEchidnaTest {
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
-    constructor() public {
+    constructor() {
         vat = new Vat();
         dai = new Dai(1);
         daiJoin = new DaiJoin(address(vat), address(dai));
@@ -55,7 +56,7 @@ contract DssVestSuckableEchidnaTest {
         chainlog.setAddress("MCD_VAT", address(vat));
         chainlog.setAddress("MCD_JOIN_DAI", address(daiJoin));
         chainlog.setAddress("MCD_VOW", vow);
-        sVest = new DssVestSuckable(address(chainlog));
+        sVest = new DssVestSuckable(address(0x0), address(chainlog));
         sVest.file("cap", MIN * WAD / TIME);
         dai.rely(address(daiJoin));
         vat.rely(address(sVest));
@@ -133,7 +134,7 @@ contract DssVestSuckableEchidnaTest {
             assert(sVest.tot(id) == toUint128(tot));
             assert(sVest.rxd(id) == 0);
             assert(sVest.mgr(id) == mgr);
-            assert(sVest.res(id) == 0);
+            assert(sVest.res(id) == 1);
             _mutusr(id);
         } catch Error(string memory errmsg) {
             bytes32 sLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4

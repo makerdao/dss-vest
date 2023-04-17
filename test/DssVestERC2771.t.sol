@@ -6,7 +6,7 @@ import "../lib/forge-std/src/Test.sol";
 import "@opengsn/contracts/src/forwarder/Forwarder.sol";
 
 
-import {DssVest, DssVestMintable, DssVestSuckable, DssVestTransferrable} from "./DssVest.sol";
+import {DssVest, DssVestMintable, DssVestSuckable, DssVestTransferrable} from "../src/DssVest.sol";
 
 interface Hevm {
     function warp(uint256) external;

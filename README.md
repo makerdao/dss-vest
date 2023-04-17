@@ -118,13 +118,13 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Local Dependencies
 
-- Install solc 0.6.12
+- Install solc 0.8.17
   ```
   $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
   ```
-- Install solc 0.6.12 via [duppsolc](https://github.com/naszam/duppsolc#installing)
+- Install solc 0.8.17 via [duppsolc](https://github.com/naszam/duppsolc#installing)
   ```
-  $ duppsolc 0.6.12
+  $ duppsolc 0.8.17
   ```
 
 ### Run Echidna Tests
@@ -154,14 +154,14 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   ```
   pip3 install certora-cli
   ```
-- Set Certora Key
+- Set Certora Key (optional)
   ```
   export CERTORAKEY=<key>
   ```
 
 ### Local Dependencies
 
-- Install solc-select and install solc 0.6.12 artifacts:
+- Install solc-select and install solc 0.8.17 artifacts:
   ```
   make solc-select
   ```
@@ -189,4 +189,21 @@ Some foundry tests have been added extending the contracts to be ERC2771 complia
     ```
     forge test --fork-url "$ETH_RPC_URL"
     ```
+    or 
+     
+    ```
+    ETH_RPC_URL=$ETH_RPC_URL yarn test 
+    ```
     Either replace `"$ETH_RPC_URL"` with the URL from step 1, or make sure the environment variable contains this URL.
+
+## NPM
+Follow these steps to publish a new version of the package to NPM:
+- prepare: update version in `package.json`
+- preview
+  ```
+  npm publish --access public --dry-run
+  ```
+- publish
+  ```
+  npm publish --access public
+  ```

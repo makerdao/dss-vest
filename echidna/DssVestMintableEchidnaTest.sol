@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.17;
 
 import {DssVest, DssVestMintable} from "../src/DssVest.sol";
 import         {DSToken} from "./DSToken.sol";
@@ -36,9 +36,9 @@ contract DssVestMintableEchidnaTest {
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
-    constructor() public {
+    constructor() {
         gem = new DSToken("MKR");
-        mVest = new DssVestMintable(address(gem));
+        mVest = new DssVestMintable(address(0x1), address(gem));
         mVest.file("cap", MIN * WAD / YEAR);
         gem.setOwner(address(mVest));
         salt = block.timestamp;
@@ -111,7 +111,7 @@ contract DssVestMintableEchidnaTest {
             assert(mVest.tot(id) == toUint128(tot));
             assert(mVest.rxd(id) == 0);
             assert(mVest.mgr(id) == mgr);
-            assert(mVest.res(id) == 0);
+            assert(mVest.res(id) == 1);
             _mutusr(id);
         } catch Error(string memory errmsg) {
             bytes32 mLocked = hevm.load(address(mVest), bytes32(uint256(4)));      // Load memory slot 0x4

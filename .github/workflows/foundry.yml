@@ -1,0 +1,35 @@
+on: [push, workflow_dispatch]
+
+name: Foundry
+
+jobs:
+  check:
+    name: Foundry project
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+        with:
+          submodules: recursive
+
+      - name: Install
+        working-directory: .
+        run: yarn install
+
+      - name: Install Foundry
+        uses: foundry-rs/foundry-toolchain@v1
+        with:
+          version: nightly
+
+      - name: Run tests
+        working-directory: .
+        run: yarn test &&  forge coverage --report lcov --fork-url $ETH_RPC_URL
+        env:
+          ETH_RPC_URL: ${{ secrets.ETH_RPC_URL }}
+
+      - name: Coverage
+        uses: VeryGoodOpenSource/very_good_coverage@v2
+        with:
+          path: "./lcov.info"
+          min_coverage: 95
+          exclude: "test/* script/*"
+      
