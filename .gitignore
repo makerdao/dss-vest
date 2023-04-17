@@ -17,3 +17,8 @@ corpus/
 .*certora*
 .last_confs/
 resource_errors.json
+
+types/
+artifacts/
+temp/
+
