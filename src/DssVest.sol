@@ -47,6 +47,18 @@ abstract contract DssVest is ERC2771Context {
     // --- Data ---
     mapping (address => uint256) public wards;
 
+    mapping (bytes32 => bool) public commitedAwards;
+
+    function blindedCommitedAward(bytes32 bcw) external lock auth {
+        commitedAwards[bcw] = true;
+    }
+
+    function createAward(bytes32 bcw, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _sec) external lock returns (uint256 id) {
+        require(bcw == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _sec)));
+        require(commitedAwards[bcw]);
+        id = create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+    }
+
     struct Award {
         address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period  [timestamp]
@@ -184,7 +196,7 @@ abstract contract DssVest is ERC2771Context {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) internal returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
