@@ -47,17 +47,7 @@ abstract contract DssVest is ERC2771Context {
     // --- Data ---
     mapping (address => uint256) public wards;
 
-    mapping (bytes32 => bool) public commitedAwards;
-
-    function blindedCommitedAward(bytes32 bcw) external lock auth {
-        commitedAwards[bcw] = true;
-    }
-
-    function createAward(bytes32 bcw, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _sec) external lock returns (uint256 id) {
-        require(bcw == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _sec)));
-        require(commitedAwards[bcw]);
-        id = create(_usr, _tot, _bgn, _tau, _eta, _mgr);
-    }
+    mapping (bytes32 => bool) public committedAwards;
 
     struct Award {
         address usr;   // Vesting recipient
@@ -184,6 +174,32 @@ abstract contract DssVest is ERC2771Context {
     }
     function toUint128(uint256 x) internal pure returns (uint128 z) {
         require((z = uint128(x)) == x, "DssVest/uint128-overflow");
+    }
+
+    /** 
+        @dev commit to the creation of an award without revealing the award's contents yet
+        @param bcw  The hash of the award's contents, see hash function in createAward for details
+    */
+    function commitAward(bytes32 bcw) external lock auth {
+        committedAwards[bcw] = true;
+    }
+
+    /**
+        @dev Create a vesting contract from an earlier commitment
+        @param _usr The recipient of the reward
+        @param _tot The total amount of the vest
+        @param _bgn The starting timestamp of the vest
+        @param _tau The duration of the vest (in seconds)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
+        @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
+        @param _slt The salt used to increase privacy when committing
+        @return id  The id of the vesting contract
+    */
+    function createAward(bytes32 bcw, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
+        require(bcw == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)));
+        require(committedAwards[bcw]);
+        id = create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+        committedAwards[bcw] = false;
     }
 
     /**
