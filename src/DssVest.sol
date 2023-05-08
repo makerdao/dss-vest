@@ -122,8 +122,15 @@ abstract contract DssVest is ERC2771Context, Initializable {
         initialize(trustedForwarder, _msgSender());    
         }
 
+    /*
+     * todo: decide on how to treat initializer inheritance. This initializer is not protected by  "initializer" modifier, but should be
+     */ 
     function initialize(address trustedForwarder, address _ward) public {
-        //_trustedForwarder = trustedForwarder; // todo: fix inability to set trustedForwarder
+        /*
+         * todo: _trustedForwarder is a private immutable variable in ERC2771Context, so we can't read or write it. 
+         *      How can it be initialized?
+         */
+        _trustedForwarder = trustedForwarder; 
         wards[_ward] = 1;
         emit Rely(_ward);
     }
