@@ -454,7 +454,7 @@ contract DssVestSuckable is DssVest, Initializable {
     }
 
     function initialize(address _chainlog, address _ward) initializer public {
-        DssVest.initialize(_ward);
+        super.initialize(_ward);
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
@@ -496,7 +496,7 @@ contract DssVestTransferrable is DssVest, Initializable {
 
     function initialize(address _czar, address _gem, address _ward) initializer public {
         // call parent initializer
-        DssVest.initialize(_ward);
+        super.initialize(_ward);
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;

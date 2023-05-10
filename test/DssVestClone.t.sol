@@ -12,11 +12,11 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
+import "../src/DssVest.sol";
+import "../src/DssVestMintableCloneFactory.sol";
+import "../src/DssVestTransferrableCloneFactory.sol";
+import "../src/DssVestSuckableCloneFactory.sol";
 
-
-
-import {DssVestMintable} from "../src/DssVest.sol";
-import "../src/DssVestCloneFactory.sol";
 
 contract DssVestCloneDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
@@ -47,7 +47,9 @@ contract DssVestCloneDemo is Test {
     address public constant platformFeeCollector =
         0x7109709eCfa91A80626Ff3989D68f67f5b1dD127;
 
-    DssVestCloneFactory vestingFactory;
+    DssVestMintableCloneFactory mintableFactory;
+    DssVestTransferrableCloneFactory transferrableFactory;
+    DssVestSuckableCloneFactory suckableFactory;
 
     uint tokenFeeDenominator = 100;
     uint paymentTokenFeeDenominator = 200;
@@ -76,18 +78,20 @@ contract DssVestCloneDemo is Test {
         feeSettings = new FeeSettings(fees, platformFeeCollector);
         vm.stopPrank();
 
+        // set up clone factories
         DssVestMintable vestingImplementation = new DssVestMintable(address(forwarder), address(0x1));
-        vestingFactory = new DssVestCloneFactory(address(vestingImplementation));
-
+        mintableFactory = new DssVestMintableCloneFactory(address(vestingImplementation));
+        DssVestTransferrable transferrableImplementation = new DssVestTransferrable(address(forwarder), address(0x1), address(0x2));
+        transferrableFactory = new DssVestTransferrableCloneFactory(address(transferrableImplementation));
     }
 
-    function testCloneCreationlocal(address newToken, address newAdmin) public {
+    function testMintableCloneCreationlocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(vestingFactory.createMintableVestingClone(newToken, newAdmin));
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(newToken, newAdmin));
 
-        console.log("factory address: ", address(vestingFactory));
+        console.log("factory address: ", address(mintableFactory));
         console.log("clone address: ", address(mVest));
 
         assertTrue(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
@@ -95,11 +99,49 @@ contract DssVestCloneDemo is Test {
         assertTrue(address(mVest.gem()) == address(newToken), "Token not set correctly");
     }
 
+    function testTransferrableCloneCreationlocal(address czar, address gem, address ward) public {
+        vm.assume(gem != address(0x0));
+        vm.assume(ward != address(0x0));
+        vm.assume(czar != address(0x0));
+        // Deploy proxy clone
+        DssVestTransferrable vest = DssVestTransferrable(
+            transferrableFactory.createTransferrableVestingClone(czar, gem, ward));
+
+        console.log("factory address: ", address(mintableFactory));
+        console.log("clone address: ", address(vest));
+
+        assertTrue(vest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
+        assertTrue(vest.wards(ward) == 1, "ward not set correctly");
+        assertTrue(address(vest.gem()) == gem, "gem not set correctly");
+        assertTrue(address(vest.czar()) == czar, "czar not set correctly");
+    }
+
+    /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
+    ///     be tested locally.
+    function testSuckableCloneCreation(address czar, address gem, address ward) public {
+        DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), address(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F));
+        suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
+
+        vm.assume(gem != address(0x0));
+        vm.assume(ward != address(0x0));
+        vm.assume(czar != address(0x0));
+        // Deploy proxy clone
+        DssVestTransferrable vest = DssVestTransferrable(
+            transferrableFactory.createTransferrableVestingClone(czar, gem, ward));
+
+        console.log("factory address: ", address(mintableFactory));
+        console.log("clone address: ", address(vest));
+
+        assertTrue(vest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
+        assertTrue(vest.wards(ward) == 1, "ward not set correctly");
+        assertTrue(address(vest.gem()) == gem, "gem not set correctly");
+        assertTrue(address(vest.czar()) == czar, "czar not set correctly");
+    }
     function testReInitializationlocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(vestingFactory.createMintableVestingClone(newToken, newAdmin));
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(newToken, newAdmin));
 
         vm.expectRevert("Initializable: contract is already initialized");
         mVest.initialize(newAdmin, newAdmin);
@@ -122,7 +164,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
 
-        DssVestMintable localDssVest = DssVestMintable(vestingFactory.createMintableVestingClone(address(newCompanyToken), adminAddress));
+        DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(newCompanyToken), adminAddress));
 
         vm.prank(adminAddress);
         localDssVest.file("cap", 100);
@@ -217,7 +259,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
 
-        DssVestMintable localDssVest = DssVestMintable(vestingFactory.createMintableVestingClone(address(newCompanyToken), localAdmin));
+        DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(newCompanyToken), localAdmin));
         
         vm.startPrank(localAdmin);
         

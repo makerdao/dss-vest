@@ -2,7 +2,7 @@
 
 pragma solidity 0.8.17;
 
-import {DssVestMintable} from "./DssVest.sol";
+import "./DssVest.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract DssVestCloneFactory {
@@ -13,6 +13,18 @@ contract DssVestCloneFactory {
     }
 
     function createMintableVestingClone(address companyToken, address companyAdminAddress) external returns (address) {
+        address clone = Clones.clone(vestingImplementation);
+        DssVestMintable(clone).initialize(companyToken, companyAdminAddress);
+        return clone;
+    }
+
+    function createTransferrableVestingClone(address czar, address gem, address ward) external returns (address) {
+        address clone = Clones.clone(vestingImplementation);
+        DssVestTransferrable(clone).initialize(czar, gem, ward);
+        return clone;
+    }
+
+    function createSuckableVestingClone(address companyToken, address companyAdminAddress) external returns (address) {
         address clone = Clones.clone(vestingImplementation);
         DssVestMintable(clone).initialize(companyToken, companyAdminAddress);
         return clone;
