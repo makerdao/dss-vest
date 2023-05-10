@@ -85,7 +85,7 @@ contract DssVestCloneDemo is Test {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(vestingFactory.createVestingClone(newToken, newAdmin));
+        DssVestMintable mVest = DssVestMintable(vestingFactory.createMintableVestingClone(newToken, newAdmin));
 
         console.log("factory address: ", address(vestingFactory));
         console.log("clone address: ", address(mVest));
@@ -99,7 +99,7 @@ contract DssVestCloneDemo is Test {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(vestingFactory.createVestingClone(newToken, newAdmin));
+        DssVestMintable mVest = DssVestMintable(vestingFactory.createMintableVestingClone(newToken, newAdmin));
 
         vm.expectRevert("Initializable: contract is already initialized");
         mVest.initialize(newAdmin, newAdmin);
@@ -122,7 +122,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
 
-        DssVestMintable localDssVest = DssVestMintable(vestingFactory.createVestingClone(address(newCompanyToken), adminAddress));
+        DssVestMintable localDssVest = DssVestMintable(vestingFactory.createMintableVestingClone(address(newCompanyToken), adminAddress));
 
         vm.prank(adminAddress);
         localDssVest.file("cap", 100);
@@ -217,7 +217,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
 
-        DssVestMintable localDssVest = DssVestMintable(vestingFactory.createVestingClone(address(newCompanyToken), localAdmin));
+        DssVestMintable localDssVest = DssVestMintable(vestingFactory.createMintableVestingClone(address(newCompanyToken), localAdmin));
         
         vm.startPrank(localAdmin);
         

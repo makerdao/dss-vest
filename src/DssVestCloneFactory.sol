@@ -12,7 +12,7 @@ contract DssVestCloneFactory {
         vestingImplementation = _implementation;
     }
 
-    function createVestingClone(address companyToken, address companyAdminAddress) external returns (address) {
+    function createMintableVestingClone(address companyToken, address companyAdminAddress) external returns (address) {
         address clone = Clones.clone(vestingImplementation);
         DssVestMintable(clone).initialize(companyToken, companyAdminAddress);
         return clone;
