@@ -102,7 +102,8 @@ contract DssVestCloneDemo is Test {
 
         console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
 
-        // try calling the DssVest initialize function
+        // try calling the DssVest initialize function again. This should fail.
+        vm.expectRevert("Initializable: contract is already initialized");
         mVest.initialize(vm.addr(0x3), vm.addr(0x4));
 
         console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));

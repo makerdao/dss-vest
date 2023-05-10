@@ -16,7 +16,7 @@ import "@openzeppelin/contracts/proxy/Clones.sol";
 
 
 import {DssVestMintable} from "../src/DssVest.sol";
-import "../src/Factory.sol";
+import "../src/DssVestNaiveFactory.sol";
 
 contract DssVestFactoryDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
