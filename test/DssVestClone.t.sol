@@ -137,6 +137,7 @@ contract DssVestCloneDemo is Test {
         assertTrue(address(vest.gem()) == gem, "gem not set correctly");
         assertTrue(address(vest.czar()) == czar, "czar not set correctly");
     }
+    
     function testReInitializationlocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
