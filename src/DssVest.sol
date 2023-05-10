@@ -21,7 +21,6 @@ pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
 import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
 
 interface MintLike {
     function mint(address, uint256) external;
