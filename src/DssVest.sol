@@ -44,7 +44,7 @@ interface TokenLike {
     function transferFrom(address, address, uint256) external returns (bool);
 }
 
-abstract contract DssVest is ERC2771Context, Initializable {
+abstract contract DssVest is ERC2771Context {
     // --- Data ---
     mapping (address => uint256) public wards;
 
@@ -409,7 +409,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
     function pay(address _guy, uint256 _amt) virtual internal;
 }
 
-contract DssVestMintable is DssVest {
+contract DssVestMintable is DssVest, Initializable {
 
     MintLike public gem;
 
@@ -437,7 +437,7 @@ contract DssVestMintable is DssVest {
     }
 }
 
-contract DssVestSuckable is DssVest {
+contract DssVestSuckable is DssVest, Initializable {
 
     uint256 internal constant RAY = 10**27;
 
@@ -480,7 +480,7 @@ contract DssVestSuckable is DssVest {
      any arbitrary token from an address (i.e. CU multisig) to individual
      contributors.
 */
-contract DssVestTransferrable is DssVest {
+contract DssVestTransferrable is DssVest, Initializable {
 
     address   public czar;
     TokenLike public gem;

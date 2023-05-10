@@ -81,7 +81,9 @@ contract DssVestCloneDemo is Test {
 
     }
 
-    function testCloneCreation(address newToken, address newAdmin) public {
+    function testCloneCreationlocal(address newToken, address newAdmin) public {
+        vm.assume(newToken != address(0x0));
+        vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
         DssVestMintable mVest = DssVestMintable(vestingFactory.createVestingClone(newToken, newAdmin));
 
@@ -93,7 +95,7 @@ contract DssVestCloneDemo is Test {
         assertTrue(address(mVest.gem()) == address(newToken), "Token not set correctly");
     }
 
-    function testReInitialization(address newToken, address newAdmin) public {
+    function testReInitializationlocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
@@ -103,50 +105,10 @@ contract DssVestCloneDemo is Test {
         mVest.initialize(newAdmin, newAdmin);
     }
 
-    // /**
-    //  * @notice Use clone with a meta-transaction to test ERC2771 
-    //  */
-    // function testERC2771(uint256 adminPrivateKey) public {
-    //     vm.assume(adminPrivateKey != 0x0);
-    //     address adminAddress = vm.addr(adminPrivateKey);
-
-    //     Token newCompanyToken = new Token(
-    //         address(forwarder),
-    //         feeSettings,
-    //         localAdmin,
-    //         allowList,
-    //         0, // set requirements 0 in order to keep this test simple
-    //         "Company Token",
-    //         "COMPT"
-    //     );
-
-    //     DssVestMintable localDssVest = DssVestMintable(vestingFactory.createVestingClone(address(newCompanyToken), localAdmin));
-
-    //     // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
-    //     vm.recordLogs();
-    //     forwarder.registerDomainSeparator(string(abi.encodePacked(address(localDssVest))), "v1.0"); // simply uses address string as name
-    //     Vm.Log[] memory logs = vm.getRecordedLogs();
-    //     // the next line extracts the domain separator from the event emitted by the forwarder
-    //     domainSeparator = logs[0].topics[1]; // internally, the forwarder calls this domainHash in registerDomainSeparator. But expects is as domainSeparator in execute().
-    //     require(forwarder.domains(domainSeparator), "Registering failed");
-
-    //     // register request type with forwarder. Since the forwarder does not check the request type, we can use any string as function name.
-    //     vm.recordLogs();
-    //     forwarder.registerRequestType("someFunctionName", "some function parameters");
-    //     logs = vm.getRecordedLogs();
-    //     // the next line extracts the request type from the event emitted by the forwarder
-    //     requestType = logs[0].topics[1];
-    //     require(forwarder.typeHashes(requestType), "Registering failed");
-
-    //     // file the cap as local admin through ERC2771
-
-
-    // }
-
     /**
      * @notice Create a new vest as ward using a meta tx that is sent by relayer
      */
-    function testCreateERC2771(address usrAddress) public {
+    function testCreateERC2771local(address usrAddress) public {
         address adminAddress = vm.addr(companyAdminPrivateKey);
 
         Token newCompanyToken = new Token(
@@ -242,7 +204,7 @@ contract DssVestCloneDemo is Test {
     /**
      * @notice Use clone to vest tokens
      */
-    function testCloneUse(address localAdmin) public {
+    function testCloneUselocal(address localAdmin) public {
         vm.assume(localAdmin != address(0x0));
         Token newCompanyToken = new Token(
             address(forwarder),
