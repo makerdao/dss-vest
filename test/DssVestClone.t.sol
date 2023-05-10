@@ -118,24 +118,22 @@ contract DssVestCloneDemo is Test {
 
     /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
     ///     be tested locally.
-    function testSuckableCloneCreation(address czar, address gem, address ward) public {
-        DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), address(0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F));
+    function testSuckableCloneCreation(address ward) public {
+        vm.assume(ward != address(0x0));
+
+        address chainlog = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
+        DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
         suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
 
-        vm.assume(gem != address(0x0));
-        vm.assume(ward != address(0x0));
-        vm.assume(czar != address(0x0));
+        
         // Deploy proxy clone
-        DssVestTransferrable vest = DssVestTransferrable(
-            transferrableFactory.createTransferrableVestingClone(czar, gem, ward));
-
-        console.log("factory address: ", address(mintableFactory));
-        console.log("clone address: ", address(vest));
+        DssVestSuckable vest = DssVestSuckable(
+            suckableFactory.createSuckableVestingClone(chainlog, ward));
 
         assertTrue(vest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
         assertTrue(vest.wards(ward) == 1, "ward not set correctly");
-        assertTrue(address(vest.gem()) == gem, "gem not set correctly");
-        assertTrue(address(vest.czar()) == czar, "czar not set correctly");
+        assertTrue(address(vest.chainlog()) == chainlog, "chainlog not set correctly");
+        // assertTrue(address(vest.czar()) == czar, "czar not set correctly");
     }
     
     function testReInitializationlocal(address newToken, address newAdmin) public {

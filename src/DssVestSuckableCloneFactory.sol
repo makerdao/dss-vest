@@ -12,9 +12,9 @@ contract DssVestSuckableCloneFactory {
         vestingImplementation = _implementation;
     }
 
-    function createSuckableVestingClone(address companyToken, address companyAdminAddress) external returns (address) {
+    function createSuckableVestingClone(address chainlog, address ward) external returns (address) {
         address clone = Clones.clone(vestingImplementation);
-        DssVestSuckable(clone).initialize(companyToken, companyAdminAddress);
+        DssVestSuckable(clone).initialize(chainlog, ward);
         return clone;
     }
 }
