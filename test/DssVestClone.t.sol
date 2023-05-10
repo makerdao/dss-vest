@@ -109,6 +109,7 @@ contract DssVestCloneDemo is Test {
      * @notice Create a new vest as ward using a meta tx that is sent by relayer
      */
     function testCreateERC2771local(address usrAddress) public {
+        vm.assume(usrAddress != address(0x0));
         address adminAddress = vm.addr(companyAdminPrivateKey);
 
         Token newCompanyToken = new Token(
