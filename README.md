@@ -10,7 +10,7 @@ A token vesting plan for contributors. Includes scheduling, cliff vesting, third
 
 - [Dapptools](https://github.com/dapphub/dapptools)
 
-### Deployment
+### Deployment using DappHub
 
 `dss-vest` allows DAOs to create a participant vesting plan via token mints or surplus withdrawals.
 
@@ -43,6 +43,22 @@ After deployment, governance must set the `cap` value using the `file` function.
 Pass the authorized sender address and the address of the token contract to the constructor to set up the contract for streaming arbitrary ERC20 tokens. Note: this contract must be given ERC `approve()` authority to withdraw tokens from this contract.
 
 After deployment, the owner must also set the `cap` value using the `file` function.
+
+### Deployment using Foundry
+
+```bash
+source .env
+forge create --rpc-url $GOERLI_RPC_URL --private-key $PRIVATE_KEY --verify --etherscan-api-key=$ETHERSCAN_API_KEY src/Factory.sol:DssVestNaiveFactory
+```
+
+After the first DssVestMintable has been created using the factory, it should be verified.
+* paste the constructor arguments into a file stored at `$FILE`. The format is described [here](https://book.getfoundry.sh/reference/forge/forge-verify-contract#examples) (see last example).
+* verify
+  ```bash
+  forge verify-contract $CONTRACT_ADDRESS --chain goerli --constructor-args-path $FILE src/DssVest.sol:DssVestMintable
+  ```
+
+
 
 ### Creating a vest
 
@@ -118,13 +134,13 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Local Dependencies
 
-- Install solc 0.6.12
+- Install solc 0.8.17
   ```
   $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
   ```
-- Install solc 0.6.12 via [duppsolc](https://github.com/naszam/duppsolc#installing)
+- Install solc 0.8.17 via [duppsolc](https://github.com/naszam/duppsolc#installing)
   ```
-  $ duppsolc 0.6.12
+  $ duppsolc 0.8.17
   ```
 
 ### Run Echidna Tests
@@ -154,14 +170,14 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
   ```
   pip3 install certora-cli
   ```
-- Set Certora Key
+- Set Certora Key (optional)
   ```
   export CERTORAKEY=<key>
   ```
 
 ### Local Dependencies
 
-- Install solc-select and install solc 0.6.12 artifacts:
+- Install solc-select and install solc 0.8.17 artifacts:
   ```
   make solc-select
   ```
@@ -195,3 +211,15 @@ Some foundry tests have been added extending the contracts to be ERC2771 complia
     ETH_RPC_URL=$ETH_RPC_URL yarn test 
     ```
     Either replace `"$ETH_RPC_URL"` with the URL from step 1, or make sure the environment variable contains this URL.
+
+## NPM
+Follow these steps to publish a new version of the package to NPM:
+- prepare: update version in `package.json`
+- preview
+  ```
+  npm publish --access public --dry-run
+  ```
+- publish
+  ```
+  npm publish --access public
+  ```

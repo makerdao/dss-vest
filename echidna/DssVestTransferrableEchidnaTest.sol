@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 
-pragma solidity 0.6.12;
+pragma solidity 0.8.17;
 
 import {DssVest, DssVestTransferrable} from "../src/DssVest.sol";
 import                  {Dai} from "./Dai.sol";
@@ -46,11 +46,11 @@ contract DssVestTransferrableEchidnaTest {
     // CHEAT_CODE = 0x7109709ECfa91a80626fF3989D68f67F5b1DD12D
     bytes20 constant CHEAT_CODE = bytes20(uint160(uint256(keccak256("hevm cheat code"))));
 
-    constructor() public {
+    constructor() {
         gem = new Dai(1);
         multisig = new Multisig();
         gem.mint(address(multisig), type(uint128).max);
-        tVest = new DssVestTransferrable(address(multisig), address(gem));
+        tVest = new DssVestTransferrable(address(0x1), address(multisig), address(gem));
         tVest.file("cap", MIN * WAD / TIME);
         multisig.approve(address(gem), address(tVest));
         salt = block.timestamp;
@@ -127,7 +127,7 @@ contract DssVestTransferrableEchidnaTest {
             assert(tVest.tot(id) == toUint128(tot));
             assert(tVest.rxd(id) == 0);
             assert(tVest.mgr(id) == mgr);
-            assert(tVest.res(id) == 0);
+            assert(tVest.res(id) == 1);
             _mutusr(id);
         } catch Error(string memory errmsg) {
             bytes32 tLocked = hevm.load(address(tVest), bytes32(uint256(4)));      // Load memory slot 0x4

@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity >=0.5.12;
+pragma solidity 0.8.17;
 
 // FIXME: This contract was altered compared to the production version.
 // It doesn't use LibNote anymore.
@@ -72,7 +72,7 @@ contract GemJoin {
     uint    public dec;
     uint    public live;  // Active Flag
 
-    constructor(address vat_, bytes32 ilk_, address gem_) public {
+    constructor(address vat_, bytes32 ilk_, address gem_) {
         wards[msg.sender] = 1;
         live = 1;
         vat = VatLike2(vat_);
@@ -110,7 +110,7 @@ contract DaiJoin {
     DSTokenLike public dai;  // Stablecoin Token
     uint    public live;     // Active Flag
 
-    constructor(address vat_, address dai_) public {
+    constructor(address vat_, address dai_) {
         wards[msg.sender] = 1;
         live = 1;
         vat = VatLike2(vat_);

@@ -18,7 +18,34 @@ corpus/
 .last_confs/
 resource_errors.json
 
-types/
-artifacts/
-temp/
+.npmignore
 
+cache
+types
+lcov.info
+.gas-snapshot
+dist
+out
+node_modules/
+**/*.dbg.json
+artifacts/*
+.DS_Store
+.idea/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+*.log
+coverage/
+temp/
+broadcast/
+.env*
+!.env.example
+.npmignore
+.VSCodeCounter/
+typechain-types
+
+.zip-output-url.txt

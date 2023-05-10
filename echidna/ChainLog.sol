@@ -17,7 +17,7 @@
 // You should have received a copy of the GNU Affero General Public License
 // along with this program.  If not, see <https://www.gnu.org/licenses/>.
 
-pragma solidity ^0.6.7;
+pragma solidity 0.8.17;
 
 /// @title An on-chain governance-managed contract registry
 /// @notice Publicly readable data; mutating functions must be called by an authorized user
@@ -52,7 +52,7 @@ contract ChainLog {
     string public sha256sum;
     string public ipfs;
 
-    constructor() public {
+    constructor() {
         wards[msg.sender] = 1;
         setVersion("0.0.0");
         setAddress("CHANGELOG", address(this));
