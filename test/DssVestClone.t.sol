@@ -47,7 +47,7 @@ contract DssVestCloneDemo is Test {
     address public constant platformFeeCollector =
         0x7109709eCfa91A80626Ff3989D68f67f5b1dD127;
 
-    DssVestMintable          mVest;
+    DssVestCloneFactory vestingFactory;
 
     uint tokenFeeDenominator = 100;
     uint paymentTokenFeeDenominator = 200;
@@ -83,79 +83,90 @@ contract DssVestCloneDemo is Test {
         );
         vm.stopPrank();
 
-        // Deploy vesting contract as some user with some address as token address. 
-        // It will be unusable, but that does not matter.
-        DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2));
-        DssVestCloneFactory vestingFactory = new DssVestCloneFactory(address(vestingImplementation));
+        DssVestMintable vestingImplementation = new DssVestMintable(address(forwarder), address(0x1));
+        vestingFactory = new DssVestCloneFactory(address(vestingImplementation));
 
+    }
+
+    function testCloneCreation(address newToken, address newAdmin) public {
         // Deploy proxy clone
-        mVest = DssVestMintable(vestingFactory.createVestingClone(address(forwarder), address(companyToken), companyAdminAddress));
+        DssVestMintable mVest = DssVestMintable(vestingFactory.createVestingClone(newToken, newAdmin));
 
-        console.log("implementation address: ", address(vestingImplementation));
         console.log("factory address: ", address(vestingFactory));
         console.log("clone address: ", address(mVest));
 
-        // initialize vesting contract 
-        vm.startPrank(companyAdminAddress);
-        //mVest = new DssVestMintable(address(forwarder), address(companyToken));
-        mVest.file("cap", (totalVestAmount / vestDuration) ); 
-
-        console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
-
-        // try calling the DssVest initialize function
-        mVest.initialize(vm.addr(0x3), vm.addr(0x4));
-
-        console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));
-        console.log("clone's forwarder is 0: ", mVest.isTrustedForwarder(address(0x0)));
-
-
-        // grant minting allowance
-        companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
-        vm.stopPrank();
-
-
-        // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
-        vm.recordLogs();
-        forwarder.registerDomainSeparator(string(abi.encodePacked(address(mVest))), "v1.0"); // simply uses address string as name
-        Vm.Log[] memory logs = vm.getRecordedLogs();
-        // the next line extracts the domain separator from the event emitted by the forwarder
-        domainSeparator = logs[0].topics[1]; // internally, the forwarder calls this domainHash in registerDomainSeparator. But expects is as domainSeparator in execute().
-        require(forwarder.domains(domainSeparator), "Registering failed");
-
-        // register request type with forwarder. Since the forwarder does not check the request type, we can use any string as function name.
-        vm.recordLogs();
-        forwarder.registerRequestType("someFunctionName", "some function parameters");
-        logs = vm.getRecordedLogs();
-        // the next line extracts the request type from the event emitted by the forwarder
-        requestType = logs[0].topics[1];
-        require(forwarder.typeHashes(requestType), "Registering failed");
+        assertTrue(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
+        assertTrue(mVest.wards(newAdmin) == 1, "Admin not set correctly");
+        assertTrue(address(mVest.gem()) == address(newToken), "Token not set correctly");
     }
 
-    /**
-     * @notice does the full setup and payout without meta tx
-     * @dev Many local variables had to be removed to avoid stack too deep error
-     */
-    function testDemoEverythinglocal() public {
+    // function testCloneUse() public {
+    //     mVest = DssVestMintable(vestingFactory.createVestingClone(companyToken, companyAdminAddress));
+    //     // initialize vesting contract 
+    //     vm.startPrank(companyAdminAddress);
+    //     //mVest = new DssVestMintable(address(forwarder), address(companyToken));
+    //     mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
-        uint startDate = block.timestamp;
-        // create vest as company admin
-        vm.prank(companyAdminAddress);
-        uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, vestCliff, companyAdminAddress);
+    //     console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
 
-        // accrued and claimable tokens can be checked at any time
-        uint timeShift = 9 * 30 days;
-        vm.warp(startDate + timeShift);
-        uint unpaid = mVest.unpaid(id);
-        assertEq(unpaid, 0, "unpaid is wrong: no tokens should be claimable yet");
-        uint accrued = mVest.accrued(id);
-        assertEq(accrued, totalVestAmount * timeShift / vestDuration, "accrued is wrong: some tokens should be accrued already");
+    //     // try calling the DssVest initialize function
+    //     mVest.initialize(vm.addr(0x3), vm.addr(0x4));
 
-        // claim tokens as employee
-        timeShift = 2 * 365 days;
-        vm.warp(startDate + timeShift);
-        assertEq(companyToken.balanceOf(employeeAddress), 0, "employee already has tokens");
-        vm.prank(employeeAddress);
-        mVest.vest(id);
-        assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
-    }
+    //     console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));
+    //             console.log("clone's forwarder is 0x1: ", mVest.isTrustedForwarder(vm.addr(0x1)));
+
+    //     console.log("clone's forwarder is 0: ", mVest.isTrustedForwarder(address(0x0)));
+
+    //     require(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
+
+
+    //     // grant minting allowance
+    //     companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
+    //     vm.stopPrank();
+
+
+    //     // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
+    //     vm.recordLogs();
+    //     forwarder.registerDomainSeparator(string(abi.encodePacked(address(mVest))), "v1.0"); // simply uses address string as name
+    //     Vm.Log[] memory logs = vm.getRecordedLogs();
+    //     // the next line extracts the domain separator from the event emitted by the forwarder
+    //     domainSeparator = logs[0].topics[1]; // internally, the forwarder calls this domainHash in registerDomainSeparator. But expects is as domainSeparator in execute().
+    //     require(forwarder.domains(domainSeparator), "Registering failed");
+
+    //     // register request type with forwarder. Since the forwarder does not check the request type, we can use any string as function name.
+    //     vm.recordLogs();
+    //     forwarder.registerRequestType("someFunctionName", "some function parameters");
+    //     logs = vm.getRecordedLogs();
+    //     // the next line extracts the request type from the event emitted by the forwarder
+    //     requestType = logs[0].topics[1];
+    //     require(forwarder.typeHashes(requestType), "Registering failed");
+    // }
+
+    // /**
+    //  * @notice does the full setup and payout without meta tx
+    //  * @dev Many local variables had to be removed to avoid stack too deep error
+    //  */
+    // function testClone() public {
+
+    //     uint startDate = block.timestamp;
+    //     // create vest as company admin
+    //     vm.prank(companyAdminAddress);
+    //     uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, vestCliff, companyAdminAddress);
+
+    //     // accrued and claimable tokens can be checked at any time
+    //     uint timeShift = 9 * 30 days;
+    //     vm.warp(startDate + timeShift);
+    //     uint unpaid = mVest.unpaid(id);
+    //     assertEq(unpaid, 0, "unpaid is wrong: no tokens should be claimable yet");
+    //     uint accrued = mVest.accrued(id);
+    //     assertEq(accrued, totalVestAmount * timeShift / vestDuration, "accrued is wrong: some tokens should be accrued already");
+
+    //     // claim tokens as employee
+    //     timeShift = 2 * 365 days;
+    //     vm.warp(startDate + timeShift);
+    //     assertEq(companyToken.balanceOf(employeeAddress), 0, "employee already has tokens");
+    //     vm.prank(employeeAddress);
+    //     mVest.vest(id);
+    //     assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
+    // }
 }

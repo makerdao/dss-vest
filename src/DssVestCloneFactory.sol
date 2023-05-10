@@ -12,9 +12,9 @@ contract DssVestCloneFactory {
         vestingImplementation = _implementation;
     }
 
-    function createVestingClone(address forwarder, address companyToken, address companyAdminAddress) external returns (address) {
+    function createVestingClone(address companyToken, address companyAdminAddress) external returns (address) {
         address clone = Clones.clone(vestingImplementation);
-        DssVestMintable(clone).initialize(forwarder, companyToken, companyAdminAddress);
+        DssVestMintable(clone).initialize(companyToken, companyAdminAddress);
         return clone;
     }
 }

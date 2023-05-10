@@ -119,18 +119,13 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @dev Base vesting logic contract constructor
     */
     constructor (address trustedForwarder) ERC2771Context(trustedForwarder) {
-        initialize(trustedForwarder, _msgSender());    
+        initialize(_msgSender());    
         }
 
     /*
      * todo: decide on how to treat initializer inheritance. This initializer is not protected by  "initializer" modifier, but should be
      */ 
-    function initialize(address trustedForwarder, address _ward) public {
-        /*
-         * todo: _trustedForwarder is a private immutable variable in ERC2771Context, so we can't read or write it. 
-         *      How can it be initialized?
-         */
-        _trustedForwarder = trustedForwarder; 
+    function initialize(address _ward) public { 
         wards[_ward] = 1;
         emit Rely(_ward);
     }
@@ -424,11 +419,11 @@ contract DssVestMintable is DssVest {
         @param _gem The contract address of the mintable token
     */
     constructor(address _forwarder, address _gem) DssVest(_forwarder) {
-        initialize(_forwarder, _gem, _msgSender());   
+        initialize(_gem, _msgSender());   
     }
 
-    function initialize(address _forwarder, address _gem, address _ward) initializer public {
-        super.initialize(_forwarder, _ward);
+    function initialize(address _gem, address _ward) initializer public {
+        super.initialize(_ward);
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
@@ -456,11 +451,11 @@ contract DssVestSuckable is DssVest {
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _forwarder, address _chainlog) DssVest(_forwarder) {
-        initialize(_forwarder, _chainlog, _msgSender());
+        initialize(_chainlog, _msgSender());
     }
 
-    function initialize(address _forwarder, address _chainlog, address _ward) initializer public {
-        DssVest.initialize(_forwarder, _ward);
+    function initialize(address _chainlog, address _ward) initializer public {
+        DssVest.initialize(_ward);
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
@@ -497,12 +492,12 @@ contract DssVestTransferrable is DssVest {
         @param _gem  The token to be distributed
     */
     constructor(address _forwarder, address _czar, address _gem) DssVest(_forwarder) {
-        initialize(_forwarder, _czar, _gem, _msgSender());    
+        initialize(_czar, _gem, _msgSender());    
     }
 
-    function initialize(address _forwarder, address _czar, address _gem, address _ward) initializer public {
+    function initialize(address _czar, address _gem, address _ward) initializer public {
         // call parent initializer
-        DssVest.initialize(_forwarder, _ward);
+        DssVest.initialize(_ward);
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
