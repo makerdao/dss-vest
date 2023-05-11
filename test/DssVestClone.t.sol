@@ -291,5 +291,81 @@ contract DssVestCloneDemo is Test {
         assertEq(newCompanyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
     }
 
+    function testNoWrongWardslocal(address localCompanyAdmin) public {
+
+        vm.startPrank(platformAdminAddress);
+        Token localCompanyToken = new Token(
+            address(forwarder),
+            feeSettings,
+            localCompanyAdmin,
+            allowList,
+            0, // set requirements 0 in order to keep this test simple
+            "Company Token",
+            "COMPT"
+        );
+        // Deploy clone
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(localCompanyToken), localCompanyAdmin));
+        vm.stopPrank();
+
+        console.log("factory address: ", address(mintableFactory));
+        console.log("localCompanyAdmin: ", localCompanyAdmin);
+        console.log("test account address: ", address(this));
+        console.log("platformAdminAddress: ", platformAdminAddress);
+
+        require(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not trusted");
+        require(address(mVest.gem()) == address(localCompanyToken), "Token not set");
+        require(mVest.wards(localCompanyAdmin) == 1, "Company admin is not a ward");
+        require(mVest.wards(address(mintableFactory)) == 0, "Factory is a ward");
+        require(mVest.wards(platformAdminAddress) == 0, "Platform is a ward");
+        require(mVest.wards(address(this)) == 0, "Test account is a ward");
+        
+    }
+
+    /**
+     * @notice does the full setup and payout without meta tx
+     * @dev Many local variables had to be removed to avoid stack too deep error
+     */
+    function testDemoEverythinglocal(address localCompanyAdmin) public {
+
+        vm.startPrank(platformAdminAddress);
+        Token localCompanyToken = new Token(
+            address(forwarder),
+            feeSettings,
+            localCompanyAdmin,
+            allowList,
+            0, // set requirements 0 in order to keep this test simple
+            "Company Token",
+            "COMPT"
+        );
+
+        // Deploy clone
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(localCompanyToken), localCompanyAdmin));
+        vm.stopPrank();
+
+        uint startDate = block.timestamp;
+        // create vest as company admin
+        vm.startPrank(localCompanyAdmin);
+        mVest.file("cap", (totalVestAmount / vestDuration) );
+        uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, vestCliff, localCompanyAdmin);
+        // grant necessary minting allowance
+        localCompanyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
+        vm.stopPrank();
+
+        // accrued and claimable tokens can be checked at any time
+        uint timeShift = 9 * 30 days;
+        vm.warp(startDate + timeShift);
+        uint unpaid = mVest.unpaid(id);
+        assertEq(unpaid, 0, "unpaid is wrong: no tokens should be claimable yet");
+        uint accrued = mVest.accrued(id);
+        assertEq(accrued, totalVestAmount * timeShift / vestDuration, "accrued is wrong: some tokens should be accrued already");
+
+        // claim tokens as employee
+        timeShift = 2 * 365 days;
+        vm.warp(startDate + timeShift);
+        assertEq(localCompanyToken.balanceOf(employeeAddress), 0, "employee already has tokens");
+        vm.prank(employeeAddress);
+        mVest.vest(id);
+        assertEq(localCompanyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
+    }
     
 }
