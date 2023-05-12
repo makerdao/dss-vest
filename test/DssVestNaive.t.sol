@@ -91,6 +91,10 @@ contract DssVestCloneDemo is Test {
         // Deploy instance
         mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
 
+
+        // check initialization
+        assertEq(address(mVest.gem()), address(companyToken));
+        assertEq(mVest.wards(address(companyAdminAddress)), 1);
         console.log("implementation address: ", address(vestingImplementation));
         console.log("factory address: ", address(factory));
         console.log("clone address: ", address(mVest));
