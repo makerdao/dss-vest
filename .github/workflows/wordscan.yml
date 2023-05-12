@@ -1,0 +1,15 @@
+name: scanERC2771ForMsgSender
+
+on: [push]
+
+jobs:
+  pre-commit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: actions/setup-node@v1
+        with:
+          node-version: 16.x
+      - run: test "$(grep msg.sender src/DssVest.sol |wc -l)" -eq 0 && test "$(grep msg.data src/DssVest.sol |wc -l)" -eq 0
+      # these contracts inherit from ERC2771Context and may not contain msg.sender or msg.data. Instead, they must use _msgSender() and _msgData()
+      - run: test "grep 'gem\s*='  src/DssVest.sol |wc -l" - eq 2
