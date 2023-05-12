@@ -12,5 +12,5 @@ jobs:
           node-version: 16.x
       - run: test "$(grep msg.sender src/DssVest.sol |wc -l)" -eq 0 && test "$(grep msg.data src/DssVest.sol |wc -l)" -eq 0
       # these contracts inherit from ERC2771Context and may not contain msg.sender or msg.data. Instead, they must use _msgSender() and _msgData()
-      - run: test "grep 'gem\s*='  src/DssVest.sol |wc -l" -eq 2
-      - run: test "grep 'chainlog\s*='  src/DssVest.sol |wc -l" -eq 1
+      - run: test "$(grep 'gem\s*='  src/DssVest.sol |wc -l)" -eq 2
+      - run: test "$(grep 'chainlog\s*='  src/DssVest.sol |wc -l)" -eq 1
