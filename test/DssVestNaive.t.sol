@@ -95,6 +95,8 @@ contract DssVestCloneDemo is Test {
         // check initialization
         assertEq(address(mVest.gem()), address(companyToken));
         assertEq(mVest.wards(address(companyAdminAddress)), 1);
+        assertEq(mVest.wards(address(this)), 0);
+        assertEq(mVest.wards(address(factory)), 0);
         console.log("implementation address: ", address(vestingImplementation));
         console.log("factory address: ", address(factory));
         console.log("clone address: ", address(mVest));
