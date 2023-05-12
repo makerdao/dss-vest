@@ -514,7 +514,6 @@ contract DssVestTransferrable is DssVest {
     */
     function pay(address _guy, uint256 _amt) override internal {
         require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
-        gem   = TokenLike(address(200));
     }
 }
 
