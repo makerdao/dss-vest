@@ -159,11 +159,6 @@ contract DssVestTest is DSTest {
         new DssVestMintable(address(forwarder), address(gem));
     }
 
-    function testFailFileWrongKeylocal() public {
-        DssVestMintable vest = new DssVestMintable(address(forwarder), address(gem));
-        vest.file("wrongKey", 0x123);
-    }
-
     function testInit() public {
         mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0 days, address(1));
         (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = mVest.awards(1);

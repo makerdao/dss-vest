@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 pragma solidity 0.8.17;
 
-//import "ds-test/test.sol";
 import "../lib/forge-std/src/Test.sol";
 import "@opengsn/contracts/src/forwarder/Forwarder.sol";
 import "@tokenize.it/contracts/contracts/Token.sol";
@@ -80,9 +79,9 @@ contract DssVestCloneDemo is Test {
 
         // set up clone factories
         DssVestMintable vestingImplementation = new DssVestMintable(address(forwarder), address(0x1));
-        mintableFactory = new DssVestMintableCloneFactory(address(vestingImplementation));
+        mintableFactory = new DssVestMintableCloneFactory(vestingImplementation);
         DssVestTransferrable transferrableImplementation = new DssVestTransferrable(address(forwarder), address(0x1), address(0x2));
-        transferrableFactory = new DssVestTransferrableCloneFactory(address(transferrableImplementation));
+        transferrableFactory = new DssVestTransferrableCloneFactory(transferrableImplementation);
     }
 
     function testMintableCloneCreationlocal(address newToken, address newAdmin) public {
@@ -123,7 +122,7 @@ contract DssVestCloneDemo is Test {
 
         address chainlog = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
         DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
-        suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
+        suckableFactory = new DssVestSuckableCloneFactory(suckableImplementation);
 
         
         // Deploy proxy clone
