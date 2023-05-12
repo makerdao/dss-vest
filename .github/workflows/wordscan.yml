@@ -11,7 +11,8 @@ jobs:
         with:
           node-version: 16.x
       # these contracts inherit from ERC2771Context and may not contain msg.sender or msg.data. Instead, they must use _msgSender() and _msgData()
-      - run: test "$(grep msg.sender src/DssVest.sol |wc -l)" -eq 0 && test "$(grep msg.data src/DssVest.sol |wc -l)" -eq 0
+      - run: test "$(grep msg.sender src/DssVest.sol |wc -l)" -eq 0
+      - run: test "$(grep msg.data src/DssVest.sol |wc -l)" -eq 0
       # gem may only be set once (in the mintable and transferrable contracts). Count the assignments.  
       - run: test "$(grep 'gem\s*='  src/DssVest.sol |wc -l)" -eq 2
       # czar may only be set once (in the transferrable contract). Count the assignments.
