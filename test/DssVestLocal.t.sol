@@ -28,4 +28,16 @@ contract DssVestLocal is Test {
         vm.expectRevert("DssVest/file-unrecognized-param");
         vest.file("wrongKey", value);
     }
+
+    function testRelyDenylocal(address gem, address ward) public {
+        vm.assume(gem != address(0));
+        vm.assume(ward != address(0));
+        vm.assume(ward != address(this));
+        DssVestMintable vest = new DssVestMintable(address(forwarder), gem);
+        assertEq(vest.wards(ward), 0, "address is already a ward");
+        vest.rely(ward);
+        assertEq(vest.wards(ward), 1, "rely failed");
+        vest.deny(ward);
+        assertEq(vest.wards(ward), 0, "deny failed");
+    }
 }

@@ -132,7 +132,7 @@ contract DssVestCloneDemo is Test {
         assertTrue(vest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
         assertTrue(vest.wards(ward) == 1, "ward not set correctly");
         assertTrue(address(vest.chainlog()) == chainlog, "chainlog not set correctly");
-        // assertTrue(address(vest.czar()) == czar, "czar not set correctly");
+        assertTrue(address(vest) != address(suckableFactory), "cloning failed");
     }
     
     function testReInitializationlocal(address newToken, address newAdmin) public {
