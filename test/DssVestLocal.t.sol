@@ -23,6 +23,7 @@ contract DssVestLocal is Test {
 
     function testFileWrongKeylocal(address gem, uint256 value, string memory key) public {
         vm.assume(keccak256(abi.encodePacked(key)) != keccak256(abi.encodePacked("cap")));
+        vm.assume(gem != address(0));
         DssVestMintable vest = new DssVestMintable(address(forwarder), gem);
         vm.expectRevert("DssVest/file-unrecognized-param");
         vest.file("wrongKey", value);

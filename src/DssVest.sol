@@ -44,7 +44,7 @@ interface TokenLike {
     function transferFrom(address, address, uint256) external returns (bool);
 }
 
-abstract contract DssVest is ERC2771Context {
+abstract contract DssVest is ERC2771Context, Initializable {
     // --- Data ---
     mapping (address => uint256) public wards;
 
@@ -117,14 +117,18 @@ abstract contract DssVest is ERC2771Context {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor (address trustedForwarder) ERC2771Context(trustedForwarder) {
-        initialize(_msgSender());    
-        }
+    constructor (address trustedForwarder) ERC2771Context(trustedForwarder) initializer {
+        initialize(_msgSender());   
+    }
 
-    /*
-     * todo: decide on how to treat initializer inheritance. This initializer is not protected by  "initializer" modifier, but should be
-     */ 
-    function initialize(address _ward) public { 
+    /**
+        @notice Initialize the contract
+        @dev This function can only be called once. Because the child contracts use the `initializer` modifier,
+             it can not be used here. Instead, this function is protected manually with the `initialized` flag.
+             Since this contract is abstract, it should not be possible to call this function directly in the first place.
+        @param _ward The address to be granted admin rights to the contract
+     */
+    function initialize(address _ward) public onlyInitializing { 
         wards[_ward] = 1;
         emit Rely(_ward);
     }
@@ -409,7 +413,7 @@ abstract contract DssVest is ERC2771Context {
     function pay(address _guy, uint256 _amt) virtual internal;
 }
 
-contract DssVestMintable is DssVest, Initializable {
+contract DssVestMintable is DssVest {
 
     MintLike public gem;
 
@@ -437,7 +441,7 @@ contract DssVestMintable is DssVest, Initializable {
     }
 }
 
-contract DssVestSuckable is DssVest, Initializable {
+contract DssVestSuckable is DssVest {
 
     uint256 internal constant RAY = 10**27;
 
@@ -480,7 +484,7 @@ contract DssVestSuckable is DssVest, Initializable {
      any arbitrary token from an address (i.e. CU multisig) to individual
      contributors.
 */
-contract DssVestTransferrable is DssVest, Initializable {
+contract DssVestTransferrable is DssVest {
 
     address   public czar;
     TokenLike public gem;
