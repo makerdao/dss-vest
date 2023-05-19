@@ -86,6 +86,35 @@ contract DssVestLocal is Test {
         vest.createFromCommitment(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
     }
 
+    function testCreateFromCommitmentWithModifiedDatalocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {
+        vm.assume(_usr != address(0));
+        vm.assume(_usr2 != address(0));
+        vm.assume(_usr2 != _usr);
+        vm.assume(_tot2 != 0 && _tot != 0 && _tot2 != _tot);
+        
+        uint48 _bgn = uint48(block.timestamp + 400 days);
+        uint48 _tau = 600 days;
+        uint48 _eta = 200 days;
+        address _mgr = address(6);
+        
+        bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
+
+        // commit
+        assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+
+        // createFromCommitment
+        vm.expectRevert("DssVest/invalid-hash");
+        vest.createFromCommitment(hash, _usr2, _tot, _bgn, _tau, _eta, _mgr, _slt);
+    
+
+        vm.expectRevert("DssVest/invalid-hash");
+        vest.createFromCommitment(hash, _usr, _tot2, _bgn, _tau, _eta, _mgr, _slt);
+        
+    }
+
     function checkBounds(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, DssVest _vest, uint256 _timestamp) public view returns (bool) {
         bool valid = true;
         valid = valid && (_usr != address(0));
