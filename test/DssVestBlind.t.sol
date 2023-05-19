@@ -41,11 +41,7 @@ contract DssVestLocal is Test {
     }
 
     function testCreateFromCommitmentlocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
-        vm.assume(_usr != address(0));
-        vm.assume(_tot != 0);
-        vm.assume(_bgn > block.timestamp - vest.TWENTY_YEARS() + 1 days && _bgn < block.timestamp + vest.TWENTY_YEARS() - 1 days);
-        vm.assume(_tau < vest.TWENTY_YEARS());
-        vm.assume(_eta < _tau);
+        vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
         vm.assume(someone != address(0));
         bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
 
@@ -88,6 +84,17 @@ contract DssVestLocal is Test {
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(someone);
         vest.createFromCommitment(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+    }
+
+    function checkBounds(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, DssVest _vest, uint256 _timestamp) public view returns (bool) {
+        bool valid = true;
+        valid = valid && (_usr != address(0));
+        valid = valid && (_tot != 0);
+        valid = valid && (_bgn > _timestamp - _vest.TWENTY_YEARS() + 1 days && _bgn < _timestamp + _vest.TWENTY_YEARS() - 1 days);
+        valid = valid && (_tau < _vest.TWENTY_YEARS());
+        valid = valid && (_eta < _tau);
+
+        return valid;
     }
 
 }
