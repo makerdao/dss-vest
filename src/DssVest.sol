@@ -63,7 +63,7 @@ abstract contract DssVest is ERC2771Context {
 
     uint256 public ids; // Total vestings
 
-    mapping (bytes32 => bool) public committedAwards;
+    mapping (bytes32 => bool) public commitments;
 
     uint256 internal locked;
 
@@ -180,12 +180,13 @@ abstract contract DssVest is ERC2771Context {
         @dev commit to the creation of an award without revealing the award's contents yet
         @param bcw  The hash of the award's contents, see hash function in createAward for details
     */
-    function commitAward(bytes32 bcw) external lock auth {
-        committedAwards[bcw] = true;
+    function commit(bytes32 bcw) external lock auth {
+        commitments[bcw] = true;
     }
 
     /**
         @dev Create a vesting contract from an earlier commitment
+        @param _bcw The hash of the award's contents, see hash function in createAward for details
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
@@ -195,11 +196,11 @@ abstract contract DssVest is ERC2771Context {
         @param _slt The salt used to increase privacy when committing
         @return id  The id of the vesting contract
     */
-    function createAward(bytes32 bcw, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
-        require(bcw == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)));
-        require(committedAwards[bcw]);
+    function createFromCommitment(bytes32 _bcw, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
+        require(_bcw == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
+        require(commitments[_bcw], "DssVest/commitment-not-found");
         id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
-        committedAwards[bcw] = false;
+        commitments[_bcw] = false;
     }
 
     /**
