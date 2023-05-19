@@ -47,8 +47,6 @@ abstract contract DssVest is ERC2771Context {
     // --- Data ---
     mapping (address => uint256) public wards;
 
-    mapping (bytes32 => bool) public committedAwards;
-
     struct Award {
         address usr;   // Vesting recipient
         uint48  bgn;   // Start of vesting period  [timestamp]
@@ -64,6 +62,8 @@ abstract contract DssVest is ERC2771Context {
     uint256 public cap; // Maximum per-second issuance token rate
 
     uint256 public ids; // Total vestings
+
+    mapping (bytes32 => bool) public committedAwards;
 
     uint256 internal locked;
 
