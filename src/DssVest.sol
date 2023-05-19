@@ -198,7 +198,7 @@ abstract contract DssVest is ERC2771Context {
     function createAward(bytes32 bcw, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
         require(bcw == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)));
         require(committedAwards[bcw]);
-        id = create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+        id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
         committedAwards[bcw] = false;
     }
 
@@ -212,7 +212,22 @@ abstract contract DssVest is ERC2771Context {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) internal returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external returns (uint256 id) {
+        return _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+    }
+
+
+    /**
+        @dev Governance adds a vesting contract
+        @param _usr The recipient of the reward
+        @param _tot The total amount of the vest
+        @param _bgn The starting timestamp of the vest
+        @param _tau The duration of the vest (in seconds)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
+        @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
+        @return id  The id of the vesting contract
+    */
+    function _create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) internal returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
