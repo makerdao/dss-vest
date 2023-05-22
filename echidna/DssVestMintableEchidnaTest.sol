@@ -98,6 +98,14 @@ contract DssVestMintableEchidnaTest {
         assert(mVest.fin(id) >= mVest.clf(id));
     }
 
+    function commit(bytes32 bch) public {
+        try mVest.commit(bch) {
+            assert(mVest.commitments(bch) == true);
+        } catch Error(string memory errmsg) {
+            assert(mVest.wards(address(this)) == 0 && cmpStr(errmsg, "DssVest/not-authorized"));
+        }
+    }
+
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = mVest.ids();
         try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
