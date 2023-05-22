@@ -121,6 +121,65 @@ contract DssVestSuckableEchidnaTest {
         assert(sVest.fin(id) >= sVest.clf(id));
     }
 
+    function commit(bytes32 bch) public {
+        try sVest.commit(bch) {
+            assert(sVest.commitments(bch) == true);
+        } catch Error(string memory errmsg) {
+            assert(sVest.wards(address(this)) == 0 && cmpStr(errmsg, "DssVest/not-authorized"));
+        }
+    }
+
+    function createFromCommitment(bytes32 bch, address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr, bytes32 slt) public {
+        uint256 prevId = sVest.ids();
+        bool committed = sVest.commitments(bch);
+        bytes32 contentHash = keccak256(abi.encodePacked(usr, tot, bgn, tau, eta, mgr, slt));
+        try sVest.createFromCommitment(bch, usr, tot, bgn, tau, eta, mgr, slt) returns (uint256 id) {
+            assert(sVest.ids() == _add(prevId, 1));
+            assert(sVest.ids() == id);
+            assert(sVest.valid(id));
+            assert(sVest.usr(id) == usr);
+            assert(sVest.bgn(id) == toUint48(bgn));
+            assert(sVest.clf(id) == toUint48(_add(bgn, eta)));
+            assert(sVest.fin(id) == toUint48(_add(bgn, tau)));
+            assert(sVest.tot(id) == toUint128(tot));
+            assert(sVest.rxd(id) == 0);
+            assert(sVest.mgr(id) == mgr);
+            assert(sVest.res(id) == 1);
+            assert(bch == contentHash); // hash must match contents
+            assert(committed == true); // commitment must have been true before
+            assert(sVest.commitments(bch) == false); // commitment must be false after
+            _mutusr(id);
+        } catch Error(string memory errmsg) {
+            bytes32 mLocked = hevm.load(address(sVest), bytes32(uint256(4)));      // Load memory slot 0x4
+            assert(
+                uint256(mLocked) == 1                                    && cmpStr(errmsg, "DssVest/system-locked")        ||
+                // authorization is not required for this function
+                // sVest.wards(address(this)) == 0                          && cmpStr(errmsg, "DssVest/not-authorized")       ||
+                usr == address(0)                                        && cmpStr(errmsg, "DssVest/invalid-user")         ||
+                tot == 0                                                 && cmpStr(errmsg, "DssVest/no-vest-total-amount") ||
+                bgn >= block.timestamp + sVest.TWENTY_YEARS()            && cmpStr(errmsg, "DssVest/bgn-too-far")          ||
+                block.timestamp + sVest.TWENTY_YEARS() < block.timestamp && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                bgn <= block.timestamp - sVest.TWENTY_YEARS()            && cmpStr(errmsg, "DssVest/bgn-too-long-ago")     ||
+                block.timestamp - sVest.TWENTY_YEARS() > block.timestamp && cmpStr(errmsg, "DssVest/sub-underflow")        ||
+                tau == 0                                                 && cmpStr(errmsg, "DssVest/tau-zero")             ||
+                tot /  tau > sVest.cap()                                 && cmpStr(errmsg, "DssVest/rate-too-high")        ||
+                tau >  sVest.TWENTY_YEARS()                              && cmpStr(errmsg, "DssVest/tau-too-long")         ||
+                eta >  tau                                               && cmpStr(errmsg, "DssVest/eta-too-long")         ||
+                sVest.ids() == type(uint256).max                         && cmpStr(errmsg, "DssVest/ids-overflow")         ||
+                uint48(bgn) != bgn                                       && cmpStr(errmsg, "DssVest/uint48-overflow")      ||
+                uint48(bgn + eta) != bgn + eta                           && cmpStr(errmsg, "DssVest/uint48-overflow")      ||
+                bgn + eta < bgn                                          && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                uint48(bgn + tau) != bgn + tau                           && cmpStr(errmsg, "DssVest/uint48-overflow")      ||
+                bgn + tau < bgn                                          && cmpStr(errmsg, "DssVest/add-overflow")         ||
+                uint128(tot) != tot                                      && cmpStr(errmsg, "DssVest/uint128-overflow")     ||
+                committed == false                                       && cmpStr(errmsg, "DssVest/commitment-not-found") ||
+                bch != contentHash                                       && cmpStr(errmsg, "DssVest/invalid-hash")   
+            );
+        } catch {
+            assert(false); // echidna will fail if other revert cases are caught
+        }
+    }
+
     function create(address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr) public {
         uint256 prevId = sVest.ids();
         try sVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
