@@ -110,7 +110,7 @@ contract DssVestMintableEchidnaTest {
         uint256 prevId = mVest.ids();
         bool committed = mVest.commitments(bch);
         bytes32 contentHash = keccak256(abi.encodePacked(usr, tot, bgn, tau, eta, mgr, slt));
-        try mVest.create(usr, tot, bgn, tau, eta, mgr) returns (uint256 id) {
+        try mVest.createFromCommitment(bch, usr, tot, bgn, tau, eta, mgr, slt) returns (uint256 id) {
             assert(mVest.ids() == _add(prevId, 1));
             assert(mVest.ids() == id);
             assert(mVest.valid(id));
