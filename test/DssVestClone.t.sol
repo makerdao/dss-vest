@@ -103,6 +103,10 @@ contract DssVestCloneDemo is Test {
         assertTrue(mVest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
         assertTrue(mVest.wards(newAdmin) == 1, "Admin not set correctly");
         assertTrue(address(mVest.gem()) == address(newToken), "Token not set correctly");
+
+        // calling initializer again must revert
+        vm.expectRevert("Initializable: contract is already initialized");
+        mVest.initialize(newToken, newAdmin);
     }
 
     function testTransferrableCloneCreationlocal(address czar, address gem, address ward) public {
@@ -125,6 +129,10 @@ contract DssVestCloneDemo is Test {
         assertTrue(vest.wards(ward) == 1, "ward not set correctly");
         assertTrue(address(vest.gem()) == gem, "gem not set correctly");
         assertTrue(address(vest.czar()) == czar, "czar not set correctly");
+
+        // calling initializer again must revert
+        vm.expectRevert("Initializable: contract is already initialized");
+        vest.initialize(czar, gem, ward);
     }
 
     /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
@@ -148,6 +156,10 @@ contract DssVestCloneDemo is Test {
         assertTrue(vest.wards(ward) == 1, "ward not set correctly");
         assertTrue(address(vest.chainlog()) == chainlog, "chainlog not set correctly");
         assertTrue(address(vest) != address(suckableFactory), "cloning failed");
+
+        // calling initializer again must revert
+        vm.expectRevert("Initializable: contract is already initialized");
+        vest.initialize(chainlog, ward);
     }
     
     function testReInitializationlocal(address newToken, address newAdmin) public {

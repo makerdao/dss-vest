@@ -21,5 +21,9 @@ jobs:
       - run: test "$(grep 'chainlog\s*='  src/DssVest.sol |wc -l)" -eq 1
       - run: test "$(grep 'vat\s*='  src/DssVest.sol |wc -l)" -eq 1
       - run: test "$(grep 'daiJoin\s*='  src/DssVest.sol |wc -l)" -eq 1
+      # clone factories must call initialize() on the new contract
+      - run: test "$(grep '\.initialize('  src/DssVestMintableCloneFactory.sol |wc -l)" -eq 1
+      - run: test "$(grep '\.initialize('  src/DssVestTransferrableCloneFactory.sol |wc -l)" -eq 1
+      - run: test "$(grep '\.initialize('  src/DssVestSuckableCloneFactory.sol |wc -l)" -eq 1
       
 
