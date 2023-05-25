@@ -199,8 +199,8 @@ abstract contract DssVest is ERC2771Context {
     function createFromCommitment(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
         require(_bch == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
         require(commitments[_bch], "DssVest/commitment-not-found");
-        id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
         commitments[_bch] = false;
+        id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
     }
 
     /**
