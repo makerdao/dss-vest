@@ -129,11 +129,11 @@ contract DssVestSuckableEchidnaTest {
         }
     }
 
-    function createFromCommitment(bytes32 bch, address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr, bytes32 slt) public {
+    function claim(bytes32 bch, address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr, bytes32 slt) public {
         uint256 prevId = sVest.ids();
         bool committed = sVest.commitments(bch);
         bytes32 contentHash = keccak256(abi.encodePacked(usr, tot, bgn, tau, eta, mgr, slt));
-        try sVest.createFromCommitment(bch, usr, tot, bgn, tau, eta, mgr, slt) returns (uint256 id) {
+        try sVest.claim(bch, usr, tot, bgn, tau, eta, mgr, slt) returns (uint256 id) {
             assert(sVest.ids() == _add(prevId, 1));
             assert(sVest.ids() == id);
             assert(sVest.valid(id));

@@ -8,6 +8,9 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/DssVest.sol";
 
 contract DssVestLocal is Test {
+    event Commit(bytes32 indexed hash);
+    event Claim(bytes32 indexed hash, uint256 indexed id);
+
     // init forwarder
     Forwarder forwarder = new Forwarder();
     ERC20 gem = new ERC20("Gem", "GEM");
@@ -40,20 +43,25 @@ contract DssVestLocal is Test {
         vest.commit(hash);
     }
 
-    function testCreateFromCommitmentlocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
+    function testclaimlocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
         vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
         vm.assume(someone != address(0));
         bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
 
         // commit
         assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Commit(hash);
         vm.prank(ward);
         vest.commit(hash);
         assertTrue(vest.commitments(hash) == true, "commitment does not exist");
 
-        // createFromCommitment
+        // claim
+
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Claim(hash, 1);
         vm.prank(someone);
-        uint256 id = vest.createFromCommitment(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        uint256 id = vest.claim(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
         assertEq(id, 1, "id is not 0");
 
         // check vesting details (looks complicated because of solidity local variables limitations)
@@ -83,10 +91,10 @@ contract DssVestLocal is Test {
         // make sure a second creation fails
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(someone);
-        vest.createFromCommitment(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        vest.claim(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
     }
 
-    function testCreateFromCommitmentWithModifiedDatalocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {
+    function testclaimWithModifiedDatalocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {
         vm.assume(_usr != address(0));
         vm.assume(_usr2 != address(0));
         vm.assume(_usr2 != _usr);
@@ -105,13 +113,13 @@ contract DssVestLocal is Test {
         vest.commit(hash);
         assertTrue(vest.commitments(hash) == true, "commitment does not exist");
 
-        // createFromCommitment
+        // claim
         vm.expectRevert("DssVest/invalid-hash");
-        vest.createFromCommitment(hash, _usr2, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        vest.claim(hash, _usr2, _tot, _bgn, _tau, _eta, _mgr, _slt);
     
 
         vm.expectRevert("DssVest/invalid-hash");
-        vest.createFromCommitment(hash, _usr, _tot2, _bgn, _tau, _eta, _mgr, _slt);
+        vest.claim(hash, _usr, _tot2, _bgn, _tau, _eta, _mgr, _slt);
         
     }
 

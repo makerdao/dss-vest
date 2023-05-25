@@ -106,11 +106,11 @@ contract DssVestMintableEchidnaTest {
         }
     }
 
-    function createFromCommitment(bytes32 bch, address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr, bytes32 slt) public {
+    function claim(bytes32 bch, address usr, uint256 tot, uint256 bgn, uint256 tau, uint256 eta, address mgr, bytes32 slt) public {
         uint256 prevId = mVest.ids();
         bool committed = mVest.commitments(bch);
         bytes32 contentHash = keccak256(abi.encodePacked(usr, tot, bgn, tau, eta, mgr, slt));
-        try mVest.createFromCommitment(bch, usr, tot, bgn, tau, eta, mgr, slt) returns (uint256 id) {
+        try mVest.claim(bch, usr, tot, bgn, tau, eta, mgr, slt) returns (uint256 id) {
             assert(mVest.ids() == _add(prevId, 1));
             assert(mVest.ids() == id);
             assert(mVest.valid(id));

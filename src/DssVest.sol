@@ -75,6 +75,8 @@ abstract contract DssVest is ERC2771Context {
 
     event File(bytes32 indexed what, uint256 data);
 
+    event Commit(bytes32 indexed hash);
+    event Claim(bytes32 indexed hash, uint256 indexed id);
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
     event Restrict(uint256 indexed id);
@@ -182,6 +184,7 @@ abstract contract DssVest is ERC2771Context {
     */
     function commit(bytes32 bch) external lock auth {
         commitments[bch] = true;
+        emit Commit(bch);
     }
 
     /**
@@ -196,11 +199,12 @@ abstract contract DssVest is ERC2771Context {
         @param _slt The salt used to increase privacy when committing
         @return id  The id of the vesting contract
     */
-    function createFromCommitment(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
+    function claim(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
         require(_bch == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
         require(commitments[_bch], "DssVest/commitment-not-found");
         commitments[_bch] = false;
         id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+        emit Claim(_bch, id);
     }
 
     /**
