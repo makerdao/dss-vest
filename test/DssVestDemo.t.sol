@@ -9,7 +9,7 @@ import "@tokenize.it/contracts/contracts/AllowList.sol";
 import "@tokenize.it/contracts/contracts/FeeSettings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DssVest, DssVestMintable} from "../src/DssVest.sol";
-import "../src/Factory.sol";
+import "../src/DssVestNaiveFactory.sol";
 
 
 contract DssVestDemo is Test {

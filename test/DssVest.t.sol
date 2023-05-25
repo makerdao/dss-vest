@@ -854,11 +854,11 @@ contract DssVestTest is DSTest {
         assertEq(dai.balanceOf(address(boss)), 10000 * WAD - 100 * days_vest);
     }
 
-    function testWardsSlot0x0() public {
+    function testWardsSlot0x1() public {
         // Load memory slot 0x0
-        bytes32 mWards = hevm.load(address(mVest), keccak256(abi.encode(address(this), uint256(0))));
-        bytes32 sWards = hevm.load(address(sVest), keccak256(abi.encode(address(this), uint256(0))));
-        bytes32 tWards = hevm.load(address(tVest), keccak256(abi.encode(address(this), uint256(0))));
+        bytes32 mWards = hevm.load(address(mVest), keccak256(abi.encode(address(this), uint256(1))));
+        bytes32 sWards = hevm.load(address(sVest), keccak256(abi.encode(address(this), uint256(1))));
+        bytes32 tWards = hevm.load(address(tVest), keccak256(abi.encode(address(this), uint256(1))));
 
         // mVest wards
         assertEq(mVest.wards(address(this)), uint256(mWards)); // Assert wards = slot wards
@@ -873,7 +873,7 @@ contract DssVestTest is DSTest {
         assertEq(uint256(tWards), 1);                          // Assert slot wards == 1
     }
 
-    function testAwardSlot0x1() public {
+    function testAwardSlot0x2() public {
         uint256 mId = mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 10 days, address(0xdead));
         uint256 sId = sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 10 days, address(0xdead));
         uint256 tId = tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 10 days, address(0xdead));
@@ -892,83 +892,83 @@ contract DssVestTest is DSTest {
         DssVest.Award memory smemaward = testUnpackAward(address(sVest), sId);
         DssVest.Award memory tmemaward = testUnpackAward(address(tVest), tId);
 
-        // Assert usr = slot 0x1 offset 0 awards.usr
+        // Assert usr = slot 0x2 offset 0 awards.usr
         assertEq(mVest.usr(mId), mmemaward.usr);
         assertEq(sVest.usr(sId), smemaward.usr);
         assertEq(tVest.usr(tId), tmemaward.usr);
 
-        // Assert bgn = slot 0x1 offset 0 awards.bgn
+        // Assert bgn = slot 0x2 offset 0 awards.bgn
         assertEq(mVest.bgn(mId), uint256(mmemaward.bgn));
         assertEq(sVest.bgn(sId), uint256(smemaward.bgn));
         assertEq(tVest.bgn(tId), uint256(tmemaward.bgn));
 
-        // Assert clf = slot 0x1 offset 0 awards.clf
+        // Assert clf = slot 0x2 offset 0 awards.clf
         assertEq(mVest.clf(mId), uint256(mmemaward.clf));
         assertEq(sVest.clf(sId), uint256(smemaward.clf));
         assertEq(tVest.clf(tId), uint256(tmemaward.clf));
 
-        // Assert fin = slot 0x1 offset 1 awards.fin
+        // Assert fin = slot 0x2 offset 1 awards.fin
         assertEq(mVest.fin(mId), uint256(mmemaward.fin));
         assertEq(sVest.fin(sId), uint256(smemaward.fin));
         assertEq(tVest.fin(tId), uint256(tmemaward.fin));
 
-        // Assert mgr = slot 0x1 offset 1 awards.mgr
+        // Assert mgr = slot 0x2 offset 1 awards.mgr
         assertEq(mVest.mgr(mId), mmemaward.mgr);
         assertEq(sVest.mgr(sId), smemaward.mgr);
         assertEq(tVest.mgr(tId), tmemaward.mgr);
 
-        // Assert res = slot 0x1 offset 1 awards.res
+        // Assert res = slot 0x2 offset 1 awards.res
         assertEq(mVest.res(mId), uint256(mmemaward.res));
         assertEq(sVest.res(sId), uint256(smemaward.res));
         assertEq(tVest.res(tId), uint256(tmemaward.res));
 
-        // Assert tot = slot 0x1 offset 2 awards.tot
+        // Assert tot = slot 0x2 offset 2 awards.tot
         assertEq(mVest.tot(mId), uint256(mmemaward.tot));
         assertEq(sVest.tot(sId), uint256(smemaward.tot));
         assertEq(tVest.tot(tId), uint256(tmemaward.tot));
 
-        // Assert rxd = slot 0x1 offset 2 awards.rxd
+        // Assert rxd = slot 0x2 offset 2 awards.rxd
         assertEq(mVest.rxd(mId), uint256(mmemaward.rxd));
         assertEq(sVest.rxd(sId), uint256(smemaward.rxd));
         assertEq(tVest.rxd(tId), uint256(tmemaward.rxd));
     }
 
     function testUnpackAward(address vest, uint256 id) internal returns (DssVest.Award memory award) {
-        // Load memory slot 0x1 offset 0
-        bytes32 awardsPacked0x10 = hevm.load(address(vest), keccak256(abi.encode(uint256(id), uint256(1))));
+        // Load memory slot 0x2 offset 0
+        bytes32 awardsPacked0x20 = hevm.load(address(vest), keccak256(abi.encode(uint256(id), uint256(2))));
 
-        // Load memory slot 0x1 offset 1
-        bytes32 awardsPacked0x11 = hevm.load(address(vest), bytes32(uint256(1) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
+        // Load memory slot 0x2 offset 1
+        bytes32 awardsPacked0x21 = hevm.load(address(vest), bytes32(uint256(1) + uint256(keccak256(abi.encode(uint256(id), uint256(2))))));
 
-        // Load memory slot 0x1 offset 2
-        bytes32 awardsPacked0x12 = hevm.load(address(vest), bytes32(uint256(2) + uint256(keccak256(abi.encode(uint256(id), uint256(1))))));
+        // Load memory slot 0x2 offset 2
+        bytes32 awardsPacked0x22 = hevm.load(address(vest), bytes32(uint256(2) + uint256(keccak256(abi.encode(uint256(id), uint256(2))))));
 
-        // Unpack memory slot 0x1 offset 0
+        // Unpack memory slot 0x2 offset 0
         bytes20 memusr;
         bytes6  membgn;
         bytes6  memclf;
         assembly {
-            memclf := awardsPacked0x10
-            membgn := shl(48, awardsPacked0x10)
-            memusr := shl(96, awardsPacked0x10)
+            memclf := awardsPacked0x20
+            membgn := shl(48, awardsPacked0x20)
+            memusr := shl(96, awardsPacked0x20)
         }
 
-        // Unpack memory slot 0x1 offset 1
+        // Unpack memory slot 0x2 offset 1
         bytes6  memfin;
         bytes20 memmgr;
         bytes1  memres;
         assembly {
-            memres := shl(40, awardsPacked0x11)
-            memmgr := shl(48, awardsPacked0x11)
-            memfin := shl(208, awardsPacked0x11)
+            memres := shl(40, awardsPacked0x21)
+            memmgr := shl(48, awardsPacked0x21)
+            memfin := shl(208, awardsPacked0x21)
         }
 
-        // Unpack memory slot 0x1 offset 2
+        // Unpack memory slot 0x2 offset 2
         bytes16 memtot;
         bytes16 memrxd;
         assembly {
-            memrxd := awardsPacked0x12
-            memtot := shl(128, awardsPacked0x12)
+            memrxd := awardsPacked0x22
+            memtot := shl(128, awardsPacked0x22)
         }
 
         // awards.usr
@@ -1009,11 +1009,11 @@ contract DssVestTest is DSTest {
         );
     }
 
-    function testCapSlot0x2() public {
-        // Load memory slot 0x2
-        bytes32 mCap = hevm.load(address(mVest), bytes32(uint256(2)));
-        bytes32 sCap = hevm.load(address(sVest), bytes32(uint256(2)));
-        bytes32 tCap = hevm.load(address(tVest), bytes32(uint256(2)));
+    function testCapSlot0x3() public {
+        // Load memory slot 0x3
+        bytes32 mCap = hevm.load(address(mVest), bytes32(uint256(3)));
+        bytes32 sCap = hevm.load(address(sVest), bytes32(uint256(3)));
+        bytes32 tCap = hevm.load(address(tVest), bytes32(uint256(3)));
 
         // mVest cap
         assertEq(mVest.cap(), uint256(mCap));                          // Assert cap = slot cap
@@ -1028,15 +1028,15 @@ contract DssVestTest is DSTest {
         assertEq(uint256(tCap), (2000 * WAD) / (4 * 365 days));        // Assert slot cap == (2000 * WAD) / (4 * 365 days)
     }
 
-    function testIdsSlot0x3() public {
+    function testIdsSlot0x4() public {
         mVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
         sVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
         tVest.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0xdead));
 
-        // Load memory slot 0x3
-        bytes32 mIds = hevm.load(address(mVest), bytes32(uint256(3)));
-        bytes32 sIds = hevm.load(address(sVest), bytes32(uint256(3)));
-        bytes32 tIds = hevm.load(address(tVest), bytes32(uint256(3)));
+        // Load memory slot 0x4
+        bytes32 mIds = hevm.load(address(mVest), bytes32(uint256(4)));
+        bytes32 sIds = hevm.load(address(sVest), bytes32(uint256(4)));
+        bytes32 tIds = hevm.load(address(tVest), bytes32(uint256(4)));
 
         // mVest ids
         assertEq(mVest.ids(), uint256(mIds));                          // Assert ids = slot ids
