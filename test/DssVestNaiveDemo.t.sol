@@ -7,18 +7,12 @@ import "@opengsn/contracts/src/forwarder/Forwarder.sol";
 import "@tokenize.it/contracts/contracts/Token.sol";
 import "@tokenize.it/contracts/contracts/AllowList.sol";
 import "@tokenize.it/contracts/contracts/FeeSettings.sol";
-import "@openzeppelin/contracts/proxy/Proxy.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/proxy/Clones.sol";
-
-
-
-
-import {DssVestMintable} from "../src/DssVest.sol";
+import {DssVest, DssVestMintable} from "../src/DssVest.sol";
 import "../src/DssVestMintableNaiveFactory.sol";
 
-contract DssVestCloneDemo is Test {
+
+contract DssVestDemo is Test {
     uint256 constant totalVestAmount = 42e18; // 42 tokens
     uint256 constant vestDuration = 4 * 365 days; // 4 years
     uint256 constant vestCliff = 1 * 365 days; // 1 year
@@ -57,8 +51,8 @@ contract DssVestCloneDemo is Test {
 
         vm.warp(60 * 365 days); // in local testing, the time would start at 1. This causes problems with the vesting contract. So we warp to 60 years.
 
-        // // deploy the clone library
-        // Clones clones = new Clones();
+        // deploy factory contract
+        DssVestMintableNaiveFactory factory = new DssVestMintableNaiveFactory();
 
         // deploy tokenize.it platform and company token
         vm.startPrank(platformAdminAddress);
@@ -83,43 +77,18 @@ contract DssVestCloneDemo is Test {
         );
         vm.stopPrank();
 
-        // Deploy vesting contract as some user with some address as token address. 
-        // It will be unusable, but that does not matter.
-        DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2));
-        DssVestMintableNaiveFactory factory = new DssVestMintableNaiveFactory();
 
-        // Deploy instance
+
+        // deploy vesting contract with any wallet, setting forwarder, token and admin
         mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
 
-
-        // check initialization
-        assertEq(address(mVest.gem()), address(companyToken));
-        assertEq(mVest.wards(address(companyAdminAddress)), 1);
-        assertEq(mVest.wards(address(this)), 0);
-        assertEq(mVest.wards(address(factory)), 0);
-        console.log("implementation address: ", address(vestingImplementation));
-        console.log("factory address: ", address(factory));
-        console.log("clone address: ", address(mVest));
-
-        // initialize vesting contract 
+        // configure vesting contract
         vm.startPrank(companyAdminAddress);
-        //mVest = new DssVestMintable(address(forwarder), address(companyToken));
         mVest.file("cap", (totalVestAmount / vestDuration) ); 
-
-        console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
-
-        // try calling the DssVest initialize function again. This should fail.
-        vm.expectRevert("Initializable: contract is already initialized");
-        mVest.initialize(vm.addr(0x3), vm.addr(0x4));
-
-        console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));
-        console.log("clone's forwarder is 0: ", mVest.isTrustedForwarder(address(0x0)));
-
 
         // grant minting allowance
         companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
         vm.stopPrank();
-
 
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
         vm.recordLogs();
@@ -164,5 +133,132 @@ contract DssVestCloneDemo is Test {
         vm.prank(employeeAddress);
         mVest.vest(id);
         assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
+    }
+
+
+    /**
+     * @notice Create a new vest as companyAdmin using a meta tx that is sent by relayer
+     */
+    function testInitERC2771Local() public {
+        // build request
+        bytes memory payload = abi.encodeWithSelector(
+            mVest.create.selector,
+            employeeAddress, 
+            totalVestAmount, 
+            block.timestamp, 
+            vestDuration, 
+            0 days, 
+            companyAdminAddress
+        );
+
+        IForwarder.ForwardRequest memory request = IForwarder.ForwardRequest({
+            from: companyAdminAddress,
+            to: address(mVest),
+            value: 0,
+            gas: 1000000,
+            nonce: forwarder.getNonce(companyAdminAddress),
+            data: payload,
+            validUntil: block.timestamp + 1 hours // like this, the signature will expire after 1 hour. So the platform hotwallet can take some time to execute the transaction.
+        });
+
+        bytes memory suffixData = "0";
+
+
+        // pack and hash request
+        bytes32 digest = keccak256(
+            abi.encodePacked(
+                "\x19\x01",
+                domainSeparator,
+                keccak256(
+                    forwarder._getEncoded(request, requestType, suffixData)
+                )
+            )
+        );
+
+        // sign request.        
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            companyAdminPrivateKey,
+            digest
+        );
+        bytes memory signature = abi.encodePacked(r, s, v); // https://docs.openzeppelin.com/contracts/2.x/utilities
+
+        vm.prank(relayer);
+        forwarder.execute(
+            request,
+            domainSeparator,
+            requestType,
+            suffixData,
+            signature
+        );
+        (address usr, uint48 bgn, uint48 clf, uint48 fin, address mgr,, uint128 tot, uint128 rxd) = mVest.awards(1);
+        assertEq(usr, employeeAddress);
+        assertEq(uint256(bgn), block.timestamp);
+        assertEq(uint256(clf), block.timestamp);
+        assertEq(uint256(fin), block.timestamp + vestDuration);
+        assertEq(uint256(tot), totalVestAmount);
+        assertEq(uint256(rxd), 0);
+        assertEq(mgr, companyAdminAddress);
+    }
+
+    /**
+     * @notice Trigger payout as user using a meta tx that is sent by relayer
+     * @dev Many local variables had to be removed to avoid stack too deep error
+     */
+    function testVestERC2771Local() public {
+        vm.prank(companyAdminAddress);
+        uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, 0 days, companyAdminAddress);
+
+        uint timeShift = 10 days;
+        vm.warp(block.timestamp + timeShift);
+
+        (address usr, uint48 bgn, uint48 clf, uint48 fin,,, uint128 tot, uint128 rxd) = mVest.awards(id);
+        assertEq(usr, employeeAddress, "employeeAddress is wrong");
+        assertEq(uint256(bgn), block.timestamp - timeShift, "bgn is wrong");
+        assertEq(uint256(fin), block.timestamp + vestDuration - timeShift, "fin is wrong");
+        assertEq(uint256(tot), totalVestAmount, "totalVestAmount is wrong");
+        assertEq(uint256(rxd), 0, "rxd is wrong");
+        assertEq(companyToken.balanceOf(employeeAddress), 0, "employeeAddress balance is wrong");
+
+        IForwarder.ForwardRequest memory request = IForwarder.ForwardRequest({
+            from: employeeAddress,
+            to: address(mVest),
+            value: 0,
+            gas: 1000000,
+            nonce: forwarder.getNonce(employeeAddress),
+            data: abi.encodeWithSelector(
+            bytes4(keccak256(bytes("vest(uint256)"))),
+            id
+        ),
+            validUntil: block.timestamp + 1 hours // like this, the signature will expire after 1 hour. So the platform hotwallet can take some time to execute the transaction.
+        });
+
+        // sign request.        
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(
+            employeePrivateKey,
+            keccak256(abi.encodePacked(
+                "\x19\x01",
+                domainSeparator,
+                keccak256(
+                    forwarder._getEncoded(request, requestType, "0")
+                )
+            ))
+        );
+
+        vm.prank(relayer);
+        forwarder.execute(
+            request,
+            domainSeparator,
+            requestType,
+            "0",
+            abi.encodePacked(r, s, v)
+        );
+
+        (usr, bgn, clf, fin,,, tot, rxd) = mVest.awards(id);
+        assertEq(usr, employeeAddress, "employeeAddress is wrong");
+        assertEq(uint256(bgn), block.timestamp - timeShift, "bgn is wrong");
+        assertEq(uint256(fin), block.timestamp + vestDuration - timeShift, "fin is wrong");
+        assertEq(uint256(tot), totalVestAmount, "totalVestAmount is wrong");
+        assertEq(uint256(rxd), totalVestAmount * timeShift / vestDuration, "rxd is wrong");
+        assertEq(companyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employeeAddress balance is wrong");
     }
 }

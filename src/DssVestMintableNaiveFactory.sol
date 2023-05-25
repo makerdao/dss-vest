@@ -4,7 +4,7 @@ pragma solidity 0.8.17;
 
 import {DssVestMintable} from "./DssVest.sol";
 
-contract DssVestNaiveFactory {
+contract DssVestMintableNaiveFactory {
 
     event DssVestMintableCreated(address dssVestMintable, address companyAdminAddress);
 
