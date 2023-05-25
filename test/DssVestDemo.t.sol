@@ -111,7 +111,7 @@ contract DssVestDemo is Test {
      * @notice does the full setup and payout without meta tx
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testDemoEverythinglocal() public {
+    function testDemoEverythingLocal() public {
 
         uint startDate = block.timestamp;
         // create vest as company admin
@@ -139,7 +139,7 @@ contract DssVestDemo is Test {
     /**
      * @notice Create a new vest as companyAdmin using a meta tx that is sent by relayer
      */
-    function testInitERC2771local() public {
+    function testInitERC2771Local() public {
         // build request
         bytes memory payload = abi.encodeWithSelector(
             mVest.create.selector,
@@ -204,7 +204,7 @@ contract DssVestDemo is Test {
      * @notice Trigger payout as user using a meta tx that is sent by relayer
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testVestERC2771local() public {
+    function testVestERC2771Local() public {
         vm.prank(companyAdminAddress);
         uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, 0 days, companyAdminAddress);
 

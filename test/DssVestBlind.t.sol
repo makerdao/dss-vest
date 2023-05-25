@@ -26,7 +26,7 @@ contract DssVestLocal is Test {
         vm.stopPrank();
     }
 
-    function testCommitlocal(bytes32 hash) public {
+    function testCommitLocal(bytes32 hash) public {
         vm.assume(hash != bytes32(0));
         assertTrue(vest.commitments(hash) == false, "commitment already exists");
         vm.prank(ward);
@@ -34,7 +34,7 @@ contract DssVestLocal is Test {
         assertTrue(vest.commitments(hash) == true, "commitment does not exist");
     }
 
-    function testCommitNoWardlocal(address noWard, bytes32 hash) public {
+    function testCommitNoWardLocal(address noWard, bytes32 hash) public {
         vm.assume(noWard != address(0));
         vm.assume(vest.wards(noWard) == 0);
         vm.assume(hash != bytes32(0));
@@ -43,7 +43,7 @@ contract DssVestLocal is Test {
         vest.commit(hash);
     }
 
-    function testclaimlocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
+    function testclaimLocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
         vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
         vm.assume(someone != address(0));
         bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
@@ -94,7 +94,7 @@ contract DssVestLocal is Test {
         vest.claim(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
     }
 
-    function testclaimWithModifiedDatalocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {
+    function testclaimWithModifiedDataLocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {
         vm.assume(_usr != address(0));
         vm.assume(_usr2 != address(0));
         vm.assume(_usr2 != _usr);

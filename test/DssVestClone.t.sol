@@ -86,7 +86,7 @@ contract DssVestCloneDemo is Test {
         transferrableFactory = new DssVestTransferrableCloneFactory(transferrableImplementation);
     }
 
-    function testMintableCloneCreationlocal(address newToken, address newAdmin) public {
+    function testMintableCloneCreationLocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
 
@@ -109,7 +109,7 @@ contract DssVestCloneDemo is Test {
         mVest.initialize(newToken, newAdmin);
     }
 
-    function testTransferrableCloneCreationlocal(address czar, address gem, address ward) public {
+    function testTransferrableCloneCreationLocal(address czar, address gem, address ward) public {
         vm.assume(gem != address(0x0));
         vm.assume(ward != address(0x0));
         vm.assume(czar != address(0x0));
@@ -162,7 +162,7 @@ contract DssVestCloneDemo is Test {
         vest.initialize(chainlog, ward);
     }
     
-    function testReInitializationlocal(address newToken, address newAdmin) public {
+    function testReInitializationLocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
@@ -175,7 +175,7 @@ contract DssVestCloneDemo is Test {
     /**
      * @notice Create a new vest as ward using a meta tx that is sent by relayer
      */
-    function testCreateERC2771local(address usrAddress) public {
+    function testCreateERC2771Local(address usrAddress) public {
         vm.assume(usrAddress != address(0x0));
         address adminAddress = vm.addr(companyAdminPrivateKey);
 
@@ -272,7 +272,7 @@ contract DssVestCloneDemo is Test {
     /**
      * @notice Use clone to vest tokens
      */
-    function testCloneUselocal(address localAdmin) public {
+    function testCloneUseLocal(address localAdmin) public {
         vm.assume(localAdmin != address(0x0));
         Token newCompanyToken = new Token(
             address(forwarder),
@@ -317,7 +317,7 @@ contract DssVestCloneDemo is Test {
         assertEq(newCompanyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
     }
 
-    function testNoWrongWardslocal(address localCompanyAdmin) public {
+    function testNoWrongWardsLocal(address localCompanyAdmin) public {
 
         vm.startPrank(platformAdminAddress);
         Token localCompanyToken = new Token(
@@ -351,7 +351,7 @@ contract DssVestCloneDemo is Test {
      * @notice does the full setup and payout without meta tx
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testDemoEverythinglocal(address localCompanyAdmin) public {
+    function testDemoEverythingLocal(address localCompanyAdmin) public {
 
         vm.startPrank(platformAdminAddress);
         Token localCompanyToken = new Token(

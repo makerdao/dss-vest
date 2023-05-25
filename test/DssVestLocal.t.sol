@@ -21,7 +21,7 @@ contract DssVestLocal is Test {
         vm.warp(60 * 365 days); // in local testing, the time would start at 1. This causes problems with the vesting contract. So we warp to 60 years.
     }
 
-    function testFileWrongKeylocal(address gem, uint256 value, string memory key) public {
+    function testFileWrongKeyLocal(address gem, uint256 value, string memory key) public {
         vm.assume(keccak256(abi.encodePacked(key)) != keccak256(abi.encodePacked("cap")));
         vm.assume(gem != address(0));
         DssVestMintable vest = new DssVestMintable(address(forwarder), gem);
@@ -29,7 +29,7 @@ contract DssVestLocal is Test {
         vest.file("wrongKey", value);
     }
 
-    function testRelyDenylocal(address gem, address ward) public {
+    function testRelyDenyLocal(address gem, address ward) public {
         vm.assume(gem != address(0));
         vm.assume(ward != address(0));
         vm.assume(ward != address(this));

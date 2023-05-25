@@ -142,7 +142,7 @@ contract DssVestCloneDemo is Test {
      * @notice does the full setup and payout without meta tx
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testDemoEverythinglocal() public {
+    function testDemoEverythingLocal() public {
 
         uint startDate = block.timestamp;
         // create vest as company admin
