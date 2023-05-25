@@ -20,6 +20,7 @@
 pragma solidity 0.8.17;
 
 import "@openzeppelin/contracts/metatx/ERC2771Context.sol";
+import "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 interface MintLike {
     function mint(address, uint256) external;
@@ -43,7 +44,7 @@ interface TokenLike {
     function transferFrom(address, address, uint256) external returns (bool);
 }
 
-abstract contract DssVest is ERC2771Context {
+abstract contract DssVest is ERC2771Context, Initializable {
     // --- Data ---
     mapping (address => uint256) public wards;
 
@@ -120,9 +121,20 @@ abstract contract DssVest is ERC2771Context {
     /**
         @dev Base vesting logic contract constructor
     */
-    constructor(address _trustedForwarder) ERC2771Context(_trustedForwarder) {
-        wards[_msgSender()] = 1;
-        emit Rely(_msgSender());
+    constructor (address trustedForwarder) ERC2771Context(trustedForwarder) initializer {
+        initialize(_msgSender());   
+    }
+
+    /**
+        @notice Initialize the contract
+        @dev This function can only be called once. Because the child contracts use the `initializer` modifier,
+             it can not be used here. Instead, this function is protected manually with the `initialized` flag.
+             Since this contract is abstract, it should not be possible to call this function directly in the first place.
+        @param _ward The address to be granted admin rights to the contract
+     */
+    function initialize(address _ward) public onlyInitializing { 
+        wards[_ward] = 1;
+        emit Rely(_ward);
     }
 
     // --- Mutex ---
@@ -451,13 +463,18 @@ abstract contract DssVest is ERC2771Context {
 
 contract DssVestMintable is DssVest {
 
-    MintLike public immutable gem;
+    MintLike public gem;
 
     /**
         @dev This contract must be authorized to 'mint' on the token
         @param _gem The contract address of the mintable token
     */
     constructor(address _forwarder, address _gem) DssVest(_forwarder) {
+        initialize(_gem, _msgSender());   
+    }
+
+    function initialize(address _gem, address _ward) initializer public {
+        super.initialize(_ward);
         require(_gem != address(0), "DssVestMintable/Invalid-token-address");
         gem = MintLike(_gem);
     }
@@ -476,15 +493,20 @@ contract DssVestSuckable is DssVest {
 
     uint256 internal constant RAY = 10**27;
 
-    ChainlogLike public immutable chainlog;
-    VatLike      public immutable vat;
-    DaiJoinLike  public immutable daiJoin;
+    ChainlogLike public chainlog;
+    VatLike      public vat;
+    DaiJoinLike  public daiJoin;
 
     /**
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
     constructor(address _forwarder, address _chainlog) DssVest(_forwarder) {
+        initialize(_chainlog, _msgSender());
+    }
+
+    function initialize(address _chainlog, address _ward) initializer public {
+        super.initialize(_ward);
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
@@ -512,8 +534,8 @@ contract DssVestSuckable is DssVest {
 */
 contract DssVestTransferrable is DssVest {
 
-    address   public immutable czar;
-    TokenLike public immutable gem;
+    address   public czar;
+    TokenLike public gem;
 
     /**
         @dev This contract must be approved for transfer of the gem on the czar
@@ -521,6 +543,12 @@ contract DssVestTransferrable is DssVest {
         @param _gem  The token to be distributed
     */
     constructor(address _forwarder, address _czar, address _gem) DssVest(_forwarder) {
+        initialize(_czar, _gem, _msgSender());    
+    }
+
+    function initialize(address _czar, address _gem, address _ward) initializer public {
+        // call parent initializer
+        super.initialize(_ward);
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
@@ -536,3 +564,4 @@ contract DssVestTransferrable is DssVest {
         require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
     }
 }
+

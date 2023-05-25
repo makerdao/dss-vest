@@ -1,0 +1,59 @@
+# Rules from: /media/data/projects/dss-vest/.gitignore
+/out
+.env
+settings.json
+
+# yarn
+node_modules
+*.log
+
+# forge
+cache/
+
+# echidna
+crytic-export/
+corpus/
+
+# certora
+.*certora*
+.last_confs/
+resource_errors.json
+
+.npmignore
+
+cache
+types
+lcov.info
+.gas-snapshot
+dist
+out
+node_modules/
+**/*.dbg.json
+artifacts/*
+.DS_Store
+.idea/
+.yarn/*
+!.yarn/patches
+!.yarn/releases
+!.yarn/plugins
+!.yarn/sdks
+!.yarn/versions
+.pnp.*
+*.log
+coverage/
+temp/
+broadcast/
+.env*
+!.env.example
+.npmignore
+.VSCodeCounter/
+typechain-types
+
+
+
+# npmignore - content above this line is automatically generated and modifications may be omitted
+# see npmjs.com/npmignore for more details.
+test/
+certora/
+echidna/
+lib/
