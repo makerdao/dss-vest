@@ -9,7 +9,7 @@ import "@tokenize.it/contracts/contracts/AllowList.sol";
 import "@tokenize.it/contracts/contracts/FeeSettings.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {DssVest, DssVestMintable} from "../src/DssVest.sol";
-import "../src/DssVestNaiveFactory.sol";
+import "../src/DssVestMintableCloneFactory.sol";
 
 
 contract DssVestDemo is Test {
@@ -51,8 +51,12 @@ contract DssVestDemo is Test {
 
         vm.warp(60 * 365 days); // in local testing, the time would start at 1. This causes problems with the vesting contract. So we warp to 60 years.
 
+        // create logic contract that will be cloned. 
+        // Forwarder must be correct, but token address can be any address (not 0), as it will be replaced during cloning
+        DssVestMintable logic = new DssVestMintable(address(forwarder), address(1));
+
         // deploy factory contract
-        DssVestNaiveFactory factory = new DssVestNaiveFactory();
+        DssVestMintableCloneFactory cloneFactory = new DssVestMintableCloneFactory(logic);
 
         // deploy tokenize.it platform and company token
         vm.startPrank(platformAdminAddress);
@@ -77,10 +81,8 @@ contract DssVestDemo is Test {
         );
         vm.stopPrank();
 
-
-
         // deploy vesting contract with any wallet, setting forwarder, token and admin
-        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
+        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(address(companyToken), companyAdminAddress));
 
         // configure vesting contract
         vm.startPrank(companyAdminAddress);
@@ -111,7 +113,7 @@ contract DssVestDemo is Test {
      * @notice does the full setup and payout without meta tx
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testDemoEverythinglocal() public {
+    function testDemoEverythingLocal() public {
 
         uint startDate = block.timestamp;
         // create vest as company admin
@@ -139,7 +141,7 @@ contract DssVestDemo is Test {
     /**
      * @notice Create a new vest as companyAdmin using a meta tx that is sent by relayer
      */
-    function testInitERC2771local() public {
+    function testInitERC2771Local() public {
         // build request
         bytes memory payload = abi.encodeWithSelector(
             mVest.create.selector,
@@ -204,7 +206,7 @@ contract DssVestDemo is Test {
      * @notice Trigger payout as user using a meta tx that is sent by relayer
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testVestERC2771local() public {
+    function testVestERC2771Local() public {
         vm.prank(companyAdminAddress);
         uint256 id = mVest.create(employeeAddress, totalVestAmount, block.timestamp, vestDuration, 0 days, companyAdminAddress);
 

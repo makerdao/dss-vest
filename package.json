@@ -57,7 +57,7 @@
     "prepack": "yarn npmignore --auto && yarn test && yarn build ",
     "build": "yarn hardhat compile && yarn tsc --declaration",
     "test": "forge test --fork-url $ETH_RPC_URL",
-    "test:local": "forge test --match-test local"
+    "test:local": "forge test --match-test Local"
   },
   "devDependencies": {
     "@ethersproject/abi": "^5.4.7",
