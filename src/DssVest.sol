@@ -64,6 +64,8 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     uint256 public ids; // Total vestings
 
+    mapping (bytes32 => bool) public commitments;
+
     uint256 internal locked;
 
     uint256 public constant  TWENTY_YEARS = 20 * 365 days;
@@ -74,6 +76,8 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     event File(bytes32 indexed what, uint256 data);
 
+    event Commit(bytes32 indexed hash);
+    event Claim(bytes32 indexed hash, uint256 indexed id);
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
     event Restrict(uint256 indexed id);
@@ -186,6 +190,35 @@ abstract contract DssVest is ERC2771Context, Initializable {
         require((z = uint128(x)) == x, "DssVest/uint128-overflow");
     }
 
+    /** 
+        @dev commit to the creation of an award without revealing the award's contents yet
+        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash function in createAward for details
+    */
+    function commit(bytes32 bch) external lock auth {
+        commitments[bch] = true;
+        emit Commit(bch);
+    }
+
+    /**
+        @dev Create a vesting contract from an earlier commitment
+        @param _bch The hash of the award's contents, see hash function in createAward for details
+        @param _usr The recipient of the reward
+        @param _tot The total amount of the vest
+        @param _bgn The starting timestamp of the vest
+        @param _tau The duration of the vest (in seconds)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
+        @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
+        @param _slt The salt used to increase privacy when committing
+        @return id  The id of the vesting contract
+    */
+    function claim(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
+        require(_bch == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
+        require(commitments[_bch], "DssVest/commitment-not-found");
+        commitments[_bch] = false;
+        id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+        emit Claim(_bch, id);
+    }
+
     /**
         @dev Governance adds a vesting contract
         @param _usr The recipient of the reward
@@ -196,7 +229,22 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock returns (uint256 id) {
+        return _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+    }
+
+
+    /**
+        @dev Governance adds a vesting contract
+        @param _usr The recipient of the reward
+        @param _tot The total amount of the vest
+        @param _bgn The starting timestamp of the vest
+        @param _tau The duration of the vest (in seconds)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
+        @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
+        @return id  The id of the vesting contract
+    */
+    function _create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) internal returns (uint256 id) {
         require(_usr != address(0),                        "DssVest/invalid-user");
         require(_tot > 0,                                  "DssVest/no-vest-total-amount");
         require(_bgn < add(block.timestamp, TWENTY_YEARS), "DssVest/bgn-too-far");
