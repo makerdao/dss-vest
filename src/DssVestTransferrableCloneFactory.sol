@@ -6,6 +6,8 @@ import {DssVestTransferrable} from "./DssVest.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract DssVestTransferrableCloneFactory {
+    event NewClone(address clone);
+    
     DssVestTransferrable immutable vestingImplementation;
 
     constructor(DssVestTransferrable _implementation) {
@@ -21,6 +23,7 @@ contract DssVestTransferrableCloneFactory {
     function createTransferrableVestingClone(address czar, address gem, address ward) external returns (address) {
         address clone = Clones.clone(address(vestingImplementation));
         DssVestTransferrable(clone).initialize(czar, gem, ward);
+        emit NewClone(clone);
         return clone;
     }
 }

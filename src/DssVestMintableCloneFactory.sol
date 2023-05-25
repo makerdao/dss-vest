@@ -6,6 +6,8 @@ import {DssVestMintable} from "./DssVest.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract DssVestMintableCloneFactory {
+    event NewClone(address clone);
+
     /// The address of the implementation to clone
     DssVestMintable immutable vestingImplementation;
 
@@ -22,6 +24,7 @@ contract DssVestMintableCloneFactory {
     function createMintableVestingClone(address gem, address ward) external returns (address) {
         address clone = Clones.clone(address(vestingImplementation));
         DssVestMintable(clone).initialize(gem, ward);
+        emit NewClone(clone);
         return clone;
     }
 }

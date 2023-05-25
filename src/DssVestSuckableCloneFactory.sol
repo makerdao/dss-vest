@@ -6,6 +6,8 @@ import {DssVestSuckable} from "./DssVest.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract DssVestSuckableCloneFactory {
+    event NewClone(address clone);
+
     DssVestSuckable immutable vestingImplementation;
 
     constructor(DssVestSuckable _implementation) {
@@ -21,6 +23,7 @@ contract DssVestSuckableCloneFactory {
     function createSuckableVestingClone(address chainlog, address ward) external returns (address) {
         address clone = Clones.clone(address(vestingImplementation));
         DssVestSuckable(clone).initialize(chainlog, ward);
+        emit NewClone(clone);
         return clone;
     }
 }

@@ -18,6 +18,8 @@ import "../src/DssVestSuckableCloneFactory.sol";
 
 
 contract DssVestCloneDemo is Test {
+    event NewClone(address clone);
+
     uint256 constant totalVestAmount = 42e18; // 42 tokens
     uint256 constant vestDuration = 4 * 365 days; // 4 years
     uint256 constant vestCliff = 1 * 365 days; // 1 year
@@ -87,6 +89,11 @@ contract DssVestCloneDemo is Test {
     function testMintableCloneCreationlocal(address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
+
+        // check event. Address is not known yet, so we can't verify it.
+        vm.expectEmit(true, true, true, false, address(mintableFactory));
+        emit NewClone(address(1)); 
+
         // Deploy proxy clone
         DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(newToken, newAdmin));
 
@@ -102,6 +109,11 @@ contract DssVestCloneDemo is Test {
         vm.assume(gem != address(0x0));
         vm.assume(ward != address(0x0));
         vm.assume(czar != address(0x0));
+
+        // check event. Address is not known yet, so we can't verify it.
+        vm.expectEmit(true, true, true, false, address(transferrableFactory));
+        emit NewClone(address(1)); 
+
         // Deploy proxy clone
         DssVestTransferrable vest = DssVestTransferrable(
             transferrableFactory.createTransferrableVestingClone(czar, gem, ward));
@@ -124,6 +136,9 @@ contract DssVestCloneDemo is Test {
         DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
         suckableFactory = new DssVestSuckableCloneFactory(suckableImplementation);
 
+        // check event. Address is not known yet, so we can't verify it.
+        vm.expectEmit(true, true, true, false, address(suckableFactory));
+        emit NewClone(address(1)); 
         
         // Deploy proxy clone
         DssVestSuckable vest = DssVestSuckable(
