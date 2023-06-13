@@ -20,9 +20,9 @@ contract DssVestTransferrableCloneFactory {
         @param gem The address of the ERC-20 token to be vested
         @param ward The address that will be the first ward of the contract
      */
-    function createTransferrableVestingClone(address czar, address gem, address ward) external returns (address) {
+    function createTransferrableVestingClone(address czar, address gem, address ward, uint256 cap) external returns (address) {
         address clone = Clones.clone(address(vestingImplementation));
-        DssVestTransferrable(clone).initialize(czar, gem, ward);
+        DssVestTransferrable(clone).initialize(czar, gem, ward, cap);
         emit NewClone(clone);
         return clone;
     }

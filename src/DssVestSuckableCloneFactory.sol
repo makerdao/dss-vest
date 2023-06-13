@@ -20,9 +20,9 @@ contract DssVestSuckableCloneFactory {
         @param chainlog The address of the chainlog contract
         @param ward The address that will be the first ward of the contract
      */
-    function createSuckableVestingClone(address chainlog, address ward) external returns (address) {
+    function createSuckableVestingClone(address chainlog, address ward, uint256 cap) external returns (address) {
         address clone = Clones.clone(address(vestingImplementation));
-        DssVestSuckable(clone).initialize(chainlog, ward);
+        DssVestSuckable(clone).initialize(chainlog, ward, cap);
         emit NewClone(clone);
         return clone;
     }
