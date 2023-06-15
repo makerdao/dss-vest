@@ -90,10 +90,6 @@ contract DssVestCloneDemo is Test {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
 
-        // check event. Address is not known yet, so we can't verify it.
-        vm.expectEmit(true, true, true, false, address(mintableFactory));
-        emit NewClone(address(1)); 
-
         // Deploy proxy clone
         DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin));
 
@@ -115,18 +111,17 @@ contract DssVestCloneDemo is Test {
 
         address expectedAddress = mintableFactory.predictCloneAddress(salt);
 
-        // check event. Address is not known yet, so we can't verify it.
         vm.expectEmit(true, true, true, true, address(mintableFactory));
         emit NewClone(expectedAddress); 
 
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin));
+        DssVestMintable vest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin));
 
-        assertEq(address(mVest), expectedAddress, "Address not as expected");
+        assertEq(address(vest), expectedAddress, "Address not as expected");
 
         // address prediction does not fail even if contract already exists
         address secondAddress = mintableFactory.predictCloneAddress(salt);
-        assertEq(address(mVest), secondAddress, "Address not as expected");
+        assertEq(address(vest), secondAddress, "Address not as expected");
 
         // second clone creation with same salt must revert
         vm.expectRevert("ERC1167: create2 failed");
@@ -138,13 +133,11 @@ contract DssVestCloneDemo is Test {
         vm.assume(ward != address(0x0));
         vm.assume(czar != address(0x0));
 
-        // check event. Address is not known yet, so we can't verify it.
-        vm.expectEmit(true, true, true, false, address(transferrableFactory));
-        emit NewClone(address(1)); 
+        bytes32 salt = bytes32(0);
 
         // Deploy proxy clone
         DssVestTransferrable vest = DssVestTransferrable(
-            transferrableFactory.createTransferrableVestingClone(czar, gem, ward));
+            transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward));
 
         console.log("factory address: ", address(mintableFactory));
         console.log("clone address: ", address(vest));
@@ -159,6 +152,32 @@ contract DssVestCloneDemo is Test {
         vest.initialize(czar, gem, ward);
     }
 
+    function testTransferrableAddressPredictionLocal(bytes32 salt, address czar, address gem, address ward) public {
+        vm.assume(gem != address(0x0));
+        vm.assume(ward != address(0x0));
+        vm.assume(czar != address(0x0));
+
+        address expectedAddress = transferrableFactory.predictCloneAddress(salt);
+
+        vm.expectEmit(true, true, true, true, address(transferrableFactory));
+        emit NewClone(expectedAddress); 
+
+        // Deploy proxy clone
+        DssVestTransferrable vest = DssVestTransferrable(
+            transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward));
+
+        assertEq(address(vest), expectedAddress, "Address not as expected");
+
+        // address prediction does not fail even if contract already exists
+        address secondAddress = transferrableFactory.predictCloneAddress(salt);
+        assertEq(address(vest), secondAddress, "Address not as expected");
+
+        // second clone creation with same salt must revert
+        vm.expectRevert("ERC1167: create2 failed");
+        transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward);
+        
+    }
+
     /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
     ///     be tested locally.
     function testSuckableCloneCreation(address ward) public {
@@ -167,10 +186,6 @@ contract DssVestCloneDemo is Test {
         address chainlog = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
         DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
         suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
-
-        // check event. Address is not known yet, so we can't verify it.
-        vm.expectEmit(true, true, true, false, address(suckableFactory));
-        emit NewClone(address(1)); 
         
         // Deploy proxy clone
         DssVestSuckable vest = DssVestSuckable(
@@ -184,6 +199,36 @@ contract DssVestCloneDemo is Test {
         // calling initializer again must revert
         vm.expectRevert("Initializable: contract is already initialized");
         vest.initialize(chainlog, ward);
+    }
+
+    /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
+    ///     be tested locally.
+    function testSuckableAddressPredictionCreation(bytes32 salt, address ward) public {
+        vm.assume(ward != address(0x0));
+
+        address chainlog = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
+        DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
+        suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
+
+        address expectedAddress = suckableFactory.predictCloneAddress(salt);
+
+        // check event. Address is not known yet, so we can't verify it.
+        vm.expectEmit(true, true, true, true, address(suckableFactory));
+        emit NewClone(expectedAddress); 
+        
+        // Deploy proxy clone
+        DssVestSuckable vest = DssVestSuckable(
+            suckableFactory.createSuckableVestingClone(salt, chainlog, ward));
+
+        assertEq(address(vest), expectedAddress, "Address not as expected");
+
+        // address prediction does not fail even if contract already exists
+        address secondAddress = transferrableFactory.predictCloneAddress(salt);
+        assertEq(address(vest), secondAddress, "Address not as expected");
+
+        // second clone creation with same salt must revert
+        vm.expectRevert("ERC1167: create2 failed");
+        suckableFactory.createSuckableVestingClone(salt, chainlog, ward);
     }
     
     function testReInitializationLocal(bytes32 salt, address newToken, address newAdmin) public {
