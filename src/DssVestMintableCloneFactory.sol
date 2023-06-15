@@ -21,10 +21,25 @@ contract DssVestMintableCloneFactory {
         @param gem The address of the ERC-20 token to be vested
         @param ward The address that will be the first ward of the contract
      */
-    function createMintableVestingClone(address gem, address ward) external returns (address) {
-        address clone = Clones.clone(address(vestingImplementation));
+    function createMintableVestingClone(bytes32 salt, address gem, address ward) external returns (address) {
+        address clone = Clones.cloneDeterministic(address(vestingImplementation), salt);
         DssVestMintable(clone).initialize(gem, ward);
         emit NewClone(clone);
         return clone;
     }
+
+    function predictCloneAddress(bytes32 salt)
+        public
+        view
+        returns (address)
+    {
+        address predictedAddress =
+            Clones.predictDeterministicAddress(
+                address(vestingImplementation),
+                salt
+            );
+
+        return predictedAddress;
+    }
+
 }

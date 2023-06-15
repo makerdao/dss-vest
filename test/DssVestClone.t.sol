@@ -86,7 +86,7 @@ contract DssVestCloneDemo is Test {
         transferrableFactory = new DssVestTransferrableCloneFactory(transferrableImplementation);
     }
 
-    function testMintableCloneCreationLocal(address newToken, address newAdmin) public {
+    function testMintableCloneCreationLocal(address newToken, address newAdmin, bytes32 salt) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
 
@@ -95,7 +95,7 @@ contract DssVestCloneDemo is Test {
         emit NewClone(address(1)); 
 
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(newToken, newAdmin));
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin));
 
         console.log("factory address: ", address(mintableFactory));
         console.log("clone address: ", address(mVest));
@@ -107,6 +107,30 @@ contract DssVestCloneDemo is Test {
         // calling initializer again must revert
         vm.expectRevert("Initializable: contract is already initialized");
         mVest.initialize(newToken, newAdmin);
+    }
+
+    function testMintableCloneAddressPredictionLocal(address newToken, address newAdmin, bytes32 salt) public {
+        vm.assume(newToken != address(0x0));
+        vm.assume(newAdmin != address(0x0));
+
+        address expectedAddress = mintableFactory.predictCloneAddress(salt);
+
+        // check event. Address is not known yet, so we can't verify it.
+        vm.expectEmit(true, true, true, true, address(mintableFactory));
+        emit NewClone(expectedAddress); 
+
+        // Deploy proxy clone
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin));
+
+        assertEq(address(mVest), expectedAddress, "Address not as expected");
+
+        // address prediction does not fail even if contract already exists
+        address secondAddress = mintableFactory.predictCloneAddress(salt);
+        assertEq(address(mVest), secondAddress, "Address not as expected");
+
+        // second clone creation with same salt must revert
+        vm.expectRevert("ERC1167: create2 failed");
+        mintableFactory.createMintableVestingClone(salt, newToken, newAdmin);
     }
 
     function testTransferrableCloneCreationLocal(address czar, address gem, address ward) public {
@@ -162,11 +186,11 @@ contract DssVestCloneDemo is Test {
         vest.initialize(chainlog, ward);
     }
     
-    function testReInitializationLocal(address newToken, address newAdmin) public {
+    function testReInitializationLocal(bytes32 salt, address newToken, address newAdmin) public {
         vm.assume(newToken != address(0x0));
         vm.assume(newAdmin != address(0x0));
         // Deploy proxy clone
-        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(newToken, newAdmin));
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt ,newToken, newAdmin));
 
         vm.expectRevert("Initializable: contract is already initialized");
         mVest.initialize(newAdmin, newAdmin);
@@ -175,7 +199,7 @@ contract DssVestCloneDemo is Test {
     /**
      * @notice Create a new vest as ward using a meta tx that is sent by relayer
      */
-    function testCreateERC2771Local(address usrAddress) public {
+    function testCreateERC2771Local(bytes32 salt, address usrAddress) public {
         vm.assume(usrAddress != address(0x0));
         address adminAddress = vm.addr(companyAdminPrivateKey);
 
@@ -189,7 +213,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
 
-        DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(newCompanyToken), adminAddress));
+        DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, address(newCompanyToken), adminAddress));
 
         vm.prank(adminAddress);
         localDssVest.file("cap", 100);
@@ -272,7 +296,7 @@ contract DssVestCloneDemo is Test {
     /**
      * @notice Use clone to vest tokens
      */
-    function testCloneUseLocal(address localAdmin) public {
+    function testCloneUseLocal(bytes32 salt, address localAdmin) public {
         vm.assume(localAdmin != address(0x0));
         Token newCompanyToken = new Token(
             address(forwarder),
@@ -284,7 +308,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
 
-        DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(newCompanyToken), localAdmin));
+        DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, address(newCompanyToken), localAdmin));
         
         vm.startPrank(localAdmin);
         
@@ -317,7 +341,7 @@ contract DssVestCloneDemo is Test {
         assertEq(newCompanyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
     }
 
-    function testNoWrongWardsLocal(address localCompanyAdmin) public {
+    function testNoWrongWardsLocal(bytes32 salt, address localCompanyAdmin) public {
 
         vm.startPrank(platformAdminAddress);
         Token localCompanyToken = new Token(
@@ -330,7 +354,7 @@ contract DssVestCloneDemo is Test {
             "COMPT"
         );
         // Deploy clone
-        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(localCompanyToken), localCompanyAdmin));
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, address(localCompanyToken), localCompanyAdmin));
         vm.stopPrank();
 
         console.log("factory address: ", address(mintableFactory));
@@ -351,7 +375,7 @@ contract DssVestCloneDemo is Test {
      * @notice does the full setup and payout without meta tx
      * @dev Many local variables had to be removed to avoid stack too deep error
      */
-    function testDemoEverythingLocal(address localCompanyAdmin) public {
+    function testDemoEverythingLocal(bytes32 salt, address localCompanyAdmin) public {
 
         vm.startPrank(platformAdminAddress);
         Token localCompanyToken = new Token(
@@ -365,7 +389,7 @@ contract DssVestCloneDemo is Test {
         );
 
         // Deploy clone
-        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(address(localCompanyToken), localCompanyAdmin));
+        DssVestMintable mVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, address(localCompanyToken), localCompanyAdmin));
         vm.stopPrank();
 
         uint startDate = block.timestamp;

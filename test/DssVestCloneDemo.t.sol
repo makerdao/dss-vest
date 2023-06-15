@@ -81,8 +81,11 @@ contract DssVestDemo is Test {
         );
         vm.stopPrank();
 
+        // can be any salt, as long as it is unique. Using the same salt twice will result in the same address and therefore the second clone creation will fail.
+        bytes32 salt = bytes32(0);
+
         // deploy vesting contract with any wallet, setting forwarder, token and admin
-        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(address(companyToken), companyAdminAddress));
+        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(salt, address(companyToken), companyAdminAddress));
 
         // configure vesting contract
         vm.startPrank(companyAdminAddress);
