@@ -2,8 +2,8 @@
 
 pragma solidity 0.8.17;
 
-import {DssVestMintable} from "./DssVest.sol";
 import {DssVestCloneFactory} from "./DssVestCloneFactory.sol";
+import {DssVestMintable} from "./DssVest.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
 contract DssVestMintableCloneFactory is DssVestCloneFactory {

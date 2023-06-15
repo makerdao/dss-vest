@@ -2,17 +2,13 @@
 
 pragma solidity 0.8.17;
 
+import {DssVestCloneFactory} from "./DssVestCloneFactory.sol";
 import {DssVestSuckable} from "./DssVest.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract DssVestSuckableCloneFactory {
-    event NewClone(address clone);
+contract DssVestSuckableCloneFactory is DssVestCloneFactory {
 
-    DssVestSuckable immutable vestingImplementation;
-
-    constructor(DssVestSuckable _implementation) {
-        vestingImplementation = _implementation;
-    }
+    constructor(address _implementation) DssVestCloneFactory(_implementation) {}
 
     /**
      * @notice Creates a new DssVestSuckable contract and initializes it.
@@ -23,7 +19,7 @@ contract DssVestSuckableCloneFactory {
      * @return The address of the newly created clone
      */
     function createSuckableVestingClone(bytes32 salt, address chainlog, address ward) external returns (address) {
-        address clone = Clones.cloneDeterministic(address(vestingImplementation), salt);
+        address clone = Clones.cloneDeterministic(implementation, salt);
         DssVestSuckable(clone).initialize(chainlog, ward);
         emit NewClone(clone);
         return clone;

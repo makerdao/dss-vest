@@ -83,7 +83,7 @@ contract DssVestCloneDemo is Test {
         DssVestMintable vestingImplementation = new DssVestMintable(address(forwarder), address(0x1));
         mintableFactory = new DssVestMintableCloneFactory(address(vestingImplementation));
         DssVestTransferrable transferrableImplementation = new DssVestTransferrable(address(forwarder), address(0x1), address(0x2));
-        transferrableFactory = new DssVestTransferrableCloneFactory(transferrableImplementation);
+        transferrableFactory = new DssVestTransferrableCloneFactory(address(transferrableImplementation));
     }
 
     function testMintableCloneCreationLocal(address newToken, address newAdmin, bytes32 salt) public {
@@ -166,7 +166,7 @@ contract DssVestCloneDemo is Test {
 
         address chainlog = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
         DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
-        suckableFactory = new DssVestSuckableCloneFactory(suckableImplementation);
+        suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
 
         // check event. Address is not known yet, so we can't verify it.
         vm.expectEmit(true, true, true, false, address(suckableFactory));
