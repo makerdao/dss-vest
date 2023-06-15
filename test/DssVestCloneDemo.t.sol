@@ -93,14 +93,14 @@ contract DssVestDemo is Test {
         // Address prediction function does not do this check!
 
         // grant minting allowance
+        vm.prank(companyAdminAddress);
         companyToken.increaseMintingAllowance(address(cloneAddress), totalVestAmount);
-        vm.stopPrank();
 
         // deploy vesting contract with any wallet, setting forwarder, token and admin
         mVest = DssVestMintable(cloneFactory.createMintableVestingClone(salt, address(companyToken), companyAdminAddress));
 
         // configure vesting contract
-        vm.startPrank(companyAdminAddress);
+        vm.prank(companyAdminAddress);
         mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
