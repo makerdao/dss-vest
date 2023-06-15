@@ -84,16 +84,24 @@ contract DssVestDemo is Test {
         // can be any salt, as long as it is unique. Using the same salt twice will result in the same address and therefore the second clone creation will fail.
         bytes32 salt = bytes32(0);
 
+        // predict address of clone in order to 
+        // 1. check if a contract already lives at this address
+        // 2. prepare further transactions with this information, like increasing Minting allowance
+        address cloneAddress = cloneFactory.predictCloneAddress(salt);
+
+        // important for real life: check if a contract already lives at this address. If that is the case, we cannot deploy a new clone with the same salt.
+        // Address prediction function does not do this check!
+
+        // grant minting allowance
+        companyToken.increaseMintingAllowance(address(cloneAddress), totalVestAmount);
+        vm.stopPrank();
+
         // deploy vesting contract with any wallet, setting forwarder, token and admin
         mVest = DssVestMintable(cloneFactory.createMintableVestingClone(salt, address(companyToken), companyAdminAddress));
 
         // configure vesting contract
         vm.startPrank(companyAdminAddress);
         mVest.file("cap", (totalVestAmount / vestDuration) ); 
-
-        // grant minting allowance
-        companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
-        vm.stopPrank();
 
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
         vm.recordLogs();
