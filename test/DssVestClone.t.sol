@@ -298,6 +298,7 @@ contract DssVestCloneDemo is Test {
      */
     function testCloneUseLocal(bytes32 salt, address localAdmin) public {
         vm.assume(localAdmin != address(0x0));
+        vm.assume(localAdmin != address(forwarder));
         Token newCompanyToken = new Token(
             address(forwarder),
             feeSettings,
@@ -311,7 +312,6 @@ contract DssVestCloneDemo is Test {
         DssVestMintable localDssVest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, address(newCompanyToken), localAdmin));
         
         vm.startPrank(localAdmin);
-        
         localDssVest.file("cap", (totalVestAmount / vestDuration) ); 
 
         // grant minting allowance
