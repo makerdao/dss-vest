@@ -81,7 +81,7 @@ contract DssVestCloneDemo is Test {
 
         // set up clone factories
         DssVestMintable vestingImplementation = new DssVestMintable(address(forwarder), address(0x1));
-        mintableFactory = new DssVestMintableCloneFactory(vestingImplementation);
+        mintableFactory = new DssVestMintableCloneFactory(address(vestingImplementation));
         DssVestTransferrable transferrableImplementation = new DssVestTransferrable(address(forwarder), address(0x1), address(0x2));
         transferrableFactory = new DssVestTransferrableCloneFactory(transferrableImplementation);
     }
@@ -174,7 +174,7 @@ contract DssVestCloneDemo is Test {
         
         // Deploy proxy clone
         DssVestSuckable vest = DssVestSuckable(
-            suckableFactory.createSuckableVestingClone(chainlog, ward));
+            suckableFactory.createSuckableVestingClone(bytes32(0), chainlog, ward));
 
         assertTrue(vest.isTrustedForwarder(address(forwarder)), "Forwarder not set correctly");
         assertTrue(vest.wards(ward) == 1, "ward not set correctly");

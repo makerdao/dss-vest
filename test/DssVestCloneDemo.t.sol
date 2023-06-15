@@ -56,7 +56,7 @@ contract DssVestDemo is Test {
         DssVestMintable logic = new DssVestMintable(address(forwarder), address(1));
 
         // deploy factory contract
-        DssVestMintableCloneFactory cloneFactory = new DssVestMintableCloneFactory(logic);
+        DssVestMintableCloneFactory cloneFactory = new DssVestMintableCloneFactory(address(logic));
 
         // deploy tokenize.it platform and company token
         vm.startPrank(platformAdminAddress);

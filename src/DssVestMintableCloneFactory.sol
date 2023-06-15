@@ -3,17 +3,12 @@
 pragma solidity 0.8.17;
 
 import {DssVestMintable} from "./DssVest.sol";
+import {DssVestCloneFactory} from "./DssVestCloneFactory.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 
-contract DssVestMintableCloneFactory {
-    event NewClone(address clone);
+contract DssVestMintableCloneFactory is DssVestCloneFactory {
 
-    /// The address of the implementation to clone
-    DssVestMintable immutable vestingImplementation;
-
-    constructor(DssVestMintable _implementation) {
-        vestingImplementation = _implementation;
-    }
+    constructor(address _implementation) DssVestCloneFactory(_implementation) {}
 
     /**
      * @notice Creates a new DssVestMintable contract and initializes it.
@@ -24,28 +19,9 @@ contract DssVestMintableCloneFactory {
      * @return The address of the newly created clone
      */
     function createMintableVestingClone(bytes32 salt, address gem, address ward) external returns (address) {
-        address clone = Clones.cloneDeterministic(address(vestingImplementation), salt);
+        address clone = Clones.cloneDeterministic(implementation, salt);
         DssVestMintable(clone).initialize(gem, ward);
         emit NewClone(clone);
         return clone;
     }
-
-    /**
-     * @notice Predicts the address of a clone that will be created using `createMintableVestingClone`
-     * @param salt The salt used to deterministically generate the clone address
-     * @return The address of the clone that will be created
-     * @dev This function does not check if the clone has already been created
-     */
-    function predictCloneAddress(bytes32 salt)
-        public
-        view
-        returns (address)
-    {
-        return
-            Clones.predictDeterministicAddress(
-                address(vestingImplementation),
-                salt
-            );
-    }
-
 }
