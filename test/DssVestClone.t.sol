@@ -223,7 +223,7 @@ contract DssVestCloneDemo is Test {
         assertEq(address(vest), expectedAddress, "Address not as expected");
 
         // address prediction does not fail even if contract already exists
-        address secondAddress = transferrableFactory.predictCloneAddress(salt);
+        address secondAddress = suckableFactory.predictCloneAddress(salt);
         assertEq(address(vest), secondAddress, "Address not as expected");
 
         // second clone creation with same salt must revert
