@@ -14,8 +14,8 @@ contract DssVestMintableNaiveFactory {
     @param companyToken The address of the ERC-20 token to be vested
     @param companyAdminAddress The address of the company admin that will be the first ward of the contract
      */
-    function createDssVestMintable(address forwarder, address companyToken, address companyAdminAddress) external returns (address) {
-        DssVestMintable myContract = new DssVestMintable(forwarder, companyToken);
+    function createDssVestMintable(address forwarder, address companyToken, address companyAdminAddress, uint256 cap) external returns (address) {
+        DssVestMintable myContract = new DssVestMintable(forwarder, companyToken, cap);
         myContract.rely(companyAdminAddress);
         myContract.deny(address(this));
         emit DssVestMintableCreated(address(myContract), companyAdminAddress);

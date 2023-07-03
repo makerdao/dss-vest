@@ -85,11 +85,11 @@ contract DssVestCloneDemo is Test {
 
         // Deploy vesting contract as some user with some address as token address. 
         // It will be unusable, but that does not matter.
-        DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2));
+        DssVestMintable vestingImplementation = new DssVestMintable(vm.addr(0x1), vm.addr(0x2), 0);
         DssVestMintableNaiveFactory factory = new DssVestMintableNaiveFactory();
 
         // Deploy instance
-        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
+        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress, (totalVestAmount / vestDuration)));
 
 
         // check initialization
@@ -103,14 +103,12 @@ contract DssVestCloneDemo is Test {
 
         // initialize vesting contract 
         vm.startPrank(companyAdminAddress);
-        //mVest = new DssVestMintable(address(forwarder), address(companyToken));
-        mVest.file("cap", (totalVestAmount / vestDuration) ); 
 
         console.log("clone's forwarder is correct: ", mVest.isTrustedForwarder(address(forwarder)));
 
         // try calling the DssVest initialize function again. This should fail.
         vm.expectRevert("Initializable: contract is already initialized");
-        mVest.initialize(vm.addr(0x3), vm.addr(0x4));
+        mVest.initialize(vm.addr(0x3), vm.addr(0x4), (totalVestAmount / vestDuration));
 
         console.log("clone's forwarder is wrong: ", mVest.isTrustedForwarder(vm.addr(0x3)));
         console.log("clone's forwarder is 0: ", mVest.isTrustedForwarder(address(0x0)));

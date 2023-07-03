@@ -21,8 +21,7 @@ contract DssVestLocal is Test {
     function setUp() public {
         vm.warp(60 * 365 days); // in local testing, the time would start at 1. This causes problems with the vesting contract. So we warp to 60 years.
         vm.startPrank(ward);
-        vest = new DssVestMintable(address(forwarder), address(gem));
-        vest.file("cap", type(uint256).max);
+        vest = new DssVestMintable(address(forwarder), address(gem), type(uint256).max);
         vm.stopPrank();
     }
 

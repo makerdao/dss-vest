@@ -142,12 +142,12 @@ contract DssVestERC2771Test is Test {
 
         // deploy contracts as ward
         vm.startPrank(wardAddress);
-        mVest = new DssVestMintable(address(forwarder), address(gem));
+        mVest = new DssVestMintable(address(forwarder), address(gem), 0);
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(forwarder), address(chainlog));
+        sVest = new DssVestSuckable(address(forwarder), address(chainlog), 0);
         sVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
-        tVest = new DssVestTransferrable(address(forwarder), address(boss), address(dai));
+        tVest = new DssVestTransferrable(address(forwarder), address(boss), address(dai), 0);
         tVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss.gemApprove(address(dai), address(tVest));
         vm.stopPrank();

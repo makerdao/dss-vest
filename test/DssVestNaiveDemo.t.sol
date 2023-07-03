@@ -80,15 +80,11 @@ contract DssVestDemo is Test {
 
 
         // deploy vesting contract with any wallet, setting forwarder, token and admin
-        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress));
-
-        // configure vesting contract
-        vm.startPrank(companyAdminAddress);
-        mVest.file("cap", (totalVestAmount / vestDuration) ); 
+        mVest = DssVestMintable(factory.createDssVestMintable(address(forwarder), address(companyToken), companyAdminAddress, (totalVestAmount / vestDuration)));
 
         // grant minting allowance
+        vm.prank(companyAdminAddress);
         companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
-        vm.stopPrank();
 
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
         vm.recordLogs();

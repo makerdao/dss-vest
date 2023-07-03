@@ -24,7 +24,7 @@ contract DssVestLocal is Test {
     function testFileWrongKeyLocal(address gem, uint256 value, string memory key) public {
         vm.assume(keccak256(abi.encodePacked(key)) != keccak256(abi.encodePacked("cap")));
         vm.assume(gem != address(0));
-        DssVestMintable vest = new DssVestMintable(address(forwarder), gem);
+        DssVestMintable vest = new DssVestMintable(address(forwarder), gem, 0);
         vm.expectRevert("DssVest/file-unrecognized-param");
         vest.file("wrongKey", value);
     }
@@ -33,7 +33,7 @@ contract DssVestLocal is Test {
         vm.assume(gem != address(0));
         vm.assume(ward != address(0));
         vm.assume(ward != address(this));
-        DssVestMintable vest = new DssVestMintable(address(forwarder), gem);
+        DssVestMintable vest = new DssVestMintable(address(forwarder), gem, 0);
         assertEq(vest.wards(ward), 0, "address is already a ward");
         vest.rely(ward);
         assertEq(vest.wards(ward), 1, "rely failed");
