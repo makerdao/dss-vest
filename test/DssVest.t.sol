@@ -120,13 +120,10 @@ contract DssVestTest is DSTest {
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
-        mVest = new DssVestMintable(address(forwarder), address(gem), 0);
-        mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(forwarder), address(chainlog), 0);
-        sVest.file("cap", (2000 * WAD) / (4 * 365 days));
+        mVest = new DssVestMintable(address(forwarder), address(gem), (2000 * WAD) / (4 * 365 days));
+        sVest = new DssVestSuckable(address(forwarder), address(chainlog), (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
-        tVest = new DssVestTransferrable(address(forwarder), address(boss), address(dai), 0);
-        tVest.file("cap", (2000 * WAD) / (4 * 365 days));
+        tVest = new DssVestTransferrable(address(forwarder), address(boss), address(dai), (2000 * WAD) / (4 * 365 days));
         boss.gemApprove(address(dai), address(tVest));
 
 
