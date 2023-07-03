@@ -116,7 +116,7 @@ contract DssVestCloneDemo is Test {
         emit NewClone(expectedAddress); 
 
         // Deploy proxy clone
-        DssVestMintable vest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin));
+        DssVestMintable vest = DssVestMintable(mintableFactory.createMintableVestingClone(salt, newToken, newAdmin, 0));
 
         assertEq(address(vest), expectedAddress, "Address not as expected");
 
@@ -126,7 +126,7 @@ contract DssVestCloneDemo is Test {
 
         // second clone creation with same salt must revert
         vm.expectRevert("ERC1167: create2 failed");
-        mintableFactory.createMintableVestingClone(salt, newToken, newAdmin);
+        mintableFactory.createMintableVestingClone(salt, newToken, newAdmin, 0);
     }
 
     function testTransferrableCloneCreationLocal(address czar, address gem, address ward, uint256 newCap) public {
@@ -151,10 +151,10 @@ contract DssVestCloneDemo is Test {
 
         // calling initializer again must revert
         vm.expectRevert("Initializable: contract is already initialized");
-        vest.initialize(czar, gem, ward);
+        vest.initialize(czar, gem, ward, newCap);
     }
 
-    function testTransferrableAddressPredictionLocal(bytes32 salt, address czar, address gem, address ward) public {
+    function testTransferrableAddressPredictionLocal(bytes32 salt, address czar, address gem, address ward, uint256 newCap) public {
         vm.assume(gem != address(0x0));
         vm.assume(ward != address(0x0));
         vm.assume(czar != address(0x0));
@@ -166,7 +166,7 @@ contract DssVestCloneDemo is Test {
 
         // Deploy proxy clone
         DssVestTransferrable vest = DssVestTransferrable(
-            transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward));
+            transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward, newCap));
 
         assertEq(address(vest), expectedAddress, "Address not as expected");
 
@@ -176,7 +176,7 @@ contract DssVestCloneDemo is Test {
 
         // second clone creation with same salt must revert
         vm.expectRevert("ERC1167: create2 failed");
-        transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward);
+        transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward, newCap);
         
     }
 
@@ -206,11 +206,11 @@ contract DssVestCloneDemo is Test {
 
     /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
     ///     be tested locally.
-    function testSuckableAddressPredictionCreation(bytes32 salt, address ward) public {
+    function testSuckableAddressPredictionCreation(bytes32 salt, address ward, uint256 newCap) public {
         vm.assume(ward != address(0x0));
 
         address chainlog = 0xdA0Ab1e0017DEbCd72Be8599041a2aa3bA7e740F;
-        DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog);
+        DssVestSuckable suckableImplementation = new DssVestSuckable(address(forwarder), chainlog, newCap);
         suckableFactory = new DssVestSuckableCloneFactory(address(suckableImplementation));
 
         address expectedAddress = suckableFactory.predictCloneAddress(salt);
@@ -221,7 +221,7 @@ contract DssVestCloneDemo is Test {
         
         // Deploy proxy clone
         DssVestSuckable vest = DssVestSuckable(
-            suckableFactory.createSuckableVestingClone(salt, chainlog, ward));
+            suckableFactory.createSuckableVestingClone(salt, chainlog, ward, newCap));
 
         assertEq(address(vest), expectedAddress, "Address not as expected");
 
@@ -231,7 +231,7 @@ contract DssVestCloneDemo is Test {
 
         // second clone creation with same salt must revert
         vm.expectRevert("ERC1167: create2 failed");
-        suckableFactory.createSuckableVestingClone(salt, chainlog, ward);
+        suckableFactory.createSuckableVestingClone(salt, chainlog, ward, newCap);
     }
     
     function testReInitializationLocal(bytes32 salt, address newToken, address newAdmin, uint256 newCap) public {
@@ -383,6 +383,7 @@ contract DssVestCloneDemo is Test {
     }
 
     function testNoWrongWardsLocal(bytes32 salt, address localCompanyAdmin, uint256 newCap) public {
+        vm.assume(localCompanyAdmin != address(this));
 
         vm.startPrank(platformAdminAddress);
         Token localCompanyToken = new Token(
