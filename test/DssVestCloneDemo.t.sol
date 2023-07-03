@@ -56,7 +56,7 @@ contract DssVestDemo is Test {
         DssVestMintable logic = new DssVestMintable(address(forwarder), address(1), 0);
 
         // deploy factory contract
-        DssVestMintableCloneFactory cloneFactory = new DssVestMintableCloneFactory(logic);
+        DssVestMintableCloneFactory cloneFactory = new DssVestMintableCloneFactory(address(logic));
 
         // deploy tokenize.it platform and company token
         vm.startPrank(platformAdminAddress);
@@ -81,13 +81,28 @@ contract DssVestDemo is Test {
         );
         vm.stopPrank();
 
+        // can be any salt, as long as it is unique. Using the same salt twice will result in the same address and therefore the second clone creation will fail.
+        bytes32 salt = bytes32(0);
+
+        // predict address of clone in order to 
+        // 1. check if a contract already lives at this address
+        // 2. prepare further transactions with this information, like increasing Minting allowance
+        address cloneAddress = cloneFactory.predictCloneAddress(salt);
+
+        // important for real life: check if a contract already lives at this address. If that is the case, we cannot deploy a new clone with the same salt.
+        // Address prediction function does not do this check!
+
+        // grant minting allowance
+        vm.prank(companyAdminAddress);
+        companyToken.increaseMintingAllowance(address(cloneAddress), totalVestAmount);
+
         // deploy vesting contract with any wallet, setting forwarder, token and admin
-        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(address(companyToken), companyAdminAddress, (totalVestAmount / vestDuration)));
-        
+        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(salt, address(companyToken), companyAdminAddress, (totalVestAmount / vestDuration)));
+
         // grant minting allowance
         vm.prank(companyAdminAddress);
         companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
-
+        
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
         vm.recordLogs();
         forwarder.registerDomainSeparator(string(abi.encodePacked(address(mVest))), "v1.0"); // simply uses address string as name

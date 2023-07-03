@@ -1,6 +1,6 @@
 {
   "name": "@tokenize.it/dss-vest",
-  "version": "0.1.0-alpha.1",
+  "version": "0.1.1-alpha.1",
   "description": "adds erc2771 and a factory for DssVestMintable to dss-vest",
   "keywords": [
     "evm",
@@ -43,7 +43,7 @@
   ],
   "repository": {
     "type": "git",
-    "url":   "git@github.com:corpus-io/dss-vest.git"
+    "url": "git@github.com:corpus-io/dss-vest.git"
   },
   "publishConfig": {
     "ignore": [
