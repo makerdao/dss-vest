@@ -229,7 +229,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
         return _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
     }
 
