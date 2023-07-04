@@ -17,9 +17,10 @@ case "$1" in
              ;;
 esac
 
-SOLC=~/.nix-profile/bin/solc-0.6.12
+SOLC=~/.nix-profile/bin/solc-0.8.17
 
-# Check if solc-0.6.12 is installed
-[[ -f "$SOLC" ]] || nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
+# Check if solc-0.8.17 is installed
+[[ -f "$SOLC" ]] || nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_8_17
 
-echidna-test echidna/"$VEST".sol --contract "$VEST" --crytic-args "--solc $SOLC" --config echidna.config.yml
+echidna echidna/"$VEST".sol --contract "$VEST" --crytic-args "--solc $SOLC --solc-remaps @openzeppelin/=node_modules/@openzeppelin/" --config echidna.config.yml 
+#echidna-test echidna/"$VEST".sol --contract "$VEST" --crytic-args "--solc $SOLC" --config echidna.config.yml 

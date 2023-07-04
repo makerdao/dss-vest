@@ -411,7 +411,6 @@ contract DssVestCloneDemo is Test {
         require(mVest.wards(platformAdminAddress) == 0, "Platform is a ward");
         require(mVest.wards(address(this)) == 0, "Test account is a ward");
         assertEq(mVest.cap(), newCap, "Cap is not set correctly");
-        
     }
 
     /**

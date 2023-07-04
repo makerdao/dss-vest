@@ -38,8 +38,7 @@ contract DssVestMintableEchidnaTest {
 
     constructor() {
         gem = new DSToken("MKR");
-        mVest = new DssVestMintable(address(0x1), address(gem));
-        mVest.file("cap", MIN * WAD / YEAR);
+        mVest = new DssVestMintable(address(0x1), address(gem), MIN * WAD / YEAR);
         gem.setOwner(address(mVest));
         salt = block.timestamp;
         hevm = Hevm(address(CHEAT_CODE));
