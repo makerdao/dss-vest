@@ -848,7 +848,7 @@ contract DssVestTest is DSTest {
     }
 
     function testWardsSlot0x1() public {
-        // Load memory slot 0x0
+        // Load memory slot 0x1
         bytes32 mWards = hevm.load(address(mVest), keccak256(abi.encode(address(this), uint256(1))));
         bytes32 sWards = hevm.load(address(sVest), keccak256(abi.encode(address(this), uint256(1))));
         bytes32 tWards = hevm.load(address(tVest), keccak256(abi.encode(address(this), uint256(1))));
