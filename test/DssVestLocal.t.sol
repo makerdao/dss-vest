@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import {DssVestMintable} from "../src/DssVest.sol";
-import "../src/DssVestMintableNaiveFactory.sol";
 
 contract DssVestLocal is Test {
     // init forwarder
