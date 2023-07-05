@@ -417,8 +417,8 @@ contract DssVestMintableEchidnaTest {
     }
     function _mutusr(uint256 id) internal {
         address usr = mVest.usr(id) == address(this) ? address(0) : address(this);
-        // Set DssVestMintable awards slot n. 1 (clf, bgn, usr) to override awards(id).usr with address(this)
-        hevm.store(address(mVest), keccak256(abi.encode(uint256(id), uint256(1))), bytesToBytes32(abi.encodePacked(uint48(mVest.clf(id)), uint48(mVest.bgn(id)), usr)));
+        // Set DssVestMintable awards slot n. 2 (clf, bgn, usr) to override awards(id).usr with address(this)
+        hevm.store(address(mVest), keccak256(abi.encode(uint256(id), uint256(2))), bytesToBytes32(abi.encodePacked(uint48(mVest.clf(id)), uint48(mVest.bgn(id)), usr)));
         assert(mVest.usr(id) == usr);
     }
     function mutcap(uint256 bump) private clock(90 days) {
