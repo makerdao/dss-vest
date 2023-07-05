@@ -313,7 +313,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @param _slt The salt of the commitment
     */
-    function claimAndVest(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
+    function claimAndVest(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external returns (uint256 id) {
         id = claim(_bch, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
         _vest(id, type(uint256).max);
     }

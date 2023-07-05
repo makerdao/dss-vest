@@ -7,13 +7,24 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "../src/DssVest.sol";
 
+/**
+   @dev This contract is used to test the DssVest contract. It is a ERC20 token that can be minted by anyone.
+ */
+contract ERC20MintableByAnyone is ERC20 {
+    constructor(string memory name_, string memory symbol_) ERC20(name_, symbol_) {}
+
+    function mint(address to, uint256 amount) public {
+        _mint(to, amount);
+    }
+}
+
 contract DssVestLocal is Test {
     event Commit(bytes32 indexed hash);
     event Claim(bytes32 indexed hash, uint256 indexed id);
 
     // init forwarder
     Forwarder forwarder = new Forwarder();
-    ERC20 gem = new ERC20("Gem", "GEM");
+    ERC20 gem = new ERC20MintableByAnyone("Gem", "GEM");
     DssVestMintable vest;
     address ward = address(1);
 
@@ -123,15 +134,53 @@ contract DssVestLocal is Test {
         
     }
 
-    function checkBounds(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, DssVest _vest, uint256 _timestamp) public view returns (bool) {
-        bool valid = true;
-        valid = valid && (_usr != address(0));
+    function testClaimAndVestLocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
+        vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
+        vm.assume(someone != address(0) && someone != _usr);
+        bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
+
+        // commit
+        assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Commit(hash);
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+
+        // ensure state is as expected before claiming
+        assertTrue(gem.balanceOf(_usr) == 0, "balance is not 0");
+        assertTrue(vest.ids() == 0, "id is not 0");
+        assertEq(vest.commitments(hash), true, "commitment does not exist");
+
+        // 3rd parties can not claim and vest because vests are restricted by default
+        vm.prank(someone);
+        vm.expectRevert("DssVest/only-user-can-claim");
+        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+
+        // claim
+        vm.prank(_usr);
+        uint256 id = vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+
+        // ensure state changed as expected during claim
+        assertEq(id, 1, "id is not 1");
+        assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
+        assertEq(vest.unpaid(id), 0, "unpaid is not 0");
+        assertEq(vest.commitments(hash), false, "commitment not deleted");
+
+
+        // claiming again must fail
+        vm.expectRevert("DssVest/commitment-not-found");
+        vm.prank(_usr);
+        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+    }
+
+    function checkBounds(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, DssVest _vest, uint256 _timestamp) public view returns (bool valid) {
+        valid = true;
+        valid = valid && (_usr != address(0) && _usr != address(forwarder));
         valid = valid && (_tot != 0);
         valid = valid && (_bgn > _timestamp - _vest.TWENTY_YEARS() + 1 days && _bgn < _timestamp + _vest.TWENTY_YEARS() - 1 days);
         valid = valid && (_tau < _vest.TWENTY_YEARS());
         valid = valid && (_eta < _tau);
-
-        return valid;
     }
 
 }
