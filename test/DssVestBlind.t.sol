@@ -75,26 +75,7 @@ contract DssVestLocal is Test {
         uint256 id = vest.claim(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
         assertEq(id, 1, "id is not 0");
 
-        // check vesting details (looks complicated because of solidity local variables limitations)
-        address usrOrMgr;
-        (usrOrMgr,,,,,,, ) = vest.awards(id);
-        assertEq(usrOrMgr, _usr, "usr is not equal");
-        (,,,, usrOrMgr,,, ) = vest.awards(id);
-        assertEq(usrOrMgr, _mgr, "mgr is not equal");
-
-        uint128 uintVal;
-        (, uintVal,,,,,, ) = vest.awards(id);
-        assertEq(uintVal, _bgn, "bgn is not equal");
-        (,, uintVal,,,,, ) = vest.awards(id);
-        assertEq(uintVal, _bgn + _eta, "clf is wrong");
-        (,,, uintVal,,,, ) = vest.awards(id);
-        assertEq(uintVal, _bgn + _tau, "fin is wrong");
-        (,,,,, uintVal,, ) = vest.awards(id);
-        assertEq(uintVal, 1, "vest is not restricted");
-        (,,,,,, uintVal, ) = vest.awards(id);
-        assertEq(uintVal, _tot, "tot is not equal");
-        (,,,,,,, uintVal) = vest.awards(id);
-        assertEq(uintVal, 0, "rxd is not 0");
+        checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, 0);
 
         // make sure the commitment is deleted
         assertTrue(vest.commitments(hash) == false, "commitment still exists");
@@ -156,7 +137,7 @@ contract DssVestLocal is Test {
         vm.prank(someone);
         vm.expectRevert("DssVest/only-user-can-claim");
         vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
-
+        
         // claim
         vm.prank(_usr);
         uint256 id = vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
@@ -166,21 +147,54 @@ contract DssVestLocal is Test {
         assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
         assertEq(vest.unpaid(id), 0, "unpaid is not 0");
         assertEq(vest.commitments(hash), false, "commitment not deleted");
+        checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, vest.accrued(id));
 
 
         // claiming again must fail
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(_usr);
         vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+
+        // warp time till end of vesting and vest everything
+        vm.warp(_bgn + _tau + 1);
+        vm.prank(_usr);
+        vest.vest(id);
+        assertEq(vest.unpaid(id), 0, "unpaid is not 0");
+        assertEq(vest.accrued(id), _tot, "accrued is not equal to total");
+        assertEq(gem.balanceOf(_usr), _tot, "balance is not equal to total");
     }
 
     function checkBounds(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, DssVest _vest, uint256 _timestamp) public view returns (bool valid) {
-        valid = true;
-        valid = valid && (_usr != address(0) && _usr != address(forwarder));
-        valid = valid && (_tot != 0);
-        valid = valid && (_bgn > _timestamp - _vest.TWENTY_YEARS() + 1 days && _bgn < _timestamp + _vest.TWENTY_YEARS() - 1 days);
-        valid = valid && (_tau < _vest.TWENTY_YEARS());
-        valid = valid && (_eta < _tau);
+        valid = _usr != address(0) 
+            && _usr != address(forwarder)
+            && _tot != 0 
+            && _bgn > _timestamp - _vest.TWENTY_YEARS() + 1 days 
+            && _bgn < _timestamp + _vest.TWENTY_YEARS() - 1 days
+            && _tau < _vest.TWENTY_YEARS()
+            && _eta < _tau;
+    }
+
+    function checkVestingPlanDetails(uint256 _id, address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, uint256 _rxd) public {
+        // check vesting details (looks complicated because of solidity local variables limitations)    
+        address usrOrMgr;
+        (usrOrMgr,,,,,,, ) = vest.awards(_id);
+        assertEq(usrOrMgr, _usr, "usr is not equal");
+        (,,,, usrOrMgr,,, ) = vest.awards(_id);
+        assertEq(usrOrMgr, _mgr, "mgr is not equal");
+
+        uint128 uintVal;
+        (, uintVal,,,,,, ) = vest.awards(_id);
+        assertEq(uintVal, _bgn, "bgn is not equal");
+        (,, uintVal,,,,, ) = vest.awards(_id);
+        assertEq(uintVal, _bgn + _eta, "clf is wrong");
+        (,,, uintVal,,,, ) = vest.awards(_id);
+        assertEq(uintVal, _bgn + _tau, "fin is wrong");
+        (,,,,, uintVal,, ) = vest.awards(_id);
+        assertEq(uintVal, 1, "vest is not restricted");
+        (,,,,,, uintVal, ) = vest.awards(_id);
+        assertEq(uintVal, _tot, "tot is not equal");
+        (,,,,,,, uintVal) = vest.awards(_id);
+        assertEq(uintVal, _rxd, "rxd is not 0");
     }
 
 }
