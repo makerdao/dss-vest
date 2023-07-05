@@ -40,21 +40,4 @@ contract DssVestLocal is Test {
         vest.deny(ward);
         assertEq(vest.wards(ward), 0, "deny failed");
     }
-
-    function testReproduceCreateErrorLocal() public {
-        address usr = address(0xdeadbeef);
-        uint256 tot = 6;
-        uint256 bgn = block.timestamp - 10*365 days; //896401988;
-        uint256 tau = 29937;
-        uint256 eta = 1995;
-        address mgr = address(0);
-
-        uint256 cap = tot / tau;
-
-        DssVestMintable vest = new DssVestMintable(address(forwarder), address(this), cap);
-        console.log("block timestamp: %s", block.timestamp);
-        console.log("how long ago: %s", block.timestamp - bgn);
-        console.log("twenty years: %s", 20 * 365 days);
-        vest.create(usr, tot, bgn, tau, eta, mgr);
-    }
 }
