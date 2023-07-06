@@ -16,6 +16,8 @@ import "../src/DssVestMintableCloneFactory.sol";
 import "../src/DssVestTransferrableCloneFactory.sol";
 import "../src/DssVestSuckableCloneFactory.sol";
 
+import "./resources/ERC20MintableByAnyone.sol";
+
 
 contract DssVestCloneDemo is Test {
     event NewClone(address clone);
@@ -175,6 +177,28 @@ contract DssVestCloneDemo is Test {
         // second clone creation with same salt must revert
         vm.expectRevert("ERC1167: create2 failed");
         transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward);
+        
+    }
+
+    function testTransferrableCloneAsCzarLocal(bytes32 salt, address ward, uint256 amount) public {
+        vm.assume(ward != address(0x0));
+        vm.assume(amount > 0);
+        
+        ERC20MintableByAnyone gem = new ERC20MintableByAnyone("Test Token", "TST");        
+
+        // predict clone address
+        address expectedAddress = transferrableFactory.predictCloneAddress(salt);
+
+        // Deploy proxy clone
+        DssVestTransferrable vest = DssVestTransferrable(
+            transferrableFactory.createTransferrableVestingClone(salt, expectedAddress, gem, ward));
+
+        console.log("factory address: ", address(mintableFactory));
+        console.log("clone address: ", address(vest));
+
+        assertTrue(address(vest.czar()) == address(vest), "czar not set correctly");
+
+        // mint 
         
     }
 
