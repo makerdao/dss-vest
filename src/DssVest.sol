@@ -553,7 +553,7 @@ contract DssVestTransferrable is DssVest {
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
-        gem  = TokenLike(_gem);
+        gem = TokenLike(_gem);
     }
 
     /**
