@@ -11,7 +11,6 @@ import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/proxy/Clones.sol";
 import {DssVestMintable} from "../src/DssVest.sol";
-import "../src/DssVestMintableNaiveFactory.sol";
 
 contract DssVestLocal is Test {
     // init forwarder
@@ -39,5 +38,13 @@ contract DssVestLocal is Test {
         assertEq(vest.wards(ward), 1, "rely failed");
         vest.deny(ward);
         assertEq(vest.wards(ward), 0, "deny failed");
+    }
+
+    function testRequireAuthForCreateLocal(address noWard) public {
+        DssVestMintable vest = new DssVestMintable(address(forwarder), address(1));
+        vm.assume(vest.wards(noWard) == 0);
+        vm.expectRevert("DssVest/not-authorized");
+        vm.prank(noWard);
+        vest.create(address(2), 1, 1, 1, 1, address(0));
     }
 }

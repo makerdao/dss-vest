@@ -1,12 +1,3 @@
-// SPDX-License-Identifier: AGPL-3.0-or-later
-
-pragma solidity 0.8.17;
-
-import {DssVestMintable} from "./DssVest.sol";
-
-contract DssVestMintableNaiveFactory {
-
-    event DssVestMintableCreated(address dssVestMintable, address companyAdminAddress);
 
     /**
     @dev Creates a new DssVestMintable contract and transfers the ownership to the companyAdminAddress

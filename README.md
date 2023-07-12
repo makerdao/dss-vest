@@ -52,13 +52,12 @@ forge create --rpc-url $GOERLI_RPC_URL --private-key $PRIVATE_KEY --verify --eth
 ```
 
 After the first DssVestMintable has been created using the factory, it should be verified.
-* paste the constructor arguments into a file stored at `$FILE`. The format is described [here](https://book.getfoundry.sh/reference/forge/forge-verify-contract#examples) (see last example).
-* verify
+
+- paste the constructor arguments into a file stored at `$FILE`. The format is described [here](https://book.getfoundry.sh/reference/forge/forge-verify-contract#examples) (see last example).
+- verify
   ```bash
   forge verify-contract $CONTRACT_ADDRESS --chain goerli --constructor-args-path $FILE src/DssVest.sol:DssVestMintable
   ```
-
-
 
 ### Creating a vest
 
@@ -208,26 +207,27 @@ pip3 install slither-analyzer --user
 ## Foundry
 
 Some foundry tests have been added extending the contracts to be ERC2771 compliant. Other unit tests can also be run with foundry. To do so, follow these steps:
+
 1. Get a rpc URL that can be used for mainnet forks, e.g. from infura
-2. Run 
-    ```
-    forge test --fork-url "$ETH_RPC_URL"
-    ```
-    or 
-     
-    ```
-    ETH_RPC_URL=$ETH_RPC_URL yarn test 
-    ```
-    Either replace `"$ETH_RPC_URL"` with the URL from step 1, or make sure the environment variable contains this URL.
+2. Run
+   ```
+   forge test --fork-url "$ETH_RPC_URL"
+   ```
+   or
+   ```
+   ETH_RPC_URL=$ETH_RPC_URL yarn test
+   ```
+   Either replace `"$ETH_RPC_URL"` with the URL from step 1, or make sure the environment variable contains this URL.
 
 ## NPM
+
 Follow these steps to publish a new version of the package to NPM:
-- prepare: update version in `package.json`
-- preview
+
+- prepare: update version in `package.json` and create git tag with
+  ```bash
+   npm version <newversion>
+   ```
+- publish (add `--dry-run` to test)
   ```
-  npm publish --access public --dry-run
-  ```
-- publish
-  ```
-  npm publish --access public
+  ETH_RPC_URL=$ETH_RPC npm publish [--tag <alpha/beta>] --dry-run
   ```

@@ -42,6 +42,7 @@ interface VatLike {
 
 interface TokenLike {
     function transferFrom(address, address, uint256) external returns (bool);
+    function transfer(address, uint256) external returns (bool);
 }
 
 abstract contract DssVest is ERC2771Context, Initializable {
@@ -64,11 +65,11 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     uint256 public ids; // Total vestings
 
-    mapping (bytes32 => bool) public commitments;
-
     uint256 internal locked;
 
     uint256 public constant  TWENTY_YEARS = 20 * 365 days;
+
+    mapping (bytes32 => bool) public commitments;
 
     // --- Events ---
     event Rely(address indexed usr);
@@ -200,7 +201,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     /** 
         @dev commit to the creation of an award without revealing the award's contents yet
-        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash function in createAward for details
+        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash in `claim` for details
     */
     function commit(bytes32 bch) external lock auth {
         commitments[bch] = true;
@@ -209,7 +210,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     /**
         @dev Create a vesting contract from an earlier commitment
-        @param _bch The hash of the award's contents, see hash function in createAward for details
+        @param _bch The hash of the award's contents
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
@@ -219,7 +220,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @param _slt The salt used to increase privacy when committing
         @return id  The id of the vesting contract
     */
-    function claim(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external lock returns (uint256 id) {
+    function claim(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) public lock returns (uint256 id) {
         require(_bch == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
         require(commitments[_bch], "DssVest/commitment-not-found");
         commitments[_bch] = false;
@@ -237,7 +238,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
         return _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
     }
 
@@ -308,6 +309,22 @@ abstract contract DssVest is ERC2771Context, Initializable {
         awards[_id].rxd = toUint128(add(_award.rxd, amt));
         pay(_award.usr, amt);
         emit Vest(_id, amt);
+    }
+
+    /**
+        @dev claim and vest a commitment in one transaction
+        @param _bch The hash of the commitment
+        @param _usr The recipient of the reward
+        @param _tot The total amount of the vest
+        @param _bgn The starting timestamp of the vest
+        @param _tau The duration of the vest (in seconds)
+        @param _eta The cliff duration in seconds (i.e. 1 years)
+        @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
+        @param _slt The salt of the commitment
+    */
+    function claimAndVest(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) external returns (uint256 id) {
+        id = claim(_bch, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        _vest(id, type(uint256).max);
     }
 
     /**
@@ -566,7 +583,7 @@ contract DssVestTransferrable is DssVest {
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
-        gem  = TokenLike(_gem);
+        gem = TokenLike(_gem);
     }
 
     /**
@@ -575,7 +592,11 @@ contract DssVestTransferrable is DssVest {
         @param _amt The amount of gem to send to the _guy (in native token units)
     */
     function pay(address _guy, uint256 _amt) override internal {
-        require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
+        // if this contract is its own czar, call transfer directly 
+        if (czar == address(this))
+            require(gem.transfer(_guy, _amt), "DssVestTransferrable/failed-transfer"); 
+        else
+            require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
     }
 }
 

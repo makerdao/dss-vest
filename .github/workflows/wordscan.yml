@@ -14,13 +14,13 @@ jobs:
       - run: test "$(grep msg.sender src/DssVest.sol |wc -l)" -eq 0
       - run: test "$(grep msg.data src/DssVest.sol |wc -l)" -eq 0
       # gem may only be set once (in the mintable and transferrable contracts). Count the assignments.  
-      - run: test "$(grep 'gem\s*='  src/DssVest.sol |wc -l)" -eq 2
+      - run: test "$(grep 'gem\s*=[^=]'  src/DssVest.sol |wc -l)" -eq 2
       # czar may only be set once (in the transferrable contract). Count the assignments.
-      - run: test "$(grep 'czar\s*='  src/DssVest.sol |wc -l)" -eq 1
+      - run: test "$(grep 'czar\s*=[^=]'  src/DssVest.sol |wc -l)" -eq 1
       # chainlog, vat and daiJoin may only be set once (in the suckable contract). Count the assignments.
-      - run: test "$(grep 'chainlog\s*='  src/DssVest.sol |wc -l)" -eq 1
-      - run: test "$(grep 'vat\s*='  src/DssVest.sol |wc -l)" -eq 1
-      - run: test "$(grep 'daiJoin\s*='  src/DssVest.sol |wc -l)" -eq 1
+      - run: test "$(grep 'chainlog\s*=[^=]'  src/DssVest.sol |wc -l)" -eq 1
+      - run: test "$(grep 'vat\s*=[^=]'  src/DssVest.sol |wc -l)" -eq 1
+      - run: test "$(grep 'daiJoin\s*=[^=]'  src/DssVest.sol |wc -l)" -eq 1
       # clone factories must call initialize() on the new contract
       - run: test "$(grep '\.initialize('  src/DssVestMintableCloneFactory.sol |wc -l)" -eq 1
       - run: test "$(grep '\.initialize('  src/DssVestTransferrableCloneFactory.sol |wc -l)" -eq 1
