@@ -42,6 +42,7 @@ interface VatLike {
 
 interface TokenLike {
     function transferFrom(address, address, uint256) external returns (bool);
+    function transfer(address, uint256) external returns (bool);
 }
 
 abstract contract DssVest is ERC2771Context, Initializable {
@@ -568,7 +569,7 @@ contract DssVestTransferrable is DssVest {
         require(_czar != address(0), "DssVestTransferrable/Invalid-distributor-address");
         require(_gem  != address(0), "DssVestTransferrable/Invalid-token-address");
         czar = _czar;
-        gem  = TokenLike(_gem);
+        gem = TokenLike(_gem);
     }
 
     /**
@@ -577,7 +578,11 @@ contract DssVestTransferrable is DssVest {
         @param _amt The amount of gem to send to the _guy (in native token units)
     */
     function pay(address _guy, uint256 _amt) override internal {
-        require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
+        // if this contract is its own czar, call transfer directly 
+        if (czar == address(this))
+            require(gem.transfer(_guy, _amt), "DssVestTransferrable/failed-transfer"); 
+        else
+            require(gem.transferFrom(czar, _guy, _amt), "DssVestTransferrable/failed-transfer");
     }
 }
 

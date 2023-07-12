@@ -16,6 +16,9 @@ import "../src/DssVestMintableCloneFactory.sol";
 import "../src/DssVestTransferrableCloneFactory.sol";
 import "../src/DssVestSuckableCloneFactory.sol";
 
+import "./resources/ERC20MintableByAnyone.sol";
+import "./resources/TestHelper.sol";
+
 
 contract DssVestCloneDemo is Test {
     event NewClone(address clone);
@@ -47,6 +50,8 @@ contract DssVestCloneDemo is Test {
 
     address public constant platformFeeCollector =
         0x7109709eCfa91A80626Ff3989D68f67f5b1dD127;
+
+    TestHelper testHelpers = new TestHelper();
 
     DssVestMintableCloneFactory mintableFactory;
     DssVestTransferrableCloneFactory transferrableFactory;
@@ -176,6 +181,53 @@ contract DssVestCloneDemo is Test {
         vm.expectRevert("ERC1167: create2 failed");
         transferrableFactory.createTransferrableVestingClone(salt, czar, gem, ward);
         
+    }
+
+    function testTransferrableCloneAsCzarLocal(bytes32 salt, address ward, address usr, uint128 amount, uint48 bgn, uint48 tau, uint48 eta, address mgr ) public {
+        vm.assume(testHelpers.checkBounds(usr, amount, bgn, tau, eta, block.timestamp, address(forwarder)));
+        vm.assume(ward != address(0x0));
+        vm.assume(ward != address(forwarder));
+        vm.assume(amount > 0);
+
+        
+        ERC20MintableByAnyone gem = new ERC20MintableByAnyone("Test Token", "TST");        
+
+        // predict clone address
+        address expectedAddress = transferrableFactory.predictCloneAddress(salt);
+
+        // Deploy clone
+        DssVestTransferrable vest = DssVestTransferrable(
+            transferrableFactory.createTransferrableVestingClone(salt, expectedAddress, address(gem), ward));
+
+        // set cap
+        vm.prank(ward);
+        vest.file("cap", amount/tau);
+
+        console.log("factory address: ", address(mintableFactory));
+        console.log("clone address: ", address(vest));
+
+        assertTrue(address(vest.czar()) == address(vest), "czar not set correctly");
+
+        // mint amount to vest
+        gem.mint(address(vest), amount);
+
+        // create vesting plan
+        vm.prank(ward);
+        uint256 id = vest.create(usr, amount, bgn, tau, eta, mgr);
+
+        // fast forward time
+        vm.warp(bgn + tau);
+
+        // make sure usr has no tokens before vesting
+        assertEq(gem.balanceOf(usr), 0, "Balance of usr not 0");
+        assertEq(gem.balanceOf(address(vest)), amount, "Balance of vesting contract not amount");
+
+        vm.prank(usr);
+        vest.vest(id);
+
+        // check balance
+        assertEq(gem.balanceOf(usr), amount, "Balance of usr not amount"); 
+        assertEq(gem.balanceOf(address(vest)), 0, "Balance of vesting contract not 0");
     }
 
     /// @dev the suckable vesting contract needs on-chain infrastructure, thus it can not
@@ -462,5 +514,6 @@ contract DssVestCloneDemo is Test {
         mVest.vest(id);
         assertEq(localCompanyToken.balanceOf(employeeAddress), totalVestAmount * timeShift / vestDuration, "employee has received wrong token amount");
     }
+    
     
 }
