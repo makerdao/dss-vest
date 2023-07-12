@@ -64,11 +64,11 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     uint256 public ids; // Total vestings
 
-    mapping (bytes32 => bool) public commitments;
-
     uint256 internal locked;
 
     uint256 public constant  TWENTY_YEARS = 20 * 365 days;
+
+    mapping (bytes32 => bool) public commitments;
 
     // --- Events ---
     event Rely(address indexed usr);
