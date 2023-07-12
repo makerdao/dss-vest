@@ -192,7 +192,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     /** 
         @dev commit to the creation of an award without revealing the award's contents yet
-        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash function in createAward for details
+        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash in `claim` for details
     */
     function commit(bytes32 bch) external lock auth {
         commitments[bch] = true;
@@ -201,7 +201,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     /**
         @dev Create a vesting contract from an earlier commitment
-        @param _bch The hash of the award's contents, see hash function in createAward for details
+        @param _bch The hash of the award's contents
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
