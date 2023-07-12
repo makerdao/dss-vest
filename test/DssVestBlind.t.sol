@@ -116,7 +116,7 @@ contract DssVestLocal is Test {
 
     function testClaimAndVestLocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
         vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
-        vm.assume(someone != address(0) && someone != _usr);
+        vm.assume(someone != address(0) && someone != _usr && someone != address(forwarder));
         bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
 
         // commit
