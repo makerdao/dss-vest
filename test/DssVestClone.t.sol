@@ -186,6 +186,7 @@ contract DssVestCloneDemo is Test {
     function testTransferrableCloneAsCzarLocal(bytes32 salt, address ward, address usr, uint128 amount, uint48 bgn, uint48 tau, uint48 eta, address mgr ) public {
         vm.assume(testHelpers.checkBounds(usr, amount, bgn, tau, eta, block.timestamp, address(forwarder)));
         vm.assume(ward != address(0x0));
+        vm.assume(ward != address(forwarder));
         vm.assume(amount > 0);
 
         
@@ -211,6 +212,7 @@ contract DssVestCloneDemo is Test {
         gem.mint(address(vest), amount);
 
         // create vesting plan
+        vm.prank(ward);
         uint256 id = vest.create(usr, amount, bgn, tau, eta, mgr);
 
         // fast forward time
