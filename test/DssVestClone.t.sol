@@ -199,11 +199,7 @@ contract DssVestCloneDemo is Test {
 
         // Deploy clone
         DssVestTransferrable vest = DssVestTransferrable(
-            transferrableFactory.createTransferrableVestingClone(salt, expectedAddress, address(gem), ward));
-
-        // set cap
-        vm.prank(ward);
-        vest.file("cap", amount/tau);
+            transferrableFactory.createTransferrableVestingClone(salt, expectedAddress, address(gem), ward, amount/tau));
 
         console.log("factory address: ", address(mintableFactory));
         console.log("clone address: ", address(vest));
