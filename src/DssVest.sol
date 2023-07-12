@@ -64,11 +64,11 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     uint256 public ids; // Total vestings
 
-    mapping (bytes32 => bool) public commitments;
-
     uint256 internal locked;
 
     uint256 public constant  TWENTY_YEARS = 20 * 365 days;
+
+    mapping (bytes32 => bool) public commitments;
 
     // --- Events ---
     event Rely(address indexed usr);
@@ -192,7 +192,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     /** 
         @dev commit to the creation of an award without revealing the award's contents yet
-        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash function in createAward for details
+        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash in `claim` for details
     */
     function commit(bytes32 bch) external lock auth {
         commitments[bch] = true;
@@ -201,7 +201,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     /**
         @dev Create a vesting contract from an earlier commitment
-        @param _bch The hash of the award's contents, see hash function in createAward for details
+        @param _bch The hash of the award's contents
         @param _usr The recipient of the reward
         @param _tot The total amount of the vest
         @param _bgn The starting timestamp of the vest
@@ -229,7 +229,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @param _mgr An optional manager for the contract. Can yank if vesting ends prematurely.
         @return id  The id of the vesting contract
     */
-    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock returns (uint256 id) {
+    function create(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr) external lock auth returns (uint256 id) {
         return _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
     }
 

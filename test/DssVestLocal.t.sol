@@ -39,4 +39,12 @@ contract DssVestLocal is Test {
         vest.deny(ward);
         assertEq(vest.wards(ward), 0, "deny failed");
     }
+
+    function testRequireAuthForCreateLocal(address noWard) public {
+        DssVestMintable vest = new DssVestMintable(address(forwarder), address(1));
+        vm.assume(vest.wards(noWard) == 0);
+        vm.expectRevert("DssVest/not-authorized");
+        vm.prank(noWard);
+        vest.create(address(2), 1, 1, 1, 1, address(0));
+    }
 }
