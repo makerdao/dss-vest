@@ -143,12 +143,19 @@ contract DssVestLocal is Test {
 
         // ensure state changed as expected during claim
         assertEq(id, 1, "id is not 1");
-        assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
         assertEq(vest.unpaid(id), 0, "unpaid is not 0");
         assertEq(vest.commitments(hash), false, "commitment not deleted");
-        checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, vest.accrued(id));
-
-
+        // before or after cliff is important
+        if (block.timestamp > _bgn + _eta) {
+            console.log("After cliff");
+            assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, vest.accrued(id));
+        } else {
+                        console.log("Before cliff");
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, 0);
+            assertEq(0, gem.balanceOf(_usr), "payout before cliff");
+        }        
+        
         // claiming again must fail
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(_usr);
