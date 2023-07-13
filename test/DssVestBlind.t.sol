@@ -200,7 +200,7 @@ contract DssVestLocal is Test {
         (,,,,,, uintVal, ) = vest.awards(_id);
         assertEq(uintVal, _tot, "tot is not equal");
         (,,,,,,, uintVal) = vest.awards(_id);
-        assertEq(uintVal, _rxd, "rxd is not 0");
+        assertEq(uintVal, _rxd, "rxd is wrong");
     }
 
 }
