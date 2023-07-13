@@ -18,9 +18,9 @@ contract DssVestMintableCloneFactory is DssVestCloneFactory {
      * @param ward The address that will be the first ward of the contract
      * @return The address of the newly created clone
      */
-    function createMintableVestingClone(bytes32 salt, address gem, address ward) external returns (address) {
+    function createMintableVestingClone(bytes32 salt, address gem, address ward, uint256 cap) external returns (address) {
         address clone = Clones.cloneDeterministic(implementation, salt);
-        DssVestMintable(clone).initialize(gem, ward);
+        DssVestMintable(clone).initialize(gem, ward, cap);
         emit NewClone(clone);
         return clone;
     }

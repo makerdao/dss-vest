@@ -55,8 +55,7 @@ contract DssVestTransferrableEchidnaTest {
         gem = new Dai(1);
         multisig = new Multisig();
         gem.mint(address(multisig), type(uint128).max);
-        tVest = new DssVestTransferrable(address(0x1), address(multisig), address(gem));
-        tVest.file("cap", MIN * WAD / TIME);
+        tVest = new DssVestTransferrable(address(0x1), address(multisig), address(gem), MIN * WAD / TIME);
         multisig.approve(address(gem), address(tVest));
         salt = block.timestamp;
         hevm = Hevm(address(CHEAT_CODE));

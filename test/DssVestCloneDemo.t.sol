@@ -53,7 +53,7 @@ contract DssVestDemo is Test {
 
         // create logic contract that will be cloned. 
         // Forwarder must be correct, but token address can be any address (not 0), as it will be replaced during cloning
-        DssVestMintable logic = new DssVestMintable(address(forwarder), address(1));
+        DssVestMintable logic = new DssVestMintable(address(forwarder), address(1), 0);
 
         // deploy factory contract
         DssVestMintableCloneFactory cloneFactory = new DssVestMintableCloneFactory(address(logic));
@@ -97,12 +97,12 @@ contract DssVestDemo is Test {
         companyToken.increaseMintingAllowance(address(cloneAddress), totalVestAmount);
 
         // deploy vesting contract with any wallet, setting forwarder, token and admin
-        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(salt, address(companyToken), companyAdminAddress));
+        mVest = DssVestMintable(cloneFactory.createMintableVestingClone(salt, address(companyToken), companyAdminAddress, (totalVestAmount / vestDuration)));
 
-        // configure vesting contract
+        // grant minting allowance
         vm.prank(companyAdminAddress);
-        mVest.file("cap", (totalVestAmount / vestDuration) ); 
-
+        companyToken.increaseMintingAllowance(address(mVest), totalVestAmount);
+        
         // register domain separator with forwarder. Since the forwarder does not check the domain separator, we can use any string as domain name.
         vm.recordLogs();
         forwarder.registerDomainSeparator(string(abi.encodePacked(address(mVest))), "v1.0"); // simply uses address string as name

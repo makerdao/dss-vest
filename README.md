@@ -122,25 +122,33 @@ Allows governance to schedule a point in the future to end the vest. Used for pl
 
 ### Install Echidna
 
-- Install Echidna v2.0.0
+- Install Echidna v2.2.0
   ```
-  $ nix-env -i -f https://github.com/crytic/echidna/archive/v2.0.0.tar.gz
+  $ nix-env -i -f https://github.com/crytic/echidna/archive/v2.2.0.tar.gz
   ```
-- Install Echidna v2.0.0 via [echidnup](https://github.com/naszam/echidnup#installing)
+- Install Echidna v2.2.0 via [echidnup](https://github.com/naszam/echidnup#installing)
   ```
-  $ echidnup v2.0.0
+  $ echidnup v2.2.0
   ```
 
 ### Local Dependencies
+#### solc
 
 - Install solc 0.8.17
   ```
-  $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_6_12
+  $ nix-env -f https://github.com/dapphub/dapptools/archive/master.tar.gz -iA solc-static-versions.solc_0_8_17
   ```
 - Install solc 0.8.17 via [duppsolc](https://github.com/naszam/duppsolc#installing)
   ```
   $ duppsolc 0.8.17
   ```
+
+#### slither
+Echidna needs slither-analyzer to run. Install it with:
+```
+pip3 install slither-analyzer --user
+```
+
 
 ### Run Echidna Tests
 

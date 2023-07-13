@@ -32,8 +32,7 @@ contract DssVestLocal is Test {
     function setUp() public {
         vm.warp(60 * 365 days); // in local testing, the time would start at 1. This causes problems with the vesting contract. So we warp to 60 years.
         vm.startPrank(ward);
-        vest = new DssVestMintable(address(forwarder), address(gem));
-        vest.file("cap", type(uint256).max);
+        vest = new DssVestMintable(address(forwarder), address(gem), type(uint256).max);
         vm.stopPrank();
     }
 
@@ -117,7 +116,7 @@ contract DssVestLocal is Test {
 
     function testClaimAndVestLocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
         vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
-        vm.assume(someone != address(0) && someone != _usr);
+        vm.assume(someone != address(0) && someone != _usr && someone != address(forwarder));
         bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
 
         // commit
@@ -144,12 +143,19 @@ contract DssVestLocal is Test {
 
         // ensure state changed as expected during claim
         assertEq(id, 1, "id is not 1");
-        assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
         assertEq(vest.unpaid(id), 0, "unpaid is not 0");
         assertEq(vest.commitments(hash), false, "commitment not deleted");
-        checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, vest.accrued(id));
-
-
+        // before or after cliff is important
+        if (block.timestamp > _bgn + _eta) {
+            console.log("After cliff");
+            assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, vest.accrued(id));
+        } else {
+                        console.log("Before cliff");
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, 0);
+            assertEq(0, gem.balanceOf(_usr), "payout before cliff");
+        }        
+        
         // claiming again must fail
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(_usr);
@@ -194,7 +200,7 @@ contract DssVestLocal is Test {
         (,,,,,, uintVal, ) = vest.awards(_id);
         assertEq(uintVal, _tot, "tot is not equal");
         (,,,,,,, uintVal) = vest.awards(_id);
-        assertEq(uintVal, _rxd, "rxd is not 0");
+        assertEq(uintVal, _rxd, "rxd is wrong");
     }
 
 }

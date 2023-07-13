@@ -18,9 +18,9 @@ contract DssVestSuckableCloneFactory is DssVestCloneFactory {
      * @param ward The address that will be the first ward of the contract
      * @return The address of the newly created clone
      */
-    function createSuckableVestingClone(bytes32 salt, address chainlog, address ward) external returns (address) {
+    function createSuckableVestingClone(bytes32 salt, address chainlog, address ward, uint256 cap) external returns (address) {
         address clone = Clones.cloneDeterministic(implementation, salt);
-        DssVestSuckable(clone).initialize(chainlog, ward);
+        DssVestSuckable(clone).initialize(chainlog, ward, cap);
         emit NewClone(clone);
         return clone;
     }

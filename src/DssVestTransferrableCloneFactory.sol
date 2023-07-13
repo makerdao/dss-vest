@@ -19,9 +19,9 @@ contract DssVestTransferrableCloneFactory is DssVestCloneFactory {
         @param ward The address that will be the first ward of the contract
         @return The address of the newly created clone
      */
-    function createTransferrableVestingClone(bytes32 salt, address czar, address gem, address ward) external returns (address) {
+    function createTransferrableVestingClone(bytes32 salt, address czar, address gem, address ward, uint256 cap) external returns (address) {
         address clone = Clones.cloneDeterministic(implementation, salt);
-        DssVestTransferrable(clone).initialize(czar, gem, ward);
+        DssVestTransferrable(clone).initialize(czar, gem, ward, cap);
         emit NewClone(clone);
         return clone;
     }
