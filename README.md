@@ -229,5 +229,5 @@ Follow these steps to publish a new version of the package to NPM:
    ```
 - publish (add `--dry-run` to test)
   ```
-  ETH_RPC_URL=$ETH_RPC npm publish [--tag <alpha/beta>] --dry-run
+  ETH_RPC_URL=$ETH_RPC_URL npm publish [--tag <alpha/beta>] --dry-run
   ```
