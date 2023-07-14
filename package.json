@@ -51,10 +51,11 @@
       "certora/",
       "echidna/",
       "lib/"
-    ]
+    ],
+    "access": "public"
   },
   "scripts": {
-    "prepack": "yarn npmignore --auto && yarn test && yarn build ",
+    "prepack": "yarn npmignore --auto && yarn test:local && yarn build ",
     "build": "yarn hardhat compile && yarn tsc --declaration",
     "test": "forge test --fork-url $ETH_RPC_URL",
     "test:local": "forge test --match-test Local"

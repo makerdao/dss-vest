@@ -432,6 +432,9 @@ contract DssVestCloneDemo is Test {
 
     function testNoWrongWardsLocal(bytes32 salt, address localCompanyAdmin, uint256 newCap) public {
         vm.assume(localCompanyAdmin != address(this));
+        vm.assume(localCompanyAdmin != address(forwarder));
+        vm.assume(localCompanyAdmin != address(0x0));
+        vm.assume(localCompanyAdmin != platformAdminAddress);
 
         vm.startPrank(platformAdminAddress);
         Token localCompanyToken = new Token(
