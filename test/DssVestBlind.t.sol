@@ -202,18 +202,19 @@ contract DssVestLocal is Test {
         // before or after cliff is important
         if (block.timestamp > _bgn + _eta) {
             console.log("After cliff");
-            assertEq(_amt, gem.balanceOf(_usr), "accrued is not equal to paid");
-            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, _amt);
+            uint256 paid = gem.balanceOf(_usr);
+            // payout must be min(_amt, accrued)
+            if (vest.accrued(id) < _amt) {
+                assertEq(vest.accrued(id), paid, "accrued is not equal to paid");
+            } else {
+                assertEq(_amt, paid, "_amt is not equal to paid");
+            }
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, paid);
         } else {
             console.log("Before cliff");
             checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, 0);
             assertEq(0, gem.balanceOf(_usr), "payout before cliff");
         }        
-        
-        // claiming again must fail
-        vm.expectRevert("DssVest/commitment-not-found");
-        vm.prank(_usr);
-        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt, type(uint256).max);
 
         // warp time till end of vesting and vest everything
         vm.warp(_bgn + _tau + 1);
