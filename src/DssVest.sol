@@ -235,27 +235,20 @@ abstract contract DssVest is ERC2771Context, Initializable {
     function claim(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) public lock returns (uint256 id) {
         require(_bch == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
         require(commitments[_bch], "DssVest/commitment-not-found");
-        if (revocations[_bch] == 0) {
-            // commitment has not been revoked and can be claimed with original values
-            commitments[_bch] = false;
-            id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
-            emit Claim(_bch, id);
+        uint48 revocationTime = toUint48(revocations[_bch]);
+        if ( revocationTime < _bgn + _eta  ) {
+            // commitment has been revoked before the cliff: vesting plan is cancelled
+            require(revocationTime == 0, "DssVest/commitment-revoked-before-cliff");
         } else {
-            uint48 revocationTime = toUint48(revocations[_bch]);
-            if (_bgn + _eta < revocationTime) {
-                // commitment has been revoked after the cliff: vesting plan values have to be updated
-                // goal: behave as if the vesting plan was created when committed, and yanked when revoked
-                _tot = mul(_tot, sub(revocationTime, _bgn)) / _tau; // newTot as amount accrued if yanked at revocationTime
-                _tau = sub(revocationTime, _bgn); // new duration as time between bgn and revocationTime
-                commitments[_bch] = false;
-                id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
-                emit Claim(_bch, id);
-            }
-            else {
-                // commitment has been revoked before the cliff: vesting plan is cancelled
-                revert("DssVest/commitment-revoked-before-cliff");
-            }
+            // commitment has been revoked after the cliff: vesting plan values have to be updated
+            // goal: behave as if the vesting plan was created when committed, and yanked when revoked
+            _tot = mul(_tot, sub(revocationTime, _bgn)) / _tau; // newTot as amount accrued if yanked at revocationTime
+            _tau = sub(revocationTime, _bgn); // new duration as time between bgn and revocationTime
         }
+        // commitment can claimed now. If values needed to be updated, they have been updated above.
+        commitments[_bch] = false;
+        id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
+        emit Claim(_bch, id);
     }
 
     /**
