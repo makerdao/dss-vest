@@ -135,11 +135,11 @@ contract DssVestLocal is Test {
         // 3rd parties can not claim and vest because vests are restricted by default
         vm.prank(someone);
         vm.expectRevert("DssVest/only-user-can-claim");
-        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt, type(uint256).max);
         
         // claim
         vm.prank(_usr);
-        uint256 id = vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        uint256 id = vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt, type(uint256).max);
 
         // ensure state changed as expected during claim
         assertEq(id, 1, "id is not 1");
@@ -151,7 +151,7 @@ contract DssVestLocal is Test {
             assertEq(vest.accrued(id), gem.balanceOf(_usr), "accrued is not equal to paid");
             checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, vest.accrued(id));
         } else {
-                        console.log("Before cliff");
+            console.log("Before cliff");
             checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, 0);
             assertEq(0, gem.balanceOf(_usr), "payout before cliff");
         }        
@@ -159,7 +159,61 @@ contract DssVestLocal is Test {
         // claiming again must fail
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(_usr);
-        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt, type(uint256).max);
+
+        // warp time till end of vesting and vest everything
+        vm.warp(_bgn + _tau + 1);
+        vm.prank(_usr);
+        vest.vest(id);
+        assertEq(vest.unpaid(id), 0, "unpaid is not 0");
+        assertEq(vest.accrued(id), _tot, "accrued is not equal to total");
+        assertEq(gem.balanceOf(_usr), _tot, "balance is not equal to total");
+    }
+
+    function testClaimAndVestSomeLocal(address _usr, uint128 _tot, uint48 _bgn, address _mgr, bytes32 _slt, uint256 _amt) public {
+        uint48 _tau = 600 days;
+        uint48 _eta = 200 days;
+        vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
+        vm.assume(_usr != address(0) && _usr != address(forwarder));
+        vm.assume(_amt <= _tot && _amt > 0);
+
+        bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
+
+        // commit
+        assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Commit(hash);
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+
+        // ensure state is as expected before claiming
+        assertTrue(gem.balanceOf(_usr) == 0, "balance is not 0");
+        assertTrue(vest.ids() == 0, "id is not 0");
+        assertEq(vest.commitments(hash), true, "commitment does not exist");
+        
+        // claim
+        vm.prank(_usr);
+        uint256 id = vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt, _amt);
+
+        // ensure state changed as expected during claim
+        assertEq(id, 1, "id is not 1");
+        assertEq(vest.commitments(hash), false, "commitment not deleted");
+        // before or after cliff is important
+        if (block.timestamp > _bgn + _eta) {
+            console.log("After cliff");
+            assertEq(_amt, gem.balanceOf(_usr), "accrued is not equal to paid");
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, _amt);
+        } else {
+            console.log("Before cliff");
+            checkVestingPlanDetails(id, _usr, _tot, _bgn, _tau, _eta, _mgr, 0);
+            assertEq(0, gem.balanceOf(_usr), "payout before cliff");
+        }        
+        
+        // claiming again must fail
+        vm.expectRevert("DssVest/commitment-not-found");
+        vm.prank(_usr);
+        vest.claimAndVest(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt, type(uint256).max);
 
         // warp time till end of vesting and vest everything
         vm.warp(_bgn + _tau + 1);
