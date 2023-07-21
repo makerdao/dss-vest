@@ -53,6 +53,29 @@ contract DssVestLocal is Test {
         vest.commit(hash);
     }
 
+    function testRevokeLocal(bytes32 hash) public {
+        vm.assume(hash != bytes32(0));
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+        vm.prank(ward);
+        vest.revoke(hash);
+        assertTrue(vest.revocations(hash) == block.timestamp, "revocation not correct");
+    }
+
+    function testRevokeNoWardLocal(address noWard, bytes32 hash) public {
+        vm.assume(noWard != address(0));
+        vm.assume(vest.wards(noWard) == 0);
+        vm.assume(hash != bytes32(0));
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+        vm.prank(noWard);
+        vm.expectRevert("DssVest/not-authorized");
+        vest.revoke(hash);
+        assertEq(vest.revocations(hash), 0, "revocation not correct");
+    }
+
     function testClaimLocal(address _usr, uint128 _tot, uint48 _bgn, uint48 _tau, uint48 _eta, address _mgr, bytes32 _slt, address someone) public {
         vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
         vm.assume(someone != address(0));
@@ -83,6 +106,56 @@ contract DssVestLocal is Test {
         vm.expectRevert("DssVest/commitment-not-found");
         vm.prank(someone);
         vest.claim(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+    }
+
+    function testClaimAfterRevokeLocal() public {
+        address _usr = address(1);
+        uint128 commitmentTot = 100;
+        uint128 realTot = 75;
+        uint48 _bgn = 40 * 365 days;
+        uint48 _tau = 2 * 365 days;
+        uint48 _eta = 1 * 365 days; 
+        address _mgr = address(0); 
+        bytes32 _slt = 0;
+
+        vm.warp(_bgn - 1 days);
+        vm.assume(checkBounds(_usr, commitmentTot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
+        bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(commitmentTot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
+
+        // commit
+        assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Commit(hash);
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+
+        // warp to 1.5 years into the vesting period and revoke
+        vm.warp(_bgn + _eta + _tau / 4);
+        vm.prank(ward);
+        vest.revoke(hash);
+        assertTrue(vest.revocations(hash) == block.timestamp, "revocation not correct");
+        
+        // warp till end of vesting and claim
+        vm.warp(_bgn + _eta + _tau + 1);
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Claim(hash, 1);
+        uint256 id = vest.claim(hash, _usr, commitmentTot, _bgn, _tau, _eta, _mgr, _slt);
+        assertEq(id, 1, "id is not 0");
+
+        checkVestingPlanDetails(id, _usr, realTot, _bgn, 1.5 * 365 days, _eta, _mgr, 0);
+
+        // make sure the commitment is deleted
+        assertTrue(vest.commitments(hash) == false, "commitment still exists");
+
+        // make sure a second creation fails
+        vm.expectRevert("DssVest/commitment-not-found");
+        vest.claim(hash, _usr, commitmentTot, _bgn, _tau, _eta, _mgr, _slt);
+
+        // vest everything
+        vm.prank(_usr);
+        vest.vest(id);
+        assertEq(realTot, gem.balanceOf(_usr), "balance is not equal to total");
     }
 
     function testClaimWithModifiedDataLocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {

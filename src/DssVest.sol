@@ -79,6 +79,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
     event File(bytes32 indexed what, uint256 data);
 
     event Commit(bytes32 indexed hash);
+    event Revoke(bytes32 indexed hash);
     event Claim(bytes32 indexed hash, uint256 indexed id);
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
@@ -216,7 +217,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
     */
     function revoke(bytes32 bch) external lock auth {
         revocations[bch] = block.timestamp;
-        emit Commit(bch);
+        emit Revoke(bch);
     }
 
     /**
@@ -247,7 +248,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
                 _tot = mul(_tot, sub(revocationTime, _bgn)) / _tau; // newTot as amount accrued if yanked at revocationTime
                 _tau = sub(revocationTime, _bgn); // new duration as time between bgn and revocationTime
                 commitments[_bch] = false;
-                id = _create(_usr, _tot, revocations[_bch], _tau, _eta, _mgr);
+                id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
                 emit Claim(_bch, id);
             }
             else {
