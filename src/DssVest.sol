@@ -79,7 +79,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
     event File(bytes32 indexed what, uint256 data);
 
     event Commit(bytes32 indexed hash);
-    event Revoke(bytes32 indexed hash);
+    event Revoke(bytes32 indexed hash, uint256 end);
     event Claim(bytes32 indexed hash, uint256 indexed id);
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
@@ -214,10 +214,13 @@ abstract contract DssVest is ERC2771Context, Initializable {
         @dev Store the timestamp of a commitment revocation. This can be used to prevent a commitment from being claimed if the cliff has not been reached yet.
         @notice This function can be called again and will update the timestamp, which could be used to grant more tokens.
         @param bch  Blind Commitment Hash - The hash of the award's contents, see hash in `claim` for details
+        @param end  When to terminate the vesting contract that can be created from the commitment. Any time in the past will be capped to the current timestamp.
     */
-    function revoke(bytes32 bch) external lock auth {
-        revocations[bch] = block.timestamp;
-        emit Revoke(bch);
+    function revoke(bytes32 bch, uint256 end) external lock auth {
+        require(commitments[bch], "DssVest/commitment-not-found");
+        end = block.timestamp > end ? block.timestamp : end; // can not revoke in the past
+        revocations[bch] = end;
+        emit Revoke(bch, end);
     }
 
     /**

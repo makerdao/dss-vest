@@ -20,6 +20,7 @@ contract ERC20MintableByAnyone is ERC20 {
 
 contract DssVestLocal is Test {
     event Commit(bytes32 indexed hash);
+    event Revoke(bytes32 indexed hash, uint256 end);
     event Claim(bytes32 indexed hash, uint256 indexed id);
 
     // init forwarder
@@ -27,6 +28,7 @@ contract DssVestLocal is Test {
     ERC20 gem = new ERC20MintableByAnyone("Gem", "GEM");
     DssVestMintable vest;
     address ward = address(1);
+    address usr = address(2);
 
 
     function setUp() public {
@@ -53,14 +55,25 @@ contract DssVestLocal is Test {
         vest.commit(hash);
     }
 
-    function testRevokeLocal(bytes32 hash) public {
+    function testRevokeNowLocal(bytes32 hash) public {
         vm.assume(hash != bytes32(0));
         vm.prank(ward);
         vest.commit(hash);
         assertTrue(vest.commitments(hash) == true, "commitment does not exist");
         vm.prank(ward);
-        vest.revoke(hash);
+        vest.revoke(hash, 0);
         assertTrue(vest.revocations(hash) == block.timestamp, "revocation not correct");
+    }
+
+    function testRevokeLaterLocal(bytes32 hash, uint48 end) public {
+        vm.assume(hash != bytes32(0));
+        vm.assume(end > block.timestamp);
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+        vm.prank(ward);
+        vest.revoke(hash, end);
+        assertTrue(vest.revocations(hash) == end, "revocation not correct");
     }
 
     function testRevokeNoWardLocal(address noWard, bytes32 hash) public {
@@ -72,7 +85,7 @@ contract DssVestLocal is Test {
         assertTrue(vest.commitments(hash) == true, "commitment does not exist");
         vm.prank(noWard);
         vm.expectRevert("DssVest/not-authorized");
-        vest.revoke(hash);
+        vest.revoke(hash, block.timestamp);
         assertEq(vest.revocations(hash), 0, "revocation not correct");
     }
 
@@ -133,7 +146,7 @@ contract DssVestLocal is Test {
         // warp to 1.5 years into the vesting period and revoke
         vm.warp(_bgn + _eta + _tau / 4);
         vm.prank(ward);
-        vest.revoke(hash);
+        vest.revoke(hash, block.timestamp);
         assertTrue(vest.revocations(hash) == block.timestamp, "revocation not correct");
         
         // warp till end of vesting and claim
@@ -156,6 +169,97 @@ contract DssVestLocal is Test {
         vm.prank(_usr);
         vest.vest(id);
         assertEq(realTot, gem.balanceOf(_usr), "balance is not equal to total");
+    }
+
+    function testRevokeBeforeCliffLocal(address _usr, uint128 _tot, uint48 _bgn, uint24 _tau24, uint24 _eta24, address _mgr, bytes32 _slt, uint24 revokeAfter24) public {
+        uint48 _tau = _tau24;
+        uint48 _eta = _eta24;
+        uint48 revokeAfter = revokeAfter24;
+        vm.assume(revokeAfter < _eta);
+        vm.assume(checkBounds(_usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
+        bytes32 hash = keccak256(abi.encodePacked(_usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), _mgr, _slt));
+
+        // commit
+        assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Commit(hash);
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+
+        // revoke
+        uint256 end = _bgn + revokeAfter;
+        vm.warp(end);
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Revoke(hash, end);
+        vm.prank(ward);
+        vest.revoke(hash, end);
+
+        // claim
+        vm.expectRevert("DssVest/commitment-revoked-before-cliff");
+        vest.claim(hash, _usr, _tot, _bgn, _tau, _eta, _mgr, _slt);
+
+        // make sure nothing changed
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+        assertTrue(vest.revocations(hash) == end, "revocation not correct");
+        assertTrue(vest.ids() == 0, "a vesting plan has been created");
+    }
+
+    function testRevokeBeforeEndLocal( uint48 _tau, uint48 _eta,  uint48 revokeAfter) public {
+        uint128 _tot = 8127847e18;
+        uint48 _bgn = 60 * 365 days;
+        bytes32 _slt = 0;
+
+        vm.assume(revokeAfter < type(uint24).max && revokeAfter > 0);
+        vm.assume(_eta < type(uint24).max);
+        vm.assume(_tau < type(uint24).max && _tau > 0);
+        vm.assume(_tau > revokeAfter);
+        vm.assume(_eta < revokeAfter);
+        vm.assume(_tot > 0);
+        vm.assume(type(uint256).max / _tot > revokeAfter); // prevent overflow
+        vm.assume(checkBounds(usr, _tot, _bgn, _tau, _eta, DssVest(vest), block.timestamp));
+        bytes32 hash = keccak256(abi.encodePacked(usr, uint256(_tot), uint256(_bgn), uint256(_tau), uint256(_eta), ward, _slt));
+
+        // commit
+        assertTrue(vest.commitments(hash) == false, "commitment already exists");
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Commit(hash);
+        vm.prank(ward);
+        vest.commit(hash);
+        assertTrue(vest.commitments(hash) == true, "commitment does not exist");
+
+        // revoke
+        vm.warp(_bgn);
+        uint256 end = _bgn + revokeAfter;
+        vm.prank(ward);
+        vm.expectEmit(true, true, true, true, address(vest));
+        emit Revoke(hash, end);
+        vest.revoke(hash, end);
+
+        // claim
+        vm.warp(uint256(_bgn) + uint256(_tau) + 1);
+
+        uint256 newTot = _tot * uint256(revokeAfter) / uint256(_tau);
+        if (newTot == 0) {
+            console.log("newTot is 0");
+            vm.prank(usr);
+            vm.expectRevert("DssVest/no-vest-total-amount");
+            vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt);
+            // assure no vesting plan has been created
+            assertTrue(vest.ids() == 0, "a vesting plan has been created");
+        }
+        else {
+            console.log("newTot is not 0");
+            vm.prank(usr);
+            vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt);
+            // check correct execution
+            assertTrue(vest.commitments(hash) == false, "commitment still exists");
+            assertTrue(vest.revocations(hash) == _bgn + revokeAfter, "revocation not correct");
+            assertTrue(vest.ids() == 1, "no vesting plan has been created");
+            assertTrue(vest.accrued(1) == newTot, "accrued is not 0");
+            assertTrue(vest.unpaid(1) == 0, "unpaid is not 0");
+        }
+
     }
 
     function testClaimWithModifiedDataLocal(address _usr, address _usr2, uint128 _tot, uint128 _tot2, bytes32 _slt) public {
