@@ -242,8 +242,8 @@ abstract contract DssVest is ERC2771Context, Initializable {
         if ( revocationTime < _bgn + _eta  ) {
             // commitment has been revoked before the cliff: vesting plan is cancelled
             require(revocationTime == 0, "DssVest/commitment-revoked-before-cliff");
-        } else {
-            // commitment has been revoked after the cliff: vesting plan values have to be updated
+        } else if ( revocationTime < _bgn + _tau ) {
+            // commitment has been revoked after the cliff, but before the end: vesting plan values have to be updated
             // goal: behave as if the vesting plan was created when committed, and yanked when revoked
             _tot = mul(_tot, sub(revocationTime, _bgn)) / _tau; // newTot as amount accrued if yanked at revocationTime
             _tau = sub(revocationTime, _bgn); // new duration as time between bgn and revocationTime
