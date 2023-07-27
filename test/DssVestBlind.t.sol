@@ -244,14 +244,14 @@ contract DssVestLocal is Test {
             console.log("newTot is 0");
             vm.prank(usr);
             vm.expectRevert("DssVest/no-vest-total-amount");
-            vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt);
+            vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt, type(uint256).max);
             // assure no vesting plan has been created
             assertTrue(vest.ids() == 0, "a vesting plan has been created");
         }
         else {
             console.log("newTot is not 0");
             vm.prank(usr);
-            vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt);
+            vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt, type(uint256).max);
             // check correct execution
             assertTrue(vest.commitments(hash) == false, "commitment still exists");
             assertTrue(vest.revocations(hash) == _bgn + revokeAfter, "revocation not correct");
@@ -297,7 +297,7 @@ contract DssVestLocal is Test {
         vm.warp(uint256(_bgn) + uint256(_tau) + 1);
 
         vm.prank(usr);
-        vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt);
+        vest.claimAndVest(hash, usr, _tot, _bgn, _tau, _eta, ward, _slt, type(uint256).max);
         // check correct execution
         assertTrue(vest.commitments(hash) == false, "commitment still exists");
         assertTrue(vest.revocations(hash) == _bgn + revokeAfter, "revocation not correct");
