@@ -69,7 +69,8 @@ abstract contract DssVest is ERC2771Context, Initializable {
 
     uint256 public constant  TWENTY_YEARS = 20 * 365 days;
 
-    mapping (bytes32 => bool) public commitments;
+    mapping (bytes32 => bool) public commitments; // hashes that can be used to create vesting plans
+    mapping (bytes32 => uint256) public revocations; // revocations of commitments with revocation timestamp
 
     // --- Events ---
     event Rely(address indexed usr);
@@ -78,6 +79,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
     event File(bytes32 indexed what, uint256 data);
 
     event Commit(bytes32 indexed hash);
+    event Revoke(bytes32 indexed hash, uint256 end);
     event Claim(bytes32 indexed hash, uint256 indexed id);
     event Init(uint256 indexed id, address indexed usr);
     event Vest(uint256 indexed id, uint256 amt);
@@ -208,6 +210,19 @@ abstract contract DssVest is ERC2771Context, Initializable {
         emit Commit(bch);
     }
 
+    /** 
+        @dev Store the timestamp of a commitment revocation. This can be used to prevent a commitment from being claimed if the cliff has not been reached yet.
+        @notice This function can be called again and will update the timestamp, which could be used to grant more tokens.
+        @param bch  Blind Commitment Hash - The hash of the award's contents, see hash in `claim` for details
+        @param end  When to terminate the vesting contract that can be created from the commitment. Any time in the past will be capped to the current timestamp.
+    */
+    function revoke(bytes32 bch, uint256 end) external lock auth {
+        require(commitments[bch], "DssVest/commitment-not-found");
+        end = block.timestamp > end ? block.timestamp : end; // can not revoke in the past
+        revocations[bch] = end;
+        emit Revoke(bch, end);
+    }
+
     /**
         @dev Create a vesting contract from an earlier commitment
         @param _bch The hash of the award's contents
@@ -223,6 +238,17 @@ abstract contract DssVest is ERC2771Context, Initializable {
     function claim(bytes32 _bch, address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint256 _eta, address _mgr, bytes32 _slt) public lock returns (uint256 id) {
         require(_bch == keccak256(abi.encodePacked(_usr, _tot, _bgn, _tau, _eta, _mgr, _slt)), "DssVest/invalid-hash");
         require(commitments[_bch], "DssVest/commitment-not-found");
+        uint48 revocationTime = toUint48(revocations[_bch]);
+        if ( revocationTime < _bgn + _eta  ) {
+            // commitment has been revoked before the cliff: vesting plan is cancelled
+            require(revocationTime == 0, "DssVest/commitment-revoked-before-cliff");
+        } else if ( revocationTime < _bgn + _tau ) {
+            // commitment has been revoked after the cliff, but before the end: vesting plan values have to be updated
+            // goal: behave as if the vesting plan was created when committed, and yanked when revoked
+            _tot = mul(_tot, sub(revocationTime, _bgn)) / _tau; // newTot as amount accrued if yanked at revocationTime
+            _tau = sub(revocationTime, _bgn); // new duration as time between bgn and revocationTime
+        }
+        // commitment can claimed now. If values needed to be updated, they have been updated above.
         commitments[_bch] = false;
         id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
         emit Claim(_bch, id);
