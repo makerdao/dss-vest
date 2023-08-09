@@ -252,7 +252,7 @@ abstract contract DssVest is ERC2771Context, Initializable {
             // new duration as time between bgn and revocationTime
             _tau = sub(revocationTime, _bgn); 
         }
-        // commitment can claimed now. If values needed to be updated, they have been updated above.
+        // commitment can be claimed now. If values needed to be updated, they have been updated above.
         commitments[_bch] = false;
         id = _create(_usr, _tot, _bgn, _tau, _eta, _mgr);
         emit Claim(_bch, id);
