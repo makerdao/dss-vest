@@ -245,8 +245,12 @@ abstract contract DssVest is ERC2771Context, Initializable {
         } else if ( revocationTime < _bgn + _tau ) {
             // commitment has been revoked after the cliff, but before the end: vesting plan values have to be updated
             // goal: behave as if the vesting plan was created when committed, and yanked when revoked
-            _tot = mul(_tot, sub(revocationTime, _bgn)) / _tau; // newTot as amount accrued if yanked at revocationTime
-            _tau = sub(revocationTime, _bgn); // new duration as time between bgn and revocationTime
+ 
+            // newTot as amount accrued if yanked at revocationTime
+            _tot = accrued(revocationTime, uint48(_bgn), uint48(_bgn + _tau), uint128(_tot));
+
+            // new duration as time between bgn and revocationTime
+            _tau = sub(revocationTime, _bgn); 
         }
         // commitment can claimed now. If values needed to be updated, they have been updated above.
         commitments[_bch] = false;
