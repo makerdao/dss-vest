@@ -101,6 +101,7 @@ contract DssVestTest is DSTest {
     EndLike                    end;
 
     address                    VOW;
+    address               DAI_JOIN;
 
     function setUp() public {
         hevm = Hevm(address(CHEAT_CODE));
@@ -112,10 +113,11 @@ contract DssVestTest is DSTest {
               dai = DaiLike(              chainlog.getAddress("MCD_DAI"));
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
+         DAI_JOIN =                       chainlog.getAddress("MCD_JOIN_DAI");
 
-        mVest = new DssVestMintable(address(gem));
+    mVest = new DssVestMintable(address(gem));
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(chainlog));
+        sVest = new DssVestSuckable(address(chainlog), DAI_JOIN);
         sVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
         tVest = new DssVestTransferrable(address(boss), address(dai));

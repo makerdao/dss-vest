@@ -28,6 +28,7 @@ interface ChainlogLike {
 }
 
 interface DaiJoinLike {
+    function vat() external view returns (address);
     function exit(address, uint256) external;
 }
 
@@ -434,11 +435,12 @@ contract DssVestSuckable is DssVest {
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
     */
-    constructor(address _chainlog) public DssVest() {
+    constructor(address _chainlog, address _daiJoin) public DssVest() {
         require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
         VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
-        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
+        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(_daiJoin);
+        require(daiJoin_.vat() == address(vat_), "DssVestSuckable/vat-mismatch");
 
         vat_.hope(address(daiJoin_));
     }

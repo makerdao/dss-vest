@@ -55,7 +55,7 @@ contract DssVestSuckableEchidnaTest {
         chainlog.setAddress("MCD_VAT", address(vat));
         chainlog.setAddress("MCD_JOIN_DAI", address(daiJoin));
         chainlog.setAddress("MCD_VOW", vow);
-        sVest = new DssVestSuckable(address(chainlog));
+        sVest = new DssVestSuckable(address(chainlog), address(daiJoin));
         sVest.file("cap", MIN * WAD / TIME);
         dai.rely(address(daiJoin));
         vat.rely(address(sVest));
