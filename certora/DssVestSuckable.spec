@@ -1,53 +1,53 @@
 // DssVestSuckable.spec
 
-// certoraRun src/DssVest.sol:DssVestSuckable certora/ChainLog.sol certora/Vat.sol certora/DaiJoin.sol certora/Dai.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:daiJoin=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=Dai --verify DssVestSuckable:certora/DssVestSuckable.spec --rule_sanity
+// certoraRun src/DssVest.sol:DssVestSuckable certora/ChainLog.sol certora/Vat.sol certora/DaiJoin.sol certora/Dai.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:join=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=Dai --verify DssVestSuckable:certora/DssVestSuckable.spec --rule_sanity
 
-using ChainLog as chainlog
-using DaiJoin as daiJoin
-using Vat as vat
-using Dai as dai
+using ChainLog as chainlog;
+using DaiJoin as join;
+using Vat as vat;
+using Dai as dai;
 
 methods {
-    TWENTY_YEARS() returns (uint256) envfree
-    wards(address) returns (uint256) envfree
-    awards(uint256) returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree
-    ids() returns (uint256) envfree
-    cap() returns (uint256) envfree
-    usr(uint256) returns (address) envfree
-    bgn(uint256) returns (uint256) envfree
-    clf(uint256) returns (uint256) envfree
-    fin(uint256) returns (uint256) envfree
-    mgr(uint256) returns (address) envfree
-    res(uint256) returns (uint256) envfree
-    tot(uint256) returns (uint256) envfree
-    rxd(uint256) returns (uint256) envfree
-    valid(uint256) returns (bool) envfree
-    chainlog.getAddress(bytes32) returns (address)
-    daiJoin.vat() returns (address) envfree
-    daiJoin.dai() returns (address) envfree
-    daiJoin.live() returns (uint256) envfree
-    vat.wards(address) returns (uint256) envfree
-    vat.can(address, address) returns (uint256) envfree
-    vat.dai(address) returns (uint256) envfree
-    vat.sin(address) returns (uint256) envfree
-    vat.debt() returns (uint256) envfree
-    vat.vice() returns (uint256) envfree
-    vat.live() returns (uint256) envfree
-    dai.wards(address) returns (uint256) envfree
-    dai.totalSupply() returns (uint256) envfree
-    dai.balanceOf(address) returns (uint256) envfree
+    function TWENTY_YEARS() external returns (uint256) envfree;
+    function wards(address) external returns (uint256) envfree;
+    function awards(uint256) external returns (address, uint48, uint48, uint48, address, uint8, uint128, uint128) envfree;
+    function ids() external returns (uint256) envfree;
+    function cap() external returns (uint256) envfree;
+    function usr(uint256) external returns (address) envfree;
+    function bgn(uint256) external returns (uint256) envfree;
+    function clf(uint256) external returns (uint256) envfree;
+    function fin(uint256) external returns (uint256) envfree;
+    function mgr(uint256) external returns (address) envfree;
+    function res(uint256) external returns (uint256) envfree;
+    function tot(uint256) external returns (uint256) envfree;
+    function rxd(uint256) external returns (uint256) envfree;
+    function valid(uint256) external returns (bool) envfree;
+    function chainlog.getAddress(bytes32) external returns (address);
+    function join.vat() external returns (address) envfree;
+    function join.dai() external returns (address) envfree;
+    function join.live() external returns (uint256) envfree;
+    function vat.wards(address) external returns (uint256) envfree;
+    function vat.can(address, address) external returns (uint256) envfree;
+    function vat.dai(address) external returns (uint256) envfree;
+    function vat.sin(address) external returns (uint256) envfree;
+    function vat.debt() external returns (uint256) envfree;
+    function vat.vice() external returns (uint256) envfree;
+    function vat.live() external returns (uint256) envfree;
+    function dai.wards(address) external returns (uint256) envfree;
+    function dai.totalSupply() external returns (uint256) envfree;
+    function dai.balanceOf(address) external returns (uint256) envfree;
 }
 
-definition max_uint48() returns uint256 = 2^48 - 1;
+/* definition max_uint48 returns uint256 = 2^48 - 1; */
 definition RAY() returns uint256 = 10^27;
 
 ghost lockedGhost() returns uint256;
 
-hook Sstore locked uint256 n_locked STORAGE {
+hook Sstore locked uint256 n_locked {
     havoc lockedGhost assuming lockedGhost@new() == n_locked;
 }
 
-hook Sload uint256 value locked STORAGE {
+hook Sload uint256 value locked {
     require lockedGhost() == value;
 }
 
@@ -252,7 +252,7 @@ rule file_revert(bytes32 what, uint256 data) {
     bool revert1 = e.msg.value > 0;
     bool revert2 = ward != 1;
     bool revert3 = locked != 0;
-    bool revert4 = what != 0x6361700000000000000000000000000000000000000000000000000000000000; // what != "cap"
+    bool revert4 = what != to_bytes32(0x6361700000000000000000000000000000000000000000000000000000000000); // what != "cap"
 
     assert(revert1 => lastReverted, "Sending ETH did not revert");
     assert(revert2 => lastReverted, "Lack of auth did not revert");
@@ -299,8 +299,8 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 
     create@withrevert(e, _usr, _tot, _bgn, _tau, _eta, _mgr);
 
-    uint256 clf = _bgn + _eta;
-    uint256 fin = _bgn + _tau;
+    mathint clf = to_mathint(_bgn) + to_mathint(_eta);
+    mathint fin = to_mathint(_bgn) + to_mathint(_tau);
 
     bool revert1  = e.msg.value > 0;
     bool revert2  = ward != 1;
@@ -316,9 +316,9 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
     bool revert12 = _tau > twenty_years;
     bool revert13 = _eta > _tau;
     bool revert14 = _ids == max_uint256;
-    bool revert15 = _bgn > max_uint48();
-    bool revert16 = clf > max_uint48();
-    bool revert17 = fin > max_uint48();
+    bool revert15 = _bgn > max_uint48;
+    bool revert16 = clf > max_uint48;
+    bool revert17 = fin > max_uint48;
     bool revert18 = _tot > max_uint128;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
@@ -353,8 +353,8 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 rule vest(uint256 _id) {
     env e;
 
-    require(vat == daiJoin.vat());
-    require(dai == daiJoin.dai());
+    require(vat == join.vat());
+    require(dai == join.dai());
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
@@ -362,7 +362,7 @@ rule vest(uint256 _id) {
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0 // This case actually never enters via vest but it's here for completeness
         : e.block.timestamp >= fin
@@ -371,21 +371,21 @@ rule vest(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         e.block.timestamp < clf
         ? 0
         : accruedAmt - rxd;
 
-    uint256 balanceBefore = dai.balanceOf(usr);
-    uint256 supplyBefore = dai.totalSupply();
+    mathint balanceBefore = dai.balanceOf(usr);
+    mathint supplyBefore = dai.totalSupply();
 
     vest(e, _id);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
     usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
-    uint256 balanceAfter = dai.balanceOf(usr);
-    uint256 supplyAfter = dai.totalSupply();
+    mathint balanceAfter = dai.balanceOf(usr);
+    mathint supplyAfter = dai.totalSupply();
 
     assert(usr2 == usr, "usr changed");
     assert(bgn2 == bgn, "bgn changed");
@@ -411,8 +411,8 @@ rule vest(uint256 _id) {
 rule vest_revert(uint256 _id) {
     env e;
 
-    require(vat == daiJoin.vat());
-    require(dai == daiJoin.dai());
+    require(vat == join.vat());
+    require(dai == join.dai());
 
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
@@ -423,18 +423,18 @@ rule vest_revert(uint256 _id) {
     uint256 supply = dai.totalSupply();
     uint256 locked = lockedGhost();
     uint256 vatLive = vat.live();
-    address vow = chainlog.getAddress(e, 0x4d43445f564f5700000000000000000000000000000000000000000000000000);
-    uint256 daiJoinLive = daiJoin.live();
+    address vow = chainlog.getAddress(e, to_bytes32(0x4d43445f564f5700000000000000000000000000000000000000000000000000));
+    uint256 daiJoinLive = join.live();
     uint256 wardVat = vat.wards(currentContract);
-    uint256 canVestDaiJoin = vat.can(currentContract, daiJoin);
-    uint256 wardDai = dai.wards(daiJoin);
+    uint256 canVestDaiJoin = vat.can(currentContract, join);
+    uint256 wardDai = dai.wards(join);
     uint256 sinVow = vat.sin(vow);
     uint256 vatDaiVest = vat.dai(currentContract);
     uint256 vice = vat.vice();
     uint256 debt = vat.debt();
-    uint256 vatDaiDaiJoin = vat.dai(daiJoin);
+    uint256 vatDaiDaiJoin = vat.dai(join);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0 // This case actually never enters via vest but it's here for completeness
         : e.block.timestamp >= fin
@@ -443,12 +443,12 @@ rule vest_revert(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         e.block.timestamp < clf
         ? 0
         : accruedAmt - rxd;
 
-    uint256 unpaidAmtRad = RAY() * unpaidAmt;
+    mathint unpaidAmtRad = RAY() * unpaidAmt;
 
     vest@withrevert(e, _id);
 
@@ -469,7 +469,7 @@ rule vest_revert(uint256 _id) {
     bool revert15 = vice + unpaidAmtRad > max_uint256;
     bool revert16 = debt + unpaidAmtRad > max_uint256;
     bool revert17 = daiJoinLive != 1;
-    bool revert18 = currentContract != daiJoin && canVestDaiJoin != 1;
+    bool revert18 = currentContract != join && canVestDaiJoin != 1;
     bool revert19 = vatDaiDaiJoin + unpaidAmtRad > max_uint256;
     bool revert20 = wardDai != 1;
     bool revert21 = usrBalance + unpaidAmt > max_uint256;
@@ -491,10 +491,10 @@ rule vest_revert(uint256 _id) {
     assert(revert14 => lastReverted, "Overflow dai + rad did not revert");
     assert(revert15 => lastReverted, "Overflow vice + rad did not revert");
     assert(revert16 => lastReverted, "Overflow debt + rad did not revert");
-    assert(revert17 => lastReverted, "Not live daiJoin did not revert");
+    assert(revert17 => lastReverted, "Not live join did not revert");
     assert(revert18 => lastReverted, "The function wish did not revert");
     assert(revert19 => lastReverted, "Overflow dst + rad did not revert");
-    assert(revert20 => lastReverted, "Lack of dai auth on daiJoin did not revert");
+    assert(revert20 => lastReverted, "Lack of dai auth on join did not revert");
     assert(revert21 => lastReverted, "Overflow usr balance did not revert");
     assert(revert22 => lastReverted, "Overflow totalSupply did not revert");
 
@@ -513,8 +513,8 @@ rule vest_revert(uint256 _id) {
 rule vest_amt(uint256 _id, uint256 _maxAmt) {
     env e;
 
-    require(vat == daiJoin.vat());
-    require(dai == daiJoin.dai());
+    require(vat == join.vat());
+    require(dai == join.dai());
 
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
@@ -522,7 +522,7 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0 // This case actually never enters via vest but it's here for completeness
         : e.block.timestamp >= fin
@@ -531,23 +531,23 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         e.block.timestamp < clf
         ? 0
         : accruedAmt - rxd;
 
-    uint256 amt = _maxAmt > unpaidAmt ? unpaidAmt : _maxAmt;
+    mathint amt = _maxAmt > unpaidAmt ? unpaidAmt : _maxAmt;
 
-    uint256 balanceBefore = dai.balanceOf(usr);
-    uint256 supplyBefore = dai.totalSupply();
+    mathint balanceBefore = dai.balanceOf(usr);
+    mathint supplyBefore = dai.totalSupply();
 
     vest(e, _id, _maxAmt);
 
     address usr2; uint48 bgn2; uint48 clf2; uint48 fin2; address mgr2; uint8 res2; uint128 tot2; uint128 rxd2;
     usr2, bgn2, clf2, fin2, mgr2, res2, tot2, rxd2 = awards(_id);
 
-    uint256 balanceAfter = dai.balanceOf(usr);
-    uint256 supplyAfter = dai.totalSupply();
+    mathint balanceAfter = dai.balanceOf(usr);
+    mathint supplyAfter = dai.totalSupply();
 
     assert(usr2 == usr, "usr changed");
     assert(bgn2 == bgn, "bgn changed");
@@ -572,8 +572,8 @@ rule vest_amt(uint256 _id, uint256 _maxAmt) {
 rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     env e;
 
-    require(vat == daiJoin.vat());
-    require(dai == daiJoin.dai());
+    require(vat == join.vat());
+    require(dai == join.dai());
 
     requireInvariant clfGreaterOrEqualBgn(_id);
     requireInvariant finGreaterOrEqualClf(_id);
@@ -584,18 +584,18 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     uint256 supply = dai.totalSupply();
     uint256 locked = lockedGhost();
     uint256 vatLive = vat.live();
-    address vow = chainlog.getAddress(e, 0x4d43445f564f5700000000000000000000000000000000000000000000000000);
-    uint256 daiJoinLive = daiJoin.live();
+    address vow = chainlog.getAddress(e, to_bytes32(0x4d43445f564f5700000000000000000000000000000000000000000000000000));
+    uint256 daiJoinLive = join.live();
     uint256 wardVat = vat.wards(currentContract);
-    uint256 canVestDaiJoin = vat.can(currentContract, daiJoin);
-    uint256 wardDai = dai.wards(daiJoin);
+    uint256 canVestDaiJoin = vat.can(currentContract, join);
+    uint256 wardDai = dai.wards(join);
     uint256 sinVow = vat.sin(vow);
     uint256 vatDaiVest = vat.dai(currentContract);
     uint256 vice = vat.vice();
     uint256 debt = vat.debt();
-    uint256 vatDaiDaiJoin = vat.dai(daiJoin);
+    uint256 vatDaiDaiJoin = vat.dai(join);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0 // This case actually never enters via vest but it's here for completeness
         : e.block.timestamp >= fin
@@ -604,14 +604,14 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         e.block.timestamp < clf
         ? 0
         : accruedAmt - rxd;
 
-    uint256 amt = _maxAmt > unpaidAmt ? unpaidAmt : _maxAmt;
+    mathint amt = _maxAmt > unpaidAmt ? unpaidAmt : _maxAmt;
 
-    uint256 amtRad = RAY() * amt;
+    mathint amtRad = RAY() * amt;
 
     vest@withrevert(e, _id, _maxAmt);
 
@@ -632,7 +632,7 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     bool revert15 = vice + amtRad > max_uint256;
     bool revert16 = debt + amtRad > max_uint256;
     bool revert17 = daiJoinLive != 1;
-    bool revert18 = currentContract != daiJoin && canVestDaiJoin != 1;
+    bool revert18 = currentContract != join && canVestDaiJoin != 1;
     bool revert19 = vatDaiDaiJoin + amtRad > max_uint256;
     bool revert20 = wardDai != 1;
     bool revert21 = usrBalance + amt > max_uint256;
@@ -654,10 +654,10 @@ rule vest_amt_revert(uint256 _id, uint256 _maxAmt) {
     assert(revert14 => lastReverted, "Overflow dai + rad did not revert");
     assert(revert15 => lastReverted, "Overflow vice + rad did not revert");
     assert(revert16 => lastReverted, "Overflow debt + rad did not revert");
-    assert(revert17 => lastReverted, "Not live daiJoin did not revert");
+    assert(revert17 => lastReverted, "Not live join did not revert");
     assert(revert18 => lastReverted, "The function wish did not revert");
     assert(revert19 => lastReverted, "Overflow dst + rad did not revert");
-    assert(revert20 => lastReverted, "Lack of dai auth on daiJoin did not revert");
+    assert(revert20 => lastReverted, "Lack of dai auth on join did not revert");
     assert(revert21 => lastReverted, "Overflow usr balance did not revert");
     assert(revert22 => lastReverted, "Overflow totalSupply did not revert");
 
@@ -679,7 +679,7 @@ rule accrued(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0
         : e.block.timestamp >= fin
@@ -688,7 +688,7 @@ rule accrued(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 amt = accrued(e, _id);
+    mathint amt = accrued(e, _id);
 
     assert(e.block.timestamp >= bgn && e.block.timestamp < fin => amt == accruedAmt, "accrued did not return amt as expected");
 }
@@ -700,7 +700,7 @@ rule accrued_revert(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0
         : e.block.timestamp >= fin
@@ -732,7 +732,7 @@ rule unpaid(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0
         : e.block.timestamp >= fin
@@ -741,7 +741,7 @@ rule unpaid(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 amt = unpaid(e, _id);
+    mathint amt = unpaid(e, _id);
 
     assert(e.block.timestamp <  clf => amt == 0, "unpaid did not return amt equal to zero as expected");
     assert(e.block.timestamp >= clf => amt == accruedAmt - rxd, "unpaid did not return amt as expected");
@@ -754,7 +754,7 @@ rule unpaid_revert(uint256 _id) {
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0
         : e.block.timestamp >= fin
@@ -794,8 +794,8 @@ rule restrict(uint256 _id) {
 rule restrict_revert(uint256 _id) {
     env e;
 
-    uint256 locked = lockedGhost();
-    uint256 ward = wards(e.msg.sender);
+    mathint locked = lockedGhost();
+    mathint ward = wards(e.msg.sender);
     address _usr = usr(_id);
 
     restrict@withrevert(e, _id);
@@ -826,8 +826,8 @@ rule unrestrict(uint256 _id) {
 rule unrestrict_revert(uint256 _id) {
     env e;
 
-    uint256 locked = lockedGhost();
-    uint256 ward = wards(e.msg.sender);
+    mathint locked = lockedGhost();
+    mathint ward = wards(e.msg.sender);
     address _usr = usr(_id);
 
     unrestrict@withrevert(e, _id);
@@ -856,7 +856,7 @@ rule yank(uint256 _id) {
     requireInvariant finGreaterOrEqualClf(_id);
     require(rxd <= tot);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0 // This case actually never enters via yank but it's here for completeness
         : e.block.timestamp >= fin
@@ -865,7 +865,7 @@ rule yank(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         e.block.timestamp < clf
         ? 0 // This case actually never enters via yank but it's here for completeness
         : accruedAmt - rxd;
@@ -893,12 +893,12 @@ rule yank(uint256 _id) {
 rule yank_revert(uint256 _id) {
     env e;
 
-    uint256 locked = lockedGhost();
-    uint256 ward = wards(e.msg.sender);
+    mathint locked = lockedGhost();
+    mathint ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    uint256 accruedAmt =
+    mathint accruedAmt =
         e.block.timestamp < bgn
         ? 0 // This case actually never enters via yank but it's here for completeness
         : e.block.timestamp >= fin
@@ -907,7 +907,7 @@ rule yank_revert(uint256 _id) {
                 ? (tot * (e.block.timestamp - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         e.block.timestamp < clf
         ? 0 // This case actually never enters via yank but it's here for completeness
         : accruedAmt - rxd;
@@ -918,7 +918,7 @@ rule yank_revert(uint256 _id) {
     bool revert2 = locked != 0;
     bool revert3 = ward != 1 && mgr != e.msg.sender;
     bool revert4 = usr == 0;
-    bool revert5 = e.block.timestamp < fin && e.block.timestamp > max_uint48();
+    bool revert5 = e.block.timestamp < fin && e.block.timestamp > max_uint48;
     bool revert6 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && tot * (e.block.timestamp - bgn) > max_uint256;
     bool revert7 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && fin == bgn;
     bool revert8 = e.block.timestamp < fin && e.block.timestamp >= bgn && e.block.timestamp >= clf && accruedAmt < rxd;
@@ -951,8 +951,8 @@ rule yank_end(uint256 _id, uint256 _end) {
     requireInvariant finGreaterOrEqualClf(_id);
     require(rxd <= tot);
 
-    uint256 _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
-    uint256 accruedAmt =
+    mathint _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
+    mathint accruedAmt =
         _end2 < bgn
         ? 0 // This case actually never enters via yank but it's here for completeness
         : _end2 >= fin
@@ -961,7 +961,7 @@ rule yank_end(uint256 _id, uint256 _end) {
                 ? (tot * (_end2 - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         _end2 < clf
         ? 0 // This case actually never enters via yank but it's here for completeness
         : accruedAmt - rxd;
@@ -989,13 +989,13 @@ rule yank_end(uint256 _id, uint256 _end) {
 rule yank_end_revert(uint256 _id, uint256 _end) {
     env e;
 
-    uint256 locked = lockedGhost();
-    uint256 ward = wards(e.msg.sender);
+    mathint locked = lockedGhost();
+    mathint ward = wards(e.msg.sender);
     address usr; uint48 bgn; uint48 clf; uint48 fin; address mgr; uint8 res; uint128 tot; uint128 rxd;
     usr, bgn, clf, fin, mgr, res, tot, rxd = awards(_id);
 
-    uint256 _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
-    uint256 accruedAmt =
+    mathint _end2 = _end < e.block.timestamp ? e.block.timestamp : _end;
+    mathint accruedAmt =
         _end2 < bgn
         ? 0 // This case actually never enters via yank but it's here for completeness
         : _end2 >= fin
@@ -1004,7 +1004,7 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
                 ? (tot * (_end2 - bgn)) / (fin - bgn)
                 : 9999; // Random value as tx will revert in this case
 
-    uint256 unpaidAmt =
+    mathint unpaidAmt =
         _end2 < clf
         ? 0 // This case actually never enters via yank but it's here for completeness
         : accruedAmt - rxd;
@@ -1015,7 +1015,7 @@ rule yank_end_revert(uint256 _id, uint256 _end) {
     bool revert2 = locked != 0;
     bool revert3 = ward != 1 && mgr != e.msg.sender;
     bool revert4 = usr == 0;
-    bool revert5 = _end2 < fin && _end2 > max_uint48();
+    bool revert5 = _end2 < fin && _end2 > max_uint48;
     bool revert6 = _end2 < fin && _end2 >= bgn && _end2 >= clf && tot * (_end2 - bgn) > max_uint256;
     bool revert7 = _end2 < fin && _end2 >= bgn && _end2 >= clf && fin == bgn;
     bool revert8 = _end2 < fin && _end2 >= bgn && _end2 >= clf && accruedAmt < rxd;
@@ -1050,7 +1050,7 @@ rule move(uint256 _id, address _dst) {
 rule move_revert(uint256 _id, address _dst) {
     env e;
 
-    uint256 locked = lockedGhost();
+    mathint locked = lockedGhost();
     address _usr = usr(_id);
 
     move@withrevert(e, _id, _dst);
@@ -1070,8 +1070,8 @@ rule move_revert(uint256 _id, address _dst) {
 
 // Verify that ids behave correctly on valid
 rule valid(uint256 _id) {
-    uint256 _tot = tot(_id);
-    uint256 _rxd = rxd(_id);
+    mathint _tot = tot(_id);
+    mathint _rxd = rxd(_id);
 
     bool validContract = _rxd < _tot;
 
