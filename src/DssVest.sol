@@ -27,8 +27,9 @@ interface ChainlogLike {
     function getAddress(bytes32) external view returns (address);
 }
 
-interface DaiJoinLike {
+interface JoinLike {
     function exit(address, uint256) external;
+    function vat() external view returns (address);
 }
 
 interface VatLike {
@@ -428,19 +429,23 @@ contract DssVestSuckable is DssVest {
 
     ChainlogLike public immutable chainlog;
     VatLike      public immutable vat;
-    DaiJoinLike  public immutable daiJoin;
+    JoinLike     public immutable join;
 
     /**
         @dev This contract must be authorized to 'suck' on the vat
         @param _chainlog The contract address of the MCD chainlog
+        @param _join The native join contract from MCD
     */
-    constructor(address _chainlog) public DssVest() {
-        require(_chainlog != address(0), "DssVestSuckable/Invalid-chainlog-address");
+    constructor(address _chainlog, address _join) public DssVest() {
+        require(_chainlog != address(0), "DssVestSuckable/invalid-chainlog-address");
         ChainlogLike chainlog_ = chainlog = ChainlogLike(_chainlog);
-        VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
-        DaiJoinLike daiJoin_ = daiJoin = DaiJoinLike(chainlog_.getAddress("MCD_JOIN_DAI"));
 
-        vat_.hope(address(daiJoin_));
+        VatLike vat_ = vat = VatLike(chainlog_.getAddress("MCD_VAT"));
+
+        require(JoinLike(_join).vat() == address(vat_), "DssVestSuckable/invalid-join-vat");
+        join = JoinLike(_join);
+
+        vat_.hope(_join);
     }
 
     /**
@@ -451,7 +456,7 @@ contract DssVestSuckable is DssVest {
     function pay(address _guy, uint256 _amt) override internal {
         require(vat.live() == 1, "DssVestSuckable/vat-not-live");
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
-        daiJoin.exit(_guy, _amt);
+        join.exit(_guy, _amt);
     }
 }
 

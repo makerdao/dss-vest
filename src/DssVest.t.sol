@@ -30,6 +30,8 @@ interface DaiLike is GemLike {
     function balanceOf(address) external returns (uint256);
 }
 
+interface JoinLike {}
+
 interface DSTokenLike {
     function balanceOf(address) external returns (uint256);
 }
@@ -98,6 +100,8 @@ contract DssVestTest is DSTest {
     MkrAuthorityLike     authority;
     VatLike                    vat;
     DaiLike                    dai;
+    JoinLike               daiJoin;
+    JoinLike              usdsJoin;
     EndLike                    end;
 
     address                    VOW;
@@ -110,12 +114,14 @@ contract DssVestTest is DSTest {
         authority = MkrAuthorityLike(     chainlog.getAddress("GOV_GUARD"));
               vat = VatLike(              chainlog.getAddress("MCD_VAT"));
               dai = DaiLike(              chainlog.getAddress("MCD_DAI"));
+          daiJoin = JoinLike(             chainlog.getAddress("MCD_JOIN_DAI"));
+         usdsJoin = JoinLike(             chainlog.getAddress("USDS_JOIN"));
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
         mVest = new DssVestMintable(address(gem));
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(chainlog));
+        sVest = new DssVestSuckable(address(chainlog), address(usdsJoin));
         sVest.file("cap", (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
         tVest = new DssVestTransferrable(address(boss), address(dai));
