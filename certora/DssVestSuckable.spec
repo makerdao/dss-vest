@@ -22,7 +22,7 @@ methods {
     function tot(uint256) external returns (uint256) envfree;
     function rxd(uint256) external returns (uint256) envfree;
     function valid(uint256) external returns (bool) envfree;
-    function chainlog.getAddress(bytes32) external returns (address);
+    function chainlog.getAddress(bytes32) external returns (address) envfree;
     function join.vat() external returns (address) envfree;
     function join.dai() external returns (address) envfree;
     function join.live() external returns (uint256) envfree;
@@ -93,13 +93,13 @@ rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
 
 // Verify fallback always reverts
 // Important as we are filtering it out from invariants and some rules
-rule fallback_revert(method f) filtered { f -> f.isFallback } {
+rule fallback_revert(method f) {
     env e;
 
     calldataarg arg;
     f@withrevert(e, arg);
 
-    assert(lastReverted, "Fallback did not revert");
+    assert(f.isFallback => lastReverted, "Fallback did not revert");
 }
 
 // Verify that returned value is what expected in TWENTY_YEARS
@@ -311,15 +311,14 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
     bool revert7  = _bgn >= e.block.timestamp + twenty_years;
     bool revert8  = e.block.timestamp < twenty_years;
     bool revert9  = _bgn <= e.block.timestamp - twenty_years;
-    bool revert10 = _tau == 0;
-    bool revert11 = _tot / _tau > _cap;
-    bool revert12 = _tau > twenty_years;
-    bool revert13 = _eta > _tau;
-    bool revert14 = _ids == max_uint256;
-    bool revert15 = _bgn > max_uint48;
-    bool revert16 = clf > max_uint48;
-    bool revert17 = fin > max_uint48;
-    bool revert18 = _tot > max_uint128;
+    bool revert10 = _tau == 0 || _tot / _tau > _cap;
+    bool revert11 = _tau > twenty_years;
+    bool revert12 = _eta > _tau;
+    bool revert13 = _ids == max_uint256;
+    bool revert14 = _bgn > max_uint48;
+    bool revert15 = clf > max_uint48;
+    bool revert16 = fin > max_uint48;
+    bool revert17 = _tot > max_uint128;
 
     assert(revert1  => lastReverted, "Sending ETH did not revert");
     assert(revert2  => lastReverted, "Lack of auth did not revert");
@@ -330,15 +329,14 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
     assert(revert7  => lastReverted, "Starting timestamp too far did not revert");
     assert(revert8  => lastReverted, "Subtraction underflow did not revert");
     assert(revert9  => lastReverted, "Starting timestamp too long ago did not revert");
-    assert(revert10 => lastReverted, "Zero tau did not revert");
-    assert(revert11 => lastReverted, "Rate too high did not revert");
-    assert(revert12 => lastReverted, "Too long tau did not revert");
-    assert(revert13 => lastReverted, "Too long clf did not revert");
-    assert(revert14 => lastReverted, "Overflow ids did not revert");
-    assert(revert15 => lastReverted, "Starting timestamp toUint48 cast did not revert");
-    assert(revert16 => lastReverted, "Overflow toUint48 clf cast did not revert");
-    assert(revert17 => lastReverted, "Overflow toUint48 fin cast did not revert");
-    assert(revert18 => lastReverted, "Overflow toUint128 tot cast did not revert");
+    assert(revert10 => lastReverted, "Zero tau or rate too high did not revert");
+    assert(revert11 => lastReverted, "Too long tau did not revert");
+    assert(revert12 => lastReverted, "Too long clf did not revert");
+    assert(revert13 => lastReverted, "Overflow ids did not revert");
+    assert(revert14 => lastReverted, "Starting timestamp toUint48 cast did not revert");
+    assert(revert15 => lastReverted, "Overflow toUint48 clf cast did not revert");
+    assert(revert16 => lastReverted, "Overflow toUint48 fin cast did not revert");
+    assert(revert17 => lastReverted, "Overflow toUint128 tot cast did not revert");
 
     assert(lastReverted =>
             revert1  || revert2  || revert3  ||
@@ -346,7 +344,7 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
             revert7  || revert8  || revert9  ||
             revert10 || revert11 || revert12 ||
             revert13 || revert14 || revert15 ||
-            revert16 || revert17 || revert18, "Revert rules are not covering all the cases");
+            revert16 || revert17, "Revert rules are not covering all the cases");
 }
 
 // Verify that awards behave correctly on vest
