@@ -458,6 +458,13 @@ contract DssVestSuckable is DssVest {
         vat.suck(chainlog.getAddress("MCD_VOW"), address(this), mul(_amt, RAY));
         join.exit(_guy, _amt);
     }
+
+    /**
+        @dev Compatibility with older implementations of `DssVestSuckable`
+    */
+    function daiJoin() external view returns (address) {
+        return address(join);
+    }
 }
 
 /*
