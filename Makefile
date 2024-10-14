@@ -6,7 +6,7 @@ solc-select           :; pip3 install solc-select && solc-select install 0.6.12
 echidna-mintable      :; ./echidna/echidna.sh mintable
 echidna-suckable      :; ./echidna/echidna.sh suckable
 echidna-transferrable :; ./echidna/echidna.sh transferrable
-certora-mintable      :; $(if $(CERTORAKEY),, @echo "set certora key"; exit 1;) certoraRun --solc ~/.solc-select/artifacts/solc-0.6.12/solc-0.6.12 src/DssVest.sol:DssVestMintable certora/DSToken.sol certora/MockAuthority.sol --link DssVestMintable:gem=DSToken DSToken:authority=MockAuthority --verify DssVestMintable:certora/DssVestMintable.spec --solc_args "['--optimize','--optimize-runs','200']" --rule_sanity $(if $(rule),--rule $(rule),) --multi_assert_check --short_output
+certora-mintable      :; PATH=${PATH} certoraRun certora/DssVestMintable.conf $(if $(rule), --rule $(rule),)
 certora-suckable      :; PATH=${PATH} certoraRun certora/DssVestSuckable.conf $(if $(rule), --rule $(rule),)
 certora-transferrable :; $(if $(CERTORAKEY),, @echo "set certora key"; exit 1;) certoraRun --solc ~/.solc-select/artifacts/solc-0.6.12/solc-0.6.12 src/DssVest.sol:DssVestTransferrable certora/Dai.sol --link DssVestTransferrable:gem=Dai --verify DssVestTransferrable:certora/DssVestTransferrable.spec --solc_args "['--optimize','--optimize-runs','200']" --rule_sanity  $(if $(rule),--rule $(rule),) --multi_assert_check --short_output
 deploy-mintable       :; make && dapp create DssVestMintable $(gem)
