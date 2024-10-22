@@ -310,7 +310,7 @@ contract DssVestTest is DSTest {
 
     function testAccrued() public {
         uint256 id = mVest.create(address(this), 100 * days_vest, block.timestamp + 10 days, 100 days, 0, address(0));
-        assertTrue(mVest.valid(id), "0");
+        assertTrue(mVest.valid(id));
 
         assertEq(mVest.accrued(id), 0, "1");
         hevm.warp(block.timestamp + 43200);

@@ -1,7 +1,5 @@
 // DssVestSuckable.spec
 
-// certoraRun src/DssVest.sol:DssVestSuckable certora/ChainLog.sol certora/Vat.sol certora/DaiJoin.sol certora/Dai.sol --link DssVestSuckable:chainlog=ChainLog DssVestSuckable:vat=Vat DssVestSuckable:join=DaiJoin DaiJoin:vat=Vat DaiJoin:dai=Dai --verify DssVestSuckable:certora/DssVestSuckable.spec --rule_sanity
-
 using ChainLog as chainlog;
 using DaiJoin as join;
 using Vat as vat;
@@ -38,7 +36,6 @@ methods {
     function dai.balanceOf(address) external returns (uint256) envfree;
 }
 
-/* definition max_uint48 returns uint256 = 2^48 - 1; */
 definition RAY() returns uint256 = 10^27;
 
 ghost lockedGhost() returns uint256;
@@ -51,14 +48,14 @@ hook Sload uint256 value locked {
     require lockedGhost() == value;
 }
 
-invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && mgr(_id) == 0 && res(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0
-filtered { f -> !f.isFallback }
-invariant usrCantBeZeroIfCreate(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0
-filtered { f -> !f.isFallback }
-invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id)
-filtered { f -> !f.isFallback }
-invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id)
-filtered { f -> !f.isFallback }
+invariant everythingNotSetIfUsrNotSet(uint256 _id) usr(_id) == 0 => bgn(_id) == 0 && clf(_id) == 0 && fin(_id) == 0 && mgr(_id) == 0 && res(_id) == 0 && tot(_id) == 0 && rxd(_id) == 0;
+
+invariant usrCantBeZeroIfCreate(uint256 _id) _id > 0 && _id <= ids() => usr(_id) != 0;
+
+invariant clfGreaterOrEqualBgn(uint256 _id) clf(_id) >= bgn(_id);
+
+invariant finGreaterOrEqualClf(uint256 _id) fin(_id) >= clf(_id);
+
 
 // The following invariant is replaced with a rule as it was kind of difficult to be finished this way.
 // Leaving this commented for possible future option to be finished.
@@ -75,7 +72,7 @@ filtered { f -> !f.isFallback }
 //     init_state axiom rxd(_id) == 0;
 // }
 
-rule rxdLessOrEqualTot(method f) filtered { f -> !f.isFallback } {
+rule rxdLessOrEqualTot(method f)  {
     env e;
     uint256 _id;
 
@@ -299,8 +296,8 @@ rule create_revert(address _usr, uint256 _tot, uint256 _bgn, uint256 _tau, uint2
 
     create@withrevert(e, _usr, _tot, _bgn, _tau, _eta, _mgr);
 
-    mathint clf = to_mathint(_bgn) + to_mathint(_eta);
-    mathint fin = to_mathint(_bgn) + to_mathint(_tau);
+    mathint clf = _bgn + _eta;
+    mathint fin = _bgn + _tau;
 
     bool revert1  = e.msg.value > 0;
     bool revert2  = ward != 1;
