@@ -75,7 +75,6 @@ rule rxdLessOrEqualTot(method f)  {
 }
 
 // Verify fallback always reverts
-// Important as we are filtering it out from invariants and some rules
 rule fallback_revert(method f) {
     env e;
 
