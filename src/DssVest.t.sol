@@ -26,9 +26,11 @@ interface GemLike {
     function approve(address, uint256) external returns (bool);
 }
 
-interface DaiLike is GemLike {
+interface ERC20Like is GemLike {
     function balanceOf(address) external returns (uint256);
 }
+
+interface JoinLike {}
 
 interface DSTokenLike {
     function balanceOf(address) external returns (uint256);
@@ -90,6 +92,7 @@ contract DssVestTest is DSTest {
 
     DssVestMintable          mVest;
     DssVestSuckable          sVest;
+    DssVestSuckable      sVestUsds;
     DssVestTransferrable     tVest;
     Manager                   boss;
 
@@ -97,7 +100,10 @@ contract DssVestTest is DSTest {
     DSTokenLike                gem;
     MkrAuthorityLike     authority;
     VatLike                    vat;
-    DaiLike                    dai;
+    ERC20Like                  dai;
+    JoinLike               daiJoin;
+    ERC20Like                 usds;
+    JoinLike              usdsJoin;
     EndLike                    end;
 
     address                    VOW;
@@ -109,14 +115,19 @@ contract DssVestTest is DSTest {
               gem = DSTokenLike    (      chainlog.getAddress("MCD_GOV"));
         authority = MkrAuthorityLike(     chainlog.getAddress("GOV_GUARD"));
               vat = VatLike(              chainlog.getAddress("MCD_VAT"));
-              dai = DaiLike(              chainlog.getAddress("MCD_DAI"));
+              dai = ERC20Like(            chainlog.getAddress("MCD_DAI"));
+          daiJoin = JoinLike(             chainlog.getAddress("MCD_JOIN_DAI"));
+             usds = ERC20Like(            chainlog.getAddress("USDS"));
+         usdsJoin = JoinLike(             chainlog.getAddress("USDS_JOIN"));
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
         mVest = new DssVestMintable(address(gem));
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(chainlog));
+        sVest = new DssVestSuckable(address(chainlog), address(daiJoin));
         sVest.file("cap", (2000 * WAD) / (4 * 365 days));
+        sVestUsds = new DssVestSuckable(address(chainlog), address(usdsJoin));
+        sVestUsds.file("cap", (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
         tVest = new DssVestTransferrable(address(boss), address(dai));
         tVest.file("cap", (2000 * WAD) / (4 * 365 days));
@@ -139,6 +150,13 @@ contract DssVestTest is DSTest {
         );
         assertEq(vat.wards(address(sVest)), 1);
 
+        hevm.store(
+            address(vat),
+            keccak256(abi.encode(address(sVestUsds), uint256(0))),
+            bytes32(uint256(1))
+        );
+        assertEq(vat.wards(address(sVestUsds)), 1);
+
         // Give boss 10000 DAI
         hevm.store(
             address(dai),
@@ -146,6 +164,14 @@ contract DssVestTest is DSTest {
             bytes32(uint256(10000 * WAD))
         );
         assertEq(dai.balanceOf(address(boss)), 10000 * WAD);
+
+        // Give boss 10000 USDS
+        hevm.store(
+            address(usds),
+            keccak256(abi.encode(address(boss), uint(2))),
+            bytes32(uint256(10000 * WAD))
+        );
+        assertEq(usds.balanceOf(address(boss)), 10000 * WAD, "Failed to check usds balance");
     }
 
     function testCost() public {
@@ -667,6 +693,24 @@ contract DssVestTest is DSTest {
         hevm.warp(block.timestamp + 365 days);
         sVest.vest(id);
         assertEq(dai.balanceOf(address(this)), 100 * days_vest);
+        assertEq(vat.sin(VOW), originalSin + 100 * days_vest * RAY);
+    }
+
+    function testSuckableVestUsds() public {
+        uint256 originalSin = vat.sin(VOW);
+        uint256 id = sVestUsds.create(address(this), 100 * days_vest, block.timestamp, 100 days, 0, address(0));
+        assertTrue(sVestUsds.valid(id));
+        hevm.warp(block.timestamp + 1 days);
+        sVestUsds.vest(id);
+        assertEq(usds.balanceOf(address(this)), 1 * days_vest);
+        assertEq(vat.sin(VOW), originalSin + 1 * days_vest * RAY);
+        hevm.warp(block.timestamp + 9 days);
+        sVestUsds.vest(id);
+        assertEq(usds.balanceOf(address(this)), 10 * days_vest);
+        assertEq(vat.sin(VOW), originalSin + 10 * days_vest * RAY);
+        hevm.warp(block.timestamp + 365 days);
+        sVestUsds.vest(id);
+        assertEq(usds.balanceOf(address(this)), 100 * days_vest);
         assertEq(vat.sin(VOW), originalSin + 100 * days_vest * RAY);
     }
 
