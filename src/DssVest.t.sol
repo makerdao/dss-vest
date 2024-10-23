@@ -317,20 +317,20 @@ contract DssVestTest is DSTest {
         assertEq(mVest.unpaid(id), 0);                   // inside cliff
         assertEq(mVest.accrued(id), 0);
         hevm.warp(block.timestamp + 12 hours + 11 days);
-        assertEq(mVest.unpaid(id), days_vest * 2, "3.1");       // past cliff
+        assertEq(mVest.unpaid(id), days_vest * 2);       // past cliff
         assertEq(mVest.accrued(id), days_vest * 2);
         hevm.warp(block.timestamp + 2 days);
         assertEq(mVest.unpaid(id), days_vest * 4);       // past cliff
         assertEq(mVest.accrued(id), days_vest * 4);
         mVest.vest(id);
-        assertEq(mVest.unpaid(id), 0, "7");
+        assertEq(mVest.unpaid(id), 0);
         assertEq(mVest.accrued(id), days_vest * 4);
         assertEq(gem.balanceOf(address(this)), days_vest * 4);
         hevm.warp(block.timestamp + 10 days);
         assertEq(mVest.unpaid(id), days_vest * 10);
         assertEq(mVest.accrued(id), days_vest * 14);
         mVest.vest(id);
-        assertEq(mVest.unpaid(id), 0, "12");
+        assertEq(mVest.unpaid(id), 0);
         assertEq(mVest.accrued(id), days_vest * 14);
         assertEq(gem.balanceOf(address(this)), days_vest * 14);
         hevm.warp(block.timestamp + 120 days);           // vesting complete
