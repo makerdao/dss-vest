@@ -30,8 +30,6 @@ interface ERC20Like is GemLike {
     function balanceOf(address) external returns (uint256);
 }
 
-interface JoinLike {}
-
 interface DSTokenLike {
     function balanceOf(address) external returns (uint256);
 }
@@ -101,9 +99,9 @@ contract DssVestTest is DSTest {
     MkrAuthorityLike     authority;
     VatLike                    vat;
     ERC20Like                  dai;
-    JoinLike               daiJoin;
+    address                daiJoin;
     ERC20Like                 usds;
-    JoinLike              usdsJoin;
+    address               usdsJoin;
     EndLike                    end;
 
     address                    VOW;
@@ -116,17 +114,17 @@ contract DssVestTest is DSTest {
         authority = MkrAuthorityLike(     chainlog.getAddress("GOV_GUARD"));
               vat = VatLike(              chainlog.getAddress("MCD_VAT"));
               dai = ERC20Like(            chainlog.getAddress("MCD_DAI"));
-          daiJoin = JoinLike(             chainlog.getAddress("MCD_JOIN_DAI"));
+          daiJoin =                       chainlog.getAddress("MCD_JOIN_DAI");
              usds = ERC20Like(            chainlog.getAddress("USDS"));
-         usdsJoin = JoinLike(             chainlog.getAddress("USDS_JOIN"));
+         usdsJoin =                       chainlog.getAddress("USDS_JOIN");
               end = EndLike(              chainlog.getAddress("MCD_END"));
               VOW =                       chainlog.getAddress("MCD_VOW");
 
         mVest = new DssVestMintable(address(gem));
         mVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVest = new DssVestSuckable(address(chainlog), address(daiJoin));
+        sVest = new DssVestSuckable(address(chainlog), daiJoin);
         sVest.file("cap", (2000 * WAD) / (4 * 365 days));
-        sVestUsds = new DssVestSuckable(address(chainlog), address(usdsJoin));
+        sVestUsds = new DssVestSuckable(address(chainlog), usdsJoin);
         sVestUsds.file("cap", (2000 * WAD) / (4 * 365 days));
         boss = new Manager();
         tVest = new DssVestTransferrable(address(boss), address(dai));
