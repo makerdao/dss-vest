@@ -169,7 +169,7 @@ contract DssVestTest is DSTest {
             keccak256(abi.encode(address(boss), uint(2))),
             bytes32(uint256(10000 * WAD))
         );
-        assertEq(usds.balanceOf(address(boss)), 10000 * WAD, "Failed to check usds balance");
+        assertEq(usds.balanceOf(address(boss)), 10000 * WAD);
     }
 
     function testCost() public {
