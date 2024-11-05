@@ -32,6 +32,9 @@ jobs:
       - name: Install solc-select
         run: pip3 install solc-select
 
+      - name: Solc Select 0.5.12
+        run: solc-select install 0.5.12
+
       - name: Solc Select 0.6.12
         run: solc-select install 0.6.12
 
